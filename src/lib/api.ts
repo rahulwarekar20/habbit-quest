@@ -414,6 +414,9 @@ export const updateCaregiver = (id: string, changes: { display_name?: string; ro
   request<ApiFamily>("PATCH", `/v1/families/${id}/caregivers/me`, changes);
 export const newInviteCode = (id: string) => request<ApiFamily>("POST", `/v1/families/${id}/invite-code`);
 export const setPin = (id: string, pin: string) => request<void>("PUT", `/v1/families/${id}/pin`, { pin });
+export const exportFamily = (id: string) => request<unknown>("GET", `/v1/families/${id}/export`);
+export const deleteFamily = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/delete`, { pin });
+export const leaveFamily = (id: string) => request<void>("DELETE", `/v1/families/${id}/caregivers/me`);
 export const verifyPin = (id: string, pin: string) => request<{ valid: boolean }>("POST", `/v1/families/${id}/pin/verify`, { pin });
 
 // ── Children ──────────────────────────────────────────────────────────────────

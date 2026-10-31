@@ -24,7 +24,6 @@ so the first request can take up to a minute; the app shows "Waking up the serve
 With `VITE_DEV_LOGIN=true` the sign-in page also offers a development login: `parent`, or `parent:<label>` for a
 separate test parent, with the shared password from the backend owner. Never put that password in an env file.
 
-Optional: `GROQ_API_KEY` in `.env` powers buddy lines and check-in moderation; without it the built-in fallbacks apply.
 
 ## Pages
 
@@ -56,58 +55,16 @@ Optional: `GROQ_API_KEY` in `.env` powers buddy lines and check-in moderation; w
 
 ## AI helpers
 
-The coach now lives on the backend ("Describe a problem"). A small server inside Vite (`server/`, mounted at
-`/api/agent` by `npm run dev` and `npm run preview`) still serves the two helpers below when `GROQ_API_KEY` is
-set, so the key stays in Node and never reaches the browser.
-
-| Agent | Where | What it does |
-|---|---|---|
-| Kid buddy | Kid mode | One short line of encouragement: hello, after "I did it!", and in the celebration |
-| Note moderation | Kid check-ins | An AI safety check on top of the local guardrails |
-
-The server's coach, planner, reviewer and retrieval code (`server/agents.ts`, `rag.ts`, `knowledge.ts`) and the proposal
-helpers in `src/lib/agents.ts` are no longer used by the app.
-
-## Safety and guardrails
-
-HabbitQuest is for children aged 3 to 13, so safety is layered:
-
-1. **Only a parent changes the plan.** Suggestions from the backend are options; nothing is saved until a parent picks and confirms with the PIN.
-2. **Goals and quests come from a pre-approved catalog** on the backend, filtered to the child's age and unlocked tier.
-3. **Text kids read** (buddy lines) passes a local word and pattern check and then an AI safety classifier (`server/guardrails.ts`). If it fails or can't be checked, a safe built-in line is shown instead.
-4. **Text kids write** (check-in notes): personal info (phone numbers, emails, addresses, links) and explicit, violent, unkind or unsafe content are blocked with a friendly "try saying it another way". **Signs a child may be unsafe or self-harming are never silently dropped.** The note is saved, the parent sees an alert on the dashboard, flagged notes are kept away from the AI, and the child sees a gentle "talk to a grown-up you trust" message. Ages 3 to 5 use stickers only.
-5. **Parent messages:** if a described problem suggests a child may be at risk, the backend saves nothing and returns guidance, which the dashboard shows on its own.
-6. **Privacy:** buddy lines see a first name, age, Sparks and quest titles. Parents' surprise messages and reward names get the local check too, because kids read them.
-The word lists in `src/lib/guardrails.ts` are deliberately conservative, not exhaustive. The AI classifier
-covers context and wording that lists miss.
+All AI runs on the HabitQuest backend: the habit coach, quest planner, weekly review, buddy lines and note screening.
+No API key reaches the browser. Helpers only suggest; a parent accepts each card with the PIN, which the server checks.
 
 ## Code layout
 
-```
-server/         agents.ts (agents, prompts, coach tools, HTTP handler), llm.ts (Groq client, JSON answers), rag.ts (BM25 retrieval),
-                knowledge.ts (guidance articles), guardrails.ts (AI safety classifier), plugin.ts (mounts it in Vite),
-                agents.test.ts (retrieval, coach tools and loop with a scripted fake client)
-src/
-  lib/          family.ts (data model, quests, points, streaks, levels), habits.ts (routine + bonus quest library),
-                rewards.ts (shop, mystery box, chest, accessories, surprises), playtime.ts (kid-mode time limit),
-                feedback.ts (kid check-ins), guardrails.ts (local safety checks), agents.ts (agent context,
-                proposals, recommendations), agentClient.ts (browser calls to /api/agent), migrate.ts (older saved data),
-                api.ts (typed backend client), sync.ts (mirrors the server's day locally), plan.ts (building a plan),
-                useKidDay.ts (kid session and today), store.tsx (state, sign-in, PIN), storage.ts, router.ts, auth.ts, time.ts, testing.ts, *.test.ts
-  components/   AiHelpers (describe a problem), PlanEditor, ChildForm, GoogleButton, ParentPanels (alerts, requests, check-ins, surprises),
-                KidExtras (playtime, chest, surprise, check-in, level badge, wardrobe), Buddy (with accessories),
-                HabitArt, WorldArt, Clock, Spark, Celebration, PinDialog, Headers, Logo
-  pages/        Home, Auth, HabitSetup, ParentDashboard, QuestLibrary, RewardsPage, Kid, KidShop
-  styles.css    design system: tokens, components, responsive rules
+```text
+src/lib/        api.ts (typed client), store.tsx (app state), sync.ts (mirror of backend data), buddy.ts (buddy lines),
+                useKidDay.ts (kid session), family.ts (levels, worlds, celebrations), plan.ts, playtime.ts
+src/components/ AiHelpers.tsx, ParentPanels.tsx, KidExtras.tsx and shared pieces
+src/pages/      One file per route, including Privacy.tsx
 ```
 
-## Prototype limits (before publishing)
-
-- Browser-only extras (bonus points, chests, surprises, check-ins, streaks and the week chart, shop prices, kid-mode time) don't sync across devices or caregivers.
-- The agent API has no sign-in of its own. Anyone who can reach the dev server (it listens on your local
-  network for phone demos) can use it, and your API key pays for it. Put it behind real auth before publishing.
-- Buddy lines and check-in moderation send children's first names, ages, quest titles and notes to Groq. Tell parents
-  this in the privacy policy before launch, and review the requirements for children's data in your markets (for example COPPA and GDPR-K).
-- The knowledge base is general guidance written for this prototype. Have it reviewed by a qualified professional before launch.
-- `npm run build` alone produces a static site with no agent API. To host the agents, run `npm run preview`
-  or move `createAgentHandler` (server/agents.ts) into your own Node server or serverless function.
+The backend repository holds the rules, safety checks and data. The browser keeps only which celebrations it has shown.

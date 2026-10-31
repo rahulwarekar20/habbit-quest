@@ -2,6 +2,7 @@
  * App shell: picks the page for the current hash route and applies the access rules.
  *
  *   #/                     Home
+ *   #/privacy              What we store and what reaches the AI provider
  *   #/login                Sign in (#/register lands here too)
  *   #/welcome              First-time setup: family, then the first child
  *   #/setup[/:child]       Child details and routine times (parent)
@@ -20,6 +21,7 @@ import Logo from "./components/Logo";
 import { Login, Welcome } from "./pages/Auth";
 import HabitSetup from "./pages/HabitSetup";
 import Home from "./pages/Home";
+import Privacy from "./pages/Privacy";
 import { KidPicker, KidQuests, WorldExplore } from "./pages/Kid";
 import KidShop from "./pages/KidShop";
 import ParentDashboard from "./pages/ParentDashboard";
@@ -34,6 +36,7 @@ export default function App() {
   const { family, phase, loadError, retry } = useStore();
 
   if (!page) return <Home />;
+  if (page === "privacy") return <Privacy />;
   if (phase === "booting") return <Holding message="Getting things ready…" />;
   if (phase === "failed") return <Holding message={loadError ?? "We couldn't load your family."} onRetry={retry} />;
 

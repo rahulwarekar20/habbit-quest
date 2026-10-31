@@ -13,7 +13,7 @@ import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
-  addChild, approveCompletion, errorText, getChildExtras, getChildToday, listApprovals, newInviteCode, rejectCompletion,
+  addChild, approveCompletion, deleteFamily, errorText, exportFamily, getChildExtras, getChildToday, listApprovals, newInviteCode, rejectCompletion,
   type Approval, type ChildInput, type Today,
 } from "../lib/api";
 import { nextWorld, type Child, type Family, type QuestStatus } from "../lib/family";
@@ -280,7 +280,7 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
 }
 
 function FamilyPanel() {
-  const { server, setServer } = useStore();
+  const { server, setServer, askPinValue, logout } = useStore();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fam = server!;
@@ -294,6 +294,33 @@ function FamilyPanel() {
       setError(errorText(e));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function download() {
+    setError(null);
+    try {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(await exportFamily(fam.id), null, 2)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "habitquest-family.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }
+
+  async function remove() {
+    if (!window.confirm(`Delete ${fam.name} and all its data? This cannot be undone.`)) return;
+    const pin = await askPinValue("Delete your family and all its data.");
+    if (!pin) return;
+    try {
+      await deleteFamily(fam.id, pin);
+      logout();
+      go("/");
+    } catch (e) {
+      setError(errorText(e));
     }
   }
 
@@ -313,6 +340,11 @@ function FamilyPanel() {
       <ul className="mini-list">
         {fam.caregivers.map((c) => <li key={c.user_id}><span>{c.display_name}</span><span className="muted">{c.role}</span></li>)}
       </ul>
+      <div className="modal__actions">
+        <a className="btn btn--ghost btn--sm" href="#/privacy">Privacy</a>
+        <button className="btn btn--ghost btn--sm" onClick={download}>Export data</button>
+        <button className="btn btn--ghost btn--sm" onClick={remove}>Delete family</button>
+      </div>
       {error && <p className="form-error">{error}</p>}
     </section>
   );

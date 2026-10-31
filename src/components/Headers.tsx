@@ -86,7 +86,7 @@ export function Footer() {
     <footer className="footer">
       <div className="wrap footer__inner">
         <Logo />
-        <p>Real-world habits. New worlds to explore. Some extras, like worlds and treasure chests, stay on this device.</p>
+        <p>Real-world habits. New worlds to explore. <a href="#/privacy">Privacy</a></p>
       </div>
     </footer>
   );
