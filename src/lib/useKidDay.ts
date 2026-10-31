@@ -4,10 +4,13 @@
  * When a kid session runs out, a grown-up restarts it with the parent PIN (`resume`).
  */
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, errorText, getKidToday, startKidSession, submitCompletion, type Today, type TodayHabit } from "./api";
+import {
+  ApiError, errorText, getKidExtras, getKidToday, listKidSurprises, startKidSession, submitCompletion,
+  type Surprise, type Today, type TodayHabit,
+} from "./api";
 import { getKidSession, kidSessionLapsed, saveKidSession } from "./storage";
 import { useStore } from "./store";
-import { applyToday } from "./sync";
+import { applyExtras, applyToday } from "./sync";
 
 const POLL_MS = 30_000;
 
@@ -16,6 +19,7 @@ export function useKidDay(childId: string, poll = false) {
   const [today, setToday] = useState<Today | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lapsed, setLapsed] = useState(false);
+  const [surprises, setSurprises] = useState<Surprise[]>([]);
 
   const accept = useCallback((day: Today) => {
     setToday(day);
@@ -37,11 +41,14 @@ export function useKidDay(childId: string, poll = false) {
     try {
       if (kidSessionLapsed()) return setLapsed(true);
       if (getKidSession()?.childId !== childId) await start();
-      accept(await getKidToday());
+      const [day, extras, waiting] = await Promise.all([getKidToday(), getKidExtras(), listKidSurprises()]);
+      accept(day);
+      update((f) => applyExtras(f, childId, extras));
+      setSurprises(waiting);
     } catch (e) {
       fail(e);
     }
-  }, [accept, childId, fail, start]);
+  }, [accept, childId, fail, start, update]);
 
   useEffect(() => {
     setToday(null);
@@ -71,11 +78,13 @@ export function useKidDay(childId: string, poll = false) {
     try {
       await start();
       setLapsed(false);
-      accept(await getKidToday());
+      await load();
     } catch (e) {
       fail(e);
     }
-  }, [accept, askPin, enterKidMode, fail, start]);
+  }, [askPin, enterKidMode, fail, load, start]);
 
-  return { today, error, lapsed, reload: load, submit, resume };
+  const dropSurprise = useCallback((id: string) => setSurprises((s) => s.filter((x) => x.id !== id)), []);
+
+  return { today, error, lapsed, surprises, dropSurprise, reload: load, submit, resume };
 }

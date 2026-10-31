@@ -1,11 +1,11 @@
 /**
  * Parent dashboard: safety alerts, quests waiting for approval (from the backend, PIN-protected),
  * reward requests, each child's day, level, Sparks and points, the family's invite code and
- * caregivers, check-ins, the surprise planner, adding a child, and "Describe a problem".
+ * caregivers, check-ins, the surprise planner, adding a child, and the AI helpers.
  */
 import { useCallback, useEffect, useState } from "react";
 import AiHelpers from "../components/AiHelpers";
-import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner } from "../components/ParentPanels";
+import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, useCheckins } from "../components/ParentPanels";
 import Buddy from "../components/Buddy";
 import Celebration from "../components/Celebration";
 import { ChildForm } from "../components/ChildForm";
@@ -13,16 +13,15 @@ import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
-  addChild, approveCompletion, errorText, getChildToday, listApprovals, newInviteCode, rejectCompletion,
+  addChild, approveCompletion, errorText, getChildExtras, getChildToday, listApprovals, newInviteCode, rejectCompletion,
   type Approval, type ChildInput, type Today,
 } from "../lib/api";
-import { approvedCount, nextWorld, streakOf, type Child, type Family, type QuestStatus } from "../lib/family";
+import { nextWorld, type Child, type Family, type QuestStatus } from "../lib/family";
 import { appAllowance, appUsedSeconds } from "../lib/playtime";
-import { pendingRedemptions } from "../lib/rewards";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
-import { applyProgress, applyToday, localStatus } from "../lib/sync";
-import { dayKey, greeting, lastDays, weekdayShort } from "../lib/time";
+import { applyExtras, applyProgress, applyToday, localStatus } from "../lib/sync";
+import { dayKey, greeting, weekdayShort } from "../lib/time";
 
 const POLL_MS = 30_000;
 const STATUS_LABEL: Record<QuestStatus, string> = {
@@ -41,14 +40,18 @@ export default function ParentDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [deciding, setDeciding] = useState<string | null>(null);
   const [levelUp, setLevelUp] = useState<LevelUp | null>(null);
+  const [requests, setRequests] = useState(0);
+  const checkins = useCheckins(familyId);
 
   const load = useCallback(async () => {
     try {
       const ids = childIds ? childIds.split(",") : [];
-      const [waiting, todays] = await Promise.all([listApprovals(familyId), Promise.all(ids.map(getChildToday))]);
+      const [waiting, todays, extras] = await Promise.all([
+        listApprovals(familyId), Promise.all(ids.map(getChildToday)), Promise.all(ids.map(getChildExtras)),
+      ]);
       setApprovals(waiting);
       setDays(Object.fromEntries(todays.map((t) => [t.child.id, t])));
-      update((f) => todays.reduce(applyToday, f));
+      update((f) => extras.reduce((next, e, i) => applyExtras(next, ids[i], e), todays.reduce(applyToday, f)));
       setError(null);
     } catch (e) {
       setError(errorText(e));
@@ -96,7 +99,6 @@ export default function ParentDashboard() {
   }
 
   const pending = approvals ?? [];
-  const requests = pendingRedemptions(fam).length;
   return (
     <div className="page page--app">
       <ParentHeader active="dashboard" />
@@ -123,7 +125,7 @@ export default function ParentDashboard() {
         </div>
 
         {error && <p className="form-error" role="alert">{error}</p>}
-        <SafetyAlerts family={fam} />
+        <SafetyAlerts items={checkins.items} onDone={() => void checkins.markRead()} />
 
         {/* ── Waiting for approval ─────────────────────────────────────── */}
         <section className="panel panel--approvals" aria-labelledby="approvals-title">
@@ -163,7 +165,7 @@ export default function ParentDashboard() {
           )}
         </section>
 
-        <RewardRequests family={fam} />
+        <RewardRequests family={fam} familyId={familyId} onCount={setRequests} />
 
         {/* ── Children ─────────────────────────────────────────────────── */}
         <div className="kids-grid">
@@ -176,8 +178,8 @@ export default function ParentDashboard() {
         <FamilyPanel />
 
         <div className="two-col">
-          <KidFeedback family={fam} />
-          <SurprisePlanner family={fam} />
+          <KidFeedback items={checkins.items} onRead={() => void checkins.markRead()} />
+          <SurprisePlanner family={fam} familyId={familyId} />
         </div>
 
         <AiHelpers family={fam} onPlanSaved={() => void load()} />
@@ -196,8 +198,8 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
   const done = quests.filter((h) => h.status === "approved").length;
   const sparks = today?.progress.sparks ?? child.sparks;
   const next = nextWorld(sparks);
-  const week = lastDays(7);
-  const streak = streakOf(family, child.id, day);
+  const week = Object.entries(today?.week ?? {});
+  const streak = today?.streak ?? 0;
   const allowance = appAllowance(family, child, day);
   const usedMin = Math.round(appUsedSeconds(child, day) / 60);
   const nextAt = today?.progress.next_level_at;
@@ -254,9 +256,8 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
         })}
       </ul>
 
-      <div className="week" aria-label="Sparks earned in the last 7 days, as seen on this device">
-        {week.map((d) => {
-          const n = approvedCount(family, d, child.id);
+      <div className="week" aria-label="Sparks earned in the last 7 days">
+        {week.map(([d, n]) => {
           return (
             <div key={d} className={`week__day ${d === day ? "is-today" : ""}`}>
               <span className="week__dots">

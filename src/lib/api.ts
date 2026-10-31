@@ -16,7 +16,7 @@ import {
 
 export type Role = "father" | "mother" | "guardian" | "other";
 export type Buddy = "fox" | "owl" | "bear" | "bunny";
-export type ThemeWorld = "space" | "forest" | "city";
+export type ThemeWorld = "camp" | "mosswood" | "sky";
 export type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export const ROUTINE_PARTS = ["morning", "midday", "after_school", "evening", "bedtime"] as const;
@@ -108,6 +108,7 @@ export interface PainPointResult {
 export interface Goal { id: string; title: string; description: string }
 
 export type HabitStatus = "todo" | "submitted" | "approved" | "rejected";
+export type Boost = "golden" | "streak" | "double";
 export interface TodayHabit {
   child_habit_id: string;
   habit_id: string;
@@ -120,6 +121,8 @@ export interface TodayHabit {
   cue_time: string;
   status: HabitStatus;
   completion_id: string | null;
+  boosts: Boost[];
+  multiplier: number;
 }
 export interface Today {
   child: { id: string; name: string; buddy: Buddy; world: ThemeWorld };
@@ -127,6 +130,8 @@ export interface Today {
   progress: Progress;
   points: number;
   habits: TodayHabit[];
+  streak: number;
+  week: Record<string, number>; // day -> approved habits, oldest first
 }
 
 export interface Approval {
@@ -151,7 +156,7 @@ export interface Decision {
 export interface PointsEntry {
   id: number | string;
   amount: number;
-  reason: "earned" | "redeemed" | "adjusted";
+  reason: "earned" | "redeemed" | "adjusted" | "bonus" | "spent" | "refund";
   note: string | null;
   created_at: string;
   habit_id: string | null;
@@ -161,6 +166,86 @@ export interface PointsEntry {
   by?: string | null;
 }
 export interface PointsHistory { points: number; earned: number; spent: number; entries: PointsEntry[] }
+
+export type RewardKind = "screen" | "privilege" | "outing" | "toy" | "mystery";
+export interface Reward { id: string; title: string; emoji: string; cost: number; kind: RewardKind; minutes: number | null }
+export interface RewardRequest {
+  id: string;
+  child_id: string;
+  title: string;
+  emoji: string;
+  cost: number;
+  minutes: number | null;
+  mystery: boolean;
+  status: "pending" | "approved" | "declined";
+  day: string;
+  created_at: string;
+}
+export interface FamilyRewardRequest extends RewardRequest { child_name: string }
+
+export type Mood = "great" | "good" | "okay" | "hard";
+export interface CheckinInput { mood: Mood; hardest: string | null; favorite: string | null; stickers: string[]; note: string | null }
+export interface OwnCheckin extends CheckinInput { id: string; day: string; flagged: string | null; read_at: string | null; created_at: string }
+export interface Checkin extends OwnCheckin { child_id: string; child_name: string }
+
+export interface Surprise {
+  id: string;
+  child_id: string | null;
+  kind: "note" | "double";
+  message: string;
+  points: number;
+  day: string;
+  created_at: string;
+}
+
+export interface FamilySettings { app_limit: number; buddy_talk: boolean }
+export interface Extras extends FamilySettings {
+  discoveries: string[];
+  accessories: string[];
+  wearing: string | null;
+  goal: string | null;
+  chests: string[];
+  level_seen: number;
+  app_seconds: Record<string, number>;
+  app_extra_minutes: Record<string, number>;
+  screen_bonus: Record<string, number>;
+}
+export type ChestPrize = { kind: "points"; points: number } | { kind: "accessory"; id: string; name: string };
+
+export interface Suggestion {
+  id: string;
+  child_id: string;
+  child_name: string;
+  source: "coach" | "planner" | "reviewer";
+  kind: "add" | "retime" | "pause" | "resume" | "remove";
+  habit_id: string;
+  title: string;
+  icon: string;
+  tier: number;
+  cue_time: string | null;
+  reason: string;
+  created_at: string;
+}
+export interface CoachMessage {
+  id: number;
+  role: "parent" | "coach";
+  content: string;
+  sources: { ref: string; title: string }[];
+  created_at: string;
+}
+export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[] }
+export interface CoachReply extends CoachThread {
+  reply: string;
+  safety: { guidance: string } | null;
+  mapped_by: "ai" | "keywords" | "manual";
+}
+export interface PlanReport { summary: string; tips: string[] }
+export interface ReviewReport {
+  headline: string;
+  children: { child: string; wins: string; watch: string }[];
+  patterns: string[];
+}
+export interface Report<T> { id: string; kind: "plan" | "review"; result: T; created_at: string }
 
 // ── Errors ────────────────────────────────────────────────────────────────────
 
@@ -188,8 +273,8 @@ export function detailText(body: unknown, status: number): string {
 
 export const WAKE_TIMEOUT_MS = 70_000;
 export const NORMAL_TIMEOUT_MS = 30_000;
-/** The AI mapping can take a while even on a warm server. */
-export const AI_TIMEOUT_MS = 60_000;
+/** The AI helpers can take a while even on a warm server. */
+export const AI_TIMEOUT_MS = 75_000;
 const IDLE_AFTER_MS = 10 * 60_000; // Render sleeps after 15 idle minutes; assume cold a little before
 const WAKE_NOTICE_MS = 2_500;
 const WAKE_RETRY_MS = 3_000;
@@ -380,3 +465,75 @@ export const getPoints = (childId: string, limit = 50) =>
   request<PointsHistory>("GET", `/v1/children/${childId}/points?limit=${limit}`);
 export const getKidPoints = (limit = 50) =>
   request<PointsHistory>("GET", `/v1/kid/points?limit=${limit}`, undefined, { kid: true });
+
+// ── Rewards ───────────────────────────────────────────────────────────────────
+
+const KID = { kid: true };
+
+export const listRewards = (familyId: string) => request<Reward[]>("GET", `/v1/families/${familyId}/rewards`);
+export const addReward = (familyId: string, reward: Omit<Reward, "id">) =>
+  request<Reward>("POST", `/v1/families/${familyId}/rewards`, reward);
+export const updateReward = (id: string, changes: { title?: string; emoji?: string; cost?: number }) =>
+  request<Reward>("PATCH", `/v1/rewards/${id}`, changes);
+export const removeReward = (id: string) => request<void>("DELETE", `/v1/rewards/${id}`);
+export const listKidRewards = () => request<Reward[]>("GET", "/v1/kid/rewards", undefined, KID);
+export const askForReward = (rewardId: string) =>
+  request<{ request: RewardRequest; points: number }>("POST", "/v1/kid/reward-requests", { reward_id: rewardId }, KID);
+export const listKidRequests = (limit = 6) =>
+  request<RewardRequest[]>("GET", `/v1/kid/reward-requests?limit=${limit}`, undefined, KID);
+export const listRewardRequests = (familyId: string) =>
+  request<FamilyRewardRequest[]>("GET", `/v1/families/${familyId}/reward-requests`);
+export const approveRewardRequest = (id: string, pin: string) =>
+  request<{ points: number }>("POST", `/v1/reward-requests/${id}/approve`, { pin });
+export const declineRewardRequest = (id: string) => request<{ points: number }>("POST", `/v1/reward-requests/${id}/decline`);
+
+// ── Check-ins and surprises ───────────────────────────────────────────────────
+
+export const sendCheckin = (input: CheckinInput) =>
+  request<{ checkin: OwnCheckin; message: string | null }>("POST", "/v1/kid/checkins", input, { ...KID, timeoutMs: AI_TIMEOUT_MS });
+export const getTodayCheckin = () => request<OwnCheckin | null>("GET", "/v1/kid/checkins/today", undefined, KID);
+export const listCheckins = (familyId: string) => request<Checkin[]>("GET", `/v1/families/${familyId}/checkins`);
+export const markCheckinsRead = (familyId: string) =>
+  request<{ marked: number }>("POST", `/v1/families/${familyId}/checkins/read`);
+export const plantSurprise = (familyId: string, input: Pick<Surprise, "kind" | "message" | "points" | "day"> & { child_id?: string }) =>
+  request<Surprise>("POST", `/v1/families/${familyId}/surprises`, input);
+export const listSurprises = (familyId: string) => request<Surprise[]>("GET", `/v1/families/${familyId}/surprises`);
+export const listKidSurprises = () => request<Surprise[]>("GET", "/v1/kid/surprises", undefined, KID);
+export const openSurprise = (id: string) =>
+  request<{ surprise: Surprise; points: number }>("POST", `/v1/kid/surprises/${id}/open`, undefined, KID);
+
+// ── Kid extras and settings ───────────────────────────────────────────────────
+
+export const getKidExtras = () => request<Extras>("GET", "/v1/kid/extras", undefined, KID);
+export const updateKidExtras = (changes: { discover?: string; wearing?: string; goal?: string; clear_goal?: boolean; level_seen?: number }) =>
+  request<Extras>("PATCH", "/v1/kid/extras", changes, KID);
+export const openChest = () =>
+  request<{ prize: ChestPrize; points: number; extras: Extras }>("POST", "/v1/kid/chest", undefined, KID);
+export const reportAppTime = (seconds: number) => request<Extras>("POST", "/v1/kid/app-time", { seconds }, KID);
+export const extendAppTime = (childId: string, minutes: number, pin: string) =>
+  request<Extras>("POST", `/v1/children/${childId}/app-time/extend`, { minutes, pin });
+export const getChildExtras = (childId: string) => request<Extras>("GET", `/v1/children/${childId}/extras`);
+export const getFamilySettings = (familyId: string) => request<FamilySettings>("GET", `/v1/families/${familyId}/settings`);
+export const updateFamilySettings = (familyId: string, changes: Partial<FamilySettings>) =>
+  request<FamilySettings>("PATCH", `/v1/families/${familyId}/settings`, changes);
+
+// ── AI helpers ────────────────────────────────────────────────────────────────
+
+const AI = { timeoutMs: AI_TIMEOUT_MS };
+
+export const getCoachThread = (childId: string) => request<CoachThread>("GET", `/v1/children/${childId}/coach/messages`);
+export const sendCoachMessage = (childId: string, text: string) =>
+  request<CoachReply>("POST", `/v1/children/${childId}/coach/messages`, { text }, AI);
+export const resetCoachThread = (childId: string) => request<void>("DELETE", `/v1/children/${childId}/coach/messages`);
+export const listSuggestions = (familyId: string) => request<Suggestion[]>("GET", `/v1/families/${familyId}/suggestions`);
+export const acceptSuggestion = (id: string, pin: string) =>
+  request<CoachThread>("POST", `/v1/suggestions/${id}/accept`, { pin });
+export const dismissSuggestion = (id: string) => request<CoachThread>("POST", `/v1/suggestions/${id}/dismiss`);
+export const requestPlan = (familyId: string) =>
+  request<Report<PlanReport>>("POST", `/v1/families/${familyId}/plan-suggestions`, undefined, AI);
+export const requestReview = (familyId: string) =>
+  request<Report<ReviewReport>>("POST", `/v1/families/${familyId}/reviews`, undefined, AI);
+export const getReports = (familyId: string) =>
+  request<{ plan: Report<PlanReport> | null; review: Report<ReviewReport> | null }>("GET", `/v1/families/${familyId}/reports`);
+export const getBuddyLine = (event: "greet" | "submitted" | "celebrate") =>
+  request<{ line: string }>("POST", "/v1/kid/buddy-line", { event }, { ...KID, ...AI });

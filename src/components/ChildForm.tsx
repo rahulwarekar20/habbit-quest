@@ -11,7 +11,7 @@ export const ROUTINE_LABEL: Record<RoutinePart, string> = {
 export const DEFAULT_ROUTINE: RoutineTimes = { morning: "07:00", midday: "12:30", after_school: "16:00", evening: "18:00", bedtime: "20:00" };
 
 const THEMES: { id: ThemeWorld; label: string }[] = [
-  { id: "space", label: "Space" }, { id: "forest", label: "Forest" }, { id: "city", label: "City" },
+  { id: "camp", label: "Camp" }, { id: "mosswood", label: "Mosswood" }, { id: "sky", label: "Sky" },
 ];
 
 export function RoutineFields({ times, onChange }: { times: RoutineTimes; onChange: (times: RoutineTimes) => void }) {
@@ -45,7 +45,7 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
   const [name, setName] = useState(initial?.name ?? "");
   const [age, setAge] = useState(initial?.age ?? 7);
   const [buddy, setBuddy] = useState<BuddyName>(initial?.buddy ?? "fox");
-  const [world, setWorld] = useState<ThemeWorld>(initial?.world ?? "forest");
+  const [world, setWorld] = useState<ThemeWorld>(initial?.world ?? "camp");
   const [times, setTimes] = useState<RoutineTimes>(initial?.routine_times ?? DEFAULT_ROUTINE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

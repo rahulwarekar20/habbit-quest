@@ -1,16 +1,18 @@
 /**
- * Kid mode reward shop. The balance and history come from the backend, and only a parent can spend
- * points, so a reward here is "ask a grown-up": the request stays in this browser until the parent's
- * yes records it. Mystery boxes are paid with browser-only bonus points. The child can also pick
- * a reward to save towards and dress up their buddy.
+ * Kid mode reward shop, from the backend. Asking for a reward holds the points until a grown-up says
+ * yes or "not this time" (the points come back). A mystery box picks its prize on the server. The
+ * child can also pick a reward to save towards and dress up their buddy.
  */
 import { useEffect, useState } from "react";
 import Buddy from "../components/Buddy";
-import { BreakTime, PointsPill, TimeWarning, Wardrobe, fixedRolls, usePlaytime } from "../components/KidExtras";
-import { getKidPoints, type PointsHistory } from "../lib/api";
-import { askForReward, requestReward, setGoal, type Redemption, type RewardItem } from "../lib/rewards";
+import { BreakTime, PointsPill, TimeWarning, Wardrobe, usePlaytime } from "../components/KidExtras";
+import {
+  askForReward, errorText, getKidPoints, listKidRequests, listKidRewards, updateKidExtras,
+  type PointsHistory, type Reward, type RewardRequest,
+} from "../lib/api";
+import { updateChild } from "../lib/family";
 import { useStore } from "../lib/store";
-import { dayKey } from "../lib/time";
+import { applyExtras } from "../lib/sync";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound } from "./Kid";
 
@@ -20,36 +22,48 @@ export default function KidShop({ childId }: { childId: string }) {
   const child = fam.children.find((c) => c.id === childId);
   const { today, lapsed, resume } = useKidDay(childId);
   const [points, setPoints] = useState<PointsHistory | null>(null);
-  const [confirm, setConfirm] = useState<RewardItem | null>(null);
-  const [result, setResult] = useState<Redemption | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [requests, setRequests] = useState<RewardRequest[]>([]);
+  const [confirm, setConfirm] = useState<Reward | null>(null);
+  const [result, setResult] = useState<RewardRequest | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const secondsLeft = usePlaytime(child);
   const ready = !!today;
 
+  function refresh() {
+    getKidPoints(8).then(setPoints).catch(() => setPoints(null)); // the balance still shows from today
+    listKidRequests().then(setRequests).catch(() => {});
+  }
+
   useEffect(() => {
-    if (ready) getKidPoints(8).then(setPoints).catch(() => setPoints(null)); // the balance still shows from today
+    if (!ready) return;
+    listKidRewards().then(setRewards).catch((e) => setError(errorText(e)));
+    refresh();
   }, [ready]);
 
   if (!child) return <NotFound />;
   if (lapsed) return <KidLapsed onResume={resume} />;
 
   const balance = points?.points ?? today?.points ?? child.balance;
-  const bonus = child.points;
-  const goal = fam.rewards.find((r) => r.id === child.goal) ?? null;
-  const requests = fam.redemptions.filter((r) => r.childId === child.id).slice(-6).reverse();
-  const bonusHistory = child.ledger.slice(-6).reverse();
-  const canGet = (r: RewardItem) => (r.kind === "mystery" ? bonus >= r.cost : balance >= r.cost);
-  const short = (r: RewardItem) => r.cost - (r.kind === "mystery" ? bonus : balance);
+  const goal = rewards.find((r) => r.id === child.goal) ?? null;
 
-  function buy(reward: RewardItem) {
-    const day = dayKey();
-    // Roll once and replay inside update() so the mystery prize shown is the one saved.
-    const rng = fixedRolls();
-    const act = reward.kind === "mystery" ? requestReward : askForReward;
-    const preview = act(fam, child!.id, reward.id, day, rng());
-    if (preview.error) return;
-    update((f) => act(f, child!.id, reward.id, day, rng()).family);
+  function setGoal(id: string | null) {
+    updateKidExtras(id ? { goal: id } : { clear_goal: true })
+      .then((extras) => update((f) => applyExtras(f, childId, extras)))
+      .catch((e) => setError(errorText(e)));
+  }
+
+  async function buy(reward: Reward) {
     setConfirm(null);
-    setResult(preview.redemption);
+    setError(null);
+    try {
+      const bought = await askForReward(reward.id);
+      update((f) => updateChild(f, childId, (c) => ({ ...c, balance: bought.points })));
+      setResult(bought.request);
+      refresh();
+    } catch (e) {
+      setError(errorText(e));
+    }
   }
 
   return (
@@ -61,11 +75,11 @@ export default function KidShop({ childId }: { childId: string }) {
           <Buddy buddy={child.buddy} accessory={child.wearing} size={84} />
           <div>
             <h1>Reward shop</h1>
-            <p>Pick something fun and ask a grown-up. They say yes before you get it.</p>
-            {bonus > 0 && <p>You also have {bonus} bonus points for mystery boxes.</p>}
+            <p>Pick something fun. A grown-up says yes before you get it, and if it's not this time, your points come back.</p>
           </div>
           <PointsPill points={balance} />
         </section>
+        {error && <p className="form-error" role="alert">{error}</p>}
 
         {goal && (
           <section className="goal-jar" aria-label="Saving goal">
@@ -75,28 +89,26 @@ export default function KidShop({ childId }: { childId: string }) {
               <div className="bar"><span style={{ width: `${Math.min(100, (balance / goal.cost) * 100)}%` }} /></div>
               <small>{balance >= goal.cost ? "You have enough. Ask a grown-up!" : `${goal.cost - balance} more points to go`}</small>
             </div>
-            <button className="btn btn--ghost btn--sm" onClick={() => update((f) => setGoal(f, child.id, null))}>Change</button>
+            <button className="btn btn--ghost btn--sm" onClick={() => setGoal(null)}>Change</button>
           </section>
         )}
 
         <div className="shop-grid">
-          {fam.rewards.map((r) => {
-            const afford = canGet(r);
+          {rewards.map((r) => {
+            const afford = balance >= r.cost;
             const mystery = r.kind === "mystery";
             return (
               <article key={r.id} className={`reward ${afford ? "" : "is-short"} ${mystery ? "reward--mystery" : ""}`}>
                 <span className="reward__emoji" aria-hidden="true">{r.emoji}</span>
                 <b>{r.title}</b>
-                <span className="reward__cost">🪙 {r.cost}{mystery ? " bonus" : ""}</span>
+                <span className="reward__cost">🪙 {r.cost}</span>
                 {afford ? (
                   <button className="btn btn--gold btn--sm btn--block" onClick={() => setConfirm(r)}>
                     {mystery ? "Open a box!" : "Ask a grown-up"}
                   </button>
-                ) : mystery ? (
-                  <button className="btn btn--soft btn--sm btn--block" disabled>{short(r)} more bonus points</button>
                 ) : (
-                  <button className="btn btn--soft btn--sm btn--block" onClick={() => update((f) => setGoal(f, child.id, r.id))} disabled={child.goal === r.id}>
-                    {child.goal === r.id ? "Saving for this" : `Save up (${short(r)} more)`}
+                  <button className="btn btn--soft btn--sm btn--block" onClick={() => setGoal(r.id)} disabled={child.goal === r.id}>
+                    {child.goal === r.id ? "Saving for this" : `Save up (${r.cost - balance} more)`}
                   </button>
                 )}
               </article>
@@ -112,7 +124,7 @@ export default function KidShop({ childId }: { childId: string }) {
                 <li key={r.id}>
                   <span><span aria-hidden="true">{r.emoji}</span> {r.title}</span>
                   <span className={`status status--${r.status === "approved" ? "approved" : r.status === "pending" ? "submitted" : "notyet"}`}>
-                    {r.status === "approved" ? "Yes!" : r.status === "pending" ? "Asking a grown-up" : r.asked ? "Not this time" : "Not this time (points back)"}
+                    {r.status === "approved" ? "Yes!" : r.status === "pending" ? "Asking a grown-up" : "Not this time (points back)"}
                   </span>
                 </li>
               ))}
@@ -138,20 +150,6 @@ export default function KidShop({ childId }: { childId: string }) {
             </ul>
           </section>
         )}
-
-        {bonusHistory.length > 0 && (
-          <section className="panel">
-            <h2>My bonus points</h2>
-            <ul className="mini-list">
-              {bonusHistory.map((e, i) => (
-                <li key={i}>
-                  {e.label}
-                  <b className={e.points >= 0 ? "pts-plus" : "pts-minus"}>{e.points >= 0 ? "+" : ""}{e.points}</b>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
       </main>
 
       {confirm && (
@@ -159,11 +157,7 @@ export default function KidShop({ childId }: { childId: string }) {
           <div className="kid-overlay__card">
             <span className="reward__emoji reward__emoji--big" aria-hidden="true">{confirm.emoji}</span>
             <h2>{confirm.kind === "mystery" ? "Open a mystery box?" : `Ask for “${confirm.title}”?`}</h2>
-            <p>
-              {confirm.kind === "mystery"
-                ? `It costs ${confirm.cost} bonus points. You'll have ${bonus - confirm.cost} left.`
-                : `It costs ${confirm.cost} points when a grown-up says yes.`}
-            </p>
+            <p>It costs {confirm.cost} points. You'll have {balance - confirm.cost} left.</p>
             <div className="modal__actions">
               <button className="btn btn--ghost" onClick={() => setConfirm(null)}>Not now</button>
               <button className="btn btn--gold" onClick={() => buy(confirm)} autoFocus>Yes please!</button>

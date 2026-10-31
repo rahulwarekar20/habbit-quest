@@ -7,24 +7,25 @@
  *   LevelBadge, PointsPill   progress at a glance
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { moderateKidNote } from "../lib/agentClient";
 import {
-  levelOf, nextLevel, questsFor, updateChild, type Child, type Family,
-} from "../lib/family";
-import { MOODS, STICKERS, feedbackFor, submitFeedback, type Mood } from "../lib/feedback";
-import { KID_BLOCKED_MESSAGE, KID_SAFETY_MESSAGE, safetyEvent } from "../lib/guardrails";
-import { addAppTime, appSecondsLeft, extendAppTime, WARN_SECONDS } from "../lib/playtime";
-import { ACCESSORIES, canOpenChest, openChest, revealSurprise, type ChestPrize, type Surprise } from "../lib/rewards";
+  ApiError, errorText, extendAppTime, getTodayCheckin, openChest, openSurprise, reportAppTime, sendCheckin, updateKidExtras,
+  type ChestPrize, type Mood, type Surprise, type Today,
+} from "../lib/api";
+import { levelOf, nextLevel, updateChild, type Child, type Family } from "../lib/family";
+import { MOODS, STICKERS } from "../lib/feedback";
+import { appSecondsLeft, WARN_SECONDS } from "../lib/playtime";
+import { ACCESSORIES } from "../lib/rewards";
 import { go } from "../lib/router";
 import { setKidMode } from "../lib/storage";
 import { useStore } from "../lib/store";
+import { applyExtras } from "../lib/sync";
 import { dayKey } from "../lib/time";
 import Buddy from "./Buddy";
 import HabitArt from "./HabitArt";
 
 // ── Playtime ──────────────────────────────────────────────────────────────────
 
-const TICK_SECONDS = 15;
+const TICK_SECONDS = 30;
 
 /** Counts kid-mode time while the page is visible. Returns seconds left today, or null with no limit. */
 export function usePlaytime(child: Child | undefined): number | null {
@@ -34,19 +35,28 @@ export function usePlaytime(child: Child | undefined): number | null {
   useEffect(() => {
     if (!childId) return;
     const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") update((f) => addAppTime(f, childId, day, TICK_SECONDS));
+      if (document.visibilityState !== "visible") return;
+      reportAppTime(TICK_SECONDS).then((extras) => update((f) => applyExtras(f, childId, extras))).catch(() => {});
     }, TICK_SECONDS * 1000);
     return () => window.clearInterval(id);
-  }, [childId, day, update]);
+  }, [childId, update]);
   return child && family ? appSecondsLeft(family, child, day) : null;
 }
 
 /** Shown on top of kid mode when today's time is used up. Only a grown-up can add more. */
 export function BreakTime({ child, family }: { child: Child; family: Family }) {
-  const { update, askPin } = useStore();
+  const { update, askPin, askPinValue } = useStore();
+  const [error, setError] = useState<string | null>(null);
   const day = dayKey();
   async function more(minutes: number) {
-    if (await askPin(`Give ${child.name} ${minutes} more minutes in the app today.`)) update((f) => extendAppTime(f, child.id, day, minutes));
+    const pin = await askPinValue(`Give ${child.name} ${minutes} more minutes in the app today.`);
+    if (!pin) return;
+    try {
+      const extras = await extendAppTime(child.id, minutes, pin);
+      update((f) => applyExtras(f, child.id, extras));
+    } catch (e) {
+      setError(errorText(e));
+    }
   }
   async function leave() {
     if (await askPin("Leave kid mode and open the parent dashboard.")) {
@@ -66,6 +76,7 @@ export function BreakTime({ child, family }: { child: Child; family: Family }) {
           <button className="btn btn--ghost btn--sm" onClick={() => more(20)}>+20 min</button>
           <button className="btn btn--soft btn--sm" onClick={leave}>Parent area</button>
         </div>
+        {error && <p className="form-error">{error}</p>}
       </div>
     </div>
   );
@@ -78,11 +89,18 @@ export function TimeWarning({ seconds }: { seconds: number | null }) {
 
 // ── Surprises ─────────────────────────────────────────────────────────────────
 
-export function SurpriseReveal({ surprise, child, parentName }: { surprise: Surprise; child: Child; parentName: string }) {
+export function SurpriseReveal({ surprise, child, parentName, onDone }: { surprise: Surprise; child: Child; parentName: string; onDone: () => void }) {
   const { update } = useStore();
   const [open, setOpen] = useState(false);
-  const day = dayKey();
-  const close = () => update((f) => revealSurprise(f, surprise.id, child.id, day));
+  async function close() {
+    try {
+      const { points } = await openSurprise(surprise.id);
+      update((f) => updateChild(f, child.id, (c) => ({ ...c, balance: points })));
+    } catch {
+      /* already opened on another device */
+    }
+    onDone();
+  }
   return (
     <div className="kid-overlay" role="dialog" aria-modal="true" aria-label="A surprise for you">
       <div className="kid-overlay__card">
@@ -119,11 +137,11 @@ export function SurpriseReveal({ surprise, child, parentName }: { surprise: Surp
 
 // ── Treasure chest ────────────────────────────────────────────────────────────
 
-export function ChestCard({ family, child, day }: { family: Family; child: Child; day: string }) {
+export function ChestCard({ child, today }: { child: Child; today: Today }) {
   const { update } = useStore();
   const [prize, setPrize] = useState<ChestPrize | null>(null);
-  const ready = canOpenChest(family, child.id, day);
-  const opened = child.chests.includes(day);
+  const opened = child.chests.includes(today.day);
+  const ready = !opened && today.habits.length > 0 && today.habits.every((h) => h.status === "approved");
   if (!ready && !prize) {
     return opened ? null : (
       <div className="chest chest--locked">
@@ -132,11 +150,14 @@ export function ChestCard({ family, child, day }: { family: Family; child: Child
       </div>
     );
   }
-  function open() {
-    // Roll once and replay the same rolls inside update(), which React may run more than once.
-    const rng = fixedRolls();
-    setPrize(openChest(family, child.id, day, rng()).prize);
-    update((f) => openChest(f, child.id, day, rng()).family);
+  async function open() {
+    try {
+      const opened = await openChest();
+      setPrize(opened.prize);
+      update((f) => updateChild(applyExtras(f, child.id, opened.extras), child.id, (c) => ({ ...c, balance: opened.points })));
+    } catch {
+      /* already open: the next refresh hides this */
+    }
   }
   return (
     <>
@@ -159,7 +180,7 @@ export function ChestCard({ family, child, day }: { family: Family; child: Child
             ) : (
               <>
                 <h2>+{prize.points} bonus points!</h2>
-                <p>Treasure for a super quest day. Spend them on mystery boxes.</p>
+                <p>Treasure for a super quest day. Spend them in the shop.</p>
               </>
             )}
             <button className="btn btn--gold btn--lg" onClick={() => setPrize(null)} autoFocus>Awesome!</button>
@@ -170,56 +191,43 @@ export function ChestCard({ family, child, day }: { family: Family; child: Child
   );
 }
 
-/**
- * Pre-rolled random numbers: each call returns a fresh generator that replays the same rolls,
- * so a random outcome shown to the child is exactly the one that gets saved.
- */
-export function fixedRolls(count = 4): () => () => number {
-  const rolls = Array.from({ length: count }, () => Math.random());
-  return () => {
-    let i = 0;
-    return () => rolls[i++ % count];
-  };
-}
-
 // ── Check-in ──────────────────────────────────────────────────────────────────
 
-export function CheckIn({ family, child, onClose }: { family: Family; child: Child; onClose: () => void }) {
-  const { update } = useStore();
-  const day = dayKey();
-  const quests = questsFor(family, child.id);
-  const previous = feedbackFor(family, child.id, day);
+export function CheckIn({ child, quests, onClose }: { child: Child; quests: { id: string; kidTitle: string }[]; onClose: () => void }) {
   const [step, setStep] = useState(0);
-  const [mood, setMood] = useState<Mood | null>(previous?.mood ?? null);
-  const [hardest, setHardest] = useState<string | null>(previous?.hardest ?? null);
-  const [favorite, setFavorite] = useState<string | null>(previous?.favorite ?? null);
-  const [stickers, setStickers] = useState<string[]>(previous?.stickers ?? []);
+  const [mood, setMood] = useState<Mood | null>(null);
+  const [hardest, setHardest] = useState<string | null>(null);
+  const [favorite, setFavorite] = useState<string | null>(null);
+  const [stickers, setStickers] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const [done, setDone] = useState<"sent" | "safety" | null>(null);
+  const [done, setDone] = useState<{ safety: string | null } | null>(null);
   const canWrite = child.age >= 6;
+
+  useEffect(() => {
+    getTodayCheckin().then((previous) => {
+      if (!previous) return;
+      setMood(previous.mood);
+      setHardest(previous.hardest);
+      setFavorite(previous.favorite);
+      setStickers(previous.stickers);
+    }).catch(() => {});
+  }, []);
 
   async function send() {
     if (!mood) return;
     setBusy(true);
     setProblem(null);
-    const text = note.trim();
-    const check = text ? await moderateKidNote(text) : { ok: true, category: null, risk: false };
-    setBusy(false);
-    if (!check.ok && !check.risk && check.category) {
-      setProblem(KID_BLOCKED_MESSAGE[check.category]);
-      return;
+    try {
+      const { message } = await sendCheckin({ mood, hardest, favorite, stickers, note: note.trim() || null });
+      setDone({ safety: message });
+    } catch (e) {
+      // The server screens the note and answers with a message written for the child.
+      setProblem(e instanceof ApiError ? e.detail : errorText(e));
+    } finally {
+      setBusy(false);
     }
-    const flagged = check.risk ? check.category : null;
-    update((f) => {
-      let next = submitFeedback(f, { childId: child.id, day, mood, hardest, favorite, stickers, note: text || null, flagged });
-      if (!check.ok && check.category) {
-        next = { ...next, safety: [...next.safety, safetyEvent({ source: "kid-note", childId: child.id, category: check.category, action: "flagged", excerpt: text.slice(0, 200) })].slice(-50) };
-      }
-      return next;
-    });
-    setDone(flagged ? "safety" : "sent");
   }
 
   const toggle = (id: string) => setStickers((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -229,8 +237,8 @@ export function CheckIn({ family, child, onClose }: { family: Family; child: Chi
     body = (
       <>
         <Buddy buddy={child.buddy} accessory={child.wearing} size={96} />
-        <h2>{done === "sent" ? "Sent to your grown-ups! 💌" : "Thank you for telling us"}</h2>
-        <p>{done === "sent" ? "Thanks for sharing how today went." : KID_SAFETY_MESSAGE}</p>
+        <h2>{done.safety ? "Thank you for telling us" : "Sent to your grown-ups! 💌"}</h2>
+        <p>{done.safety ?? "Thanks for sharing how today went."}</p>
         <button className="btn btn--gold btn--lg" onClick={onClose} autoFocus>OK</button>
       </>
     );
@@ -334,9 +342,13 @@ export function PointsPill({ points }: { points: number }) {
 /** Collected accessories, with the ones still to find shown as mystery slots. */
 export function Wardrobe({ child }: { child: Child }) {
   const { update } = useStore();
+  const wear = (id: string | null) => {
+    update((f) => updateChild(f, child.id, (c) => ({ ...c, wearing: id })));
+    updateKidExtras({ wearing: id ?? "" }).catch(() => {}); // the next refresh shows the saved outfit
+  };
   return (
     <div className="wardrobe">
-      <button className={`wardrobe__item ${!child.wearing ? "is-on" : ""}`} onClick={() => update((f) => updateChild(f, child.id, (c) => ({ ...c, wearing: null })))}>
+      <button className={`wardrobe__item ${!child.wearing ? "is-on" : ""}`} onClick={() => wear(null)}>
         <Buddy buddy={child.buddy} size={64} />
         <span>Nothing</span>
       </button>
@@ -344,7 +356,7 @@ export function Wardrobe({ child }: { child: Child }) {
         const owned = child.accessories.includes(a.id);
         return owned ? (
           <button key={a.id} className={`wardrobe__item ${child.wearing === a.id ? "is-on" : ""}`}
-            onClick={() => update((f) => updateChild(f, child.id, (c) => ({ ...c, wearing: a.id })))}>
+            onClick={() => wear(a.id)}>
             <Buddy buddy={child.buddy} accessory={a.id} size={64} />
             <span>{a.name}</span>
           </button>

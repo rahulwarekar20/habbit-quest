@@ -1,20 +1,19 @@
-/** The mirror of the backend's day, boosts paid locally, reward requests, and building a plan. */
+/** The mirror of the backend's data, and building a plan. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as api from "./api";
-import { addChild, allDone, newChild, questsFor, statusOf, streakOf, type Family } from "./family";
+import { addChild, newChild, questsFor, statusOf, type Family } from "./family";
 import { initialPicks, planInput, savePlan } from "./plan";
-import { askForReward, plantSurprise, resolveRedemption } from "./rewards";
-import { applyToday, boostExtra, creditBoost } from "./sync";
+import { applyExtras, applyToday } from "./sync";
 import { emptyFamily } from "./testing";
 
 const DAY = "2026-10-27";
 const progress = { sparks: 7, level: 2, level_name: "Explorer", unlocked_tier: 2, next_level_at: 15 };
 const habit = (habit_id: string, status: api.HabitStatus): api.TodayHabit => ({
   child_habit_id: `ch-${habit_id}`, habit_id, kid_title: `Kid ${habit_id}`, kid_hint: "Hint", icon: "x", anchor: "morning",
-  tier: 1, points: 10, cue_time: "07:00", status, completion_id: null,
+  tier: 1, points: 10, cue_time: "07:00", status, completion_id: null, boosts: [], multiplier: 1,
 });
 const today = (habits: api.TodayHabit[], day = DAY): api.Today => ({
-  child: { id: "a", name: "Alex", buddy: "fox", world: "space" }, day, progress, points: 40, habits,
+  child: { id: "a", name: "Alex", buddy: "fox", world: "camp" }, day, progress, points: 40, habits, streak: 3, week: { [DAY]: 1 },
 });
 const family = (): Family => addChild(emptyFamily(), { ...newChild("Alex", 8, "fox"), id: "a" });
 
@@ -29,46 +28,18 @@ describe("mirroring the backend's day", () => {
     expect(statusOf(f, DAY, "a", "new-from-server")).toBe("notyet");
   });
 
-  it("drives the chest: every server quest approved means all done", () => {
-    expect(allDone(applyToday(family(), today([habit("wake", "approved"), habit("bedtime", "submitted")])), DAY, "a")).toBe(false);
-    expect(allDone(applyToday(family(), today([habit("wake", "approved")])), DAY, "a")).toBe(true);
+  it("keeps the backend's streak and week", () => {
+    expect(applyToday(family(), today([])).children[0]).toMatchObject({ streak: 3, week: { [DAY]: 1 } });
   });
 
-  it("builds a streak from the days this browser saw", () => {
-    let f = family();
-    for (const d of ["2026-10-25", "2026-10-26", DAY]) f = applyToday(f, today([habit("wake", "approved")], d));
-    expect(streakOf(f, "a", DAY)).toBe(3);
-  });
-
-  it("keeps browser-only bonus points when the balance changes", () => {
-    const f = family();
-    const rich = { ...f, children: f.children.map((c) => ({ ...c, points: 15 })) };
-    expect(applyToday(rich, today([])).children[0]).toMatchObject({ points: 15, balance: 40 });
-  });
-});
-
-describe("boosts paid in the browser", () => {
-  it("pays the extra as bonus points, leaving the backend balance alone", () => {
-    const f = plantSurprise(applyToday(family(), today([habit("wake", "approved")])), { childId: "all", kind: "double", message: "", points: 0, day: DAY });
-    // A lone quest is always the golden quest, and the double day adds another 1x.
-    expect(boostExtra(f, DAY, "a", "wake", 10)).toBe(20);
-    expect(creditBoost(f, DAY, "a", "wake", "Rise", 10).children[0]).toMatchObject({ points: 20, balance: 40 });
-  });
-});
-
-describe("asking for a reward", () => {
-  const rich = () => applyToday(family(), today([]));
-
-  it("holds nothing, and saying no refunds nothing", () => {
-    const { family: f, redemption } = askForReward(rich(), "a", "mystery", DAY);
-    expect(redemption).toMatchObject({ status: "pending", asked: true });
-    const declined = resolveRedemption(f, redemption!.id, false);
-    expect(declined.children[0]).toMatchObject({ points: 0, balance: 40 });
-    expect(declined.redemptions[0].status).toBe("declined");
-  });
-
-  it("refuses a reward the balance can't cover", () => {
-    expect(askForReward(rich(), "a", "small-toy", DAY).error).toBe("You need 360 more points.");
+  it("copies kid extras and the family's settings", () => {
+    const extras: api.Extras = {
+      app_limit: 30, buddy_talk: false, discoveries: ["camp:tent"], accessories: ["crown"], wearing: "crown", goal: null, chests: [DAY],
+      level_seen: 2, app_seconds: { [DAY]: 60 }, app_extra_minutes: {}, screen_bonus: {},
+    };
+    const f = applyExtras(family(), "a", extras);
+    expect(f.settings).toEqual({ appLimit: 30, buddyTalk: false });
+    expect(f.children[0]).toMatchObject({ wearing: "crown", chests: [DAY], levelSeen: 2, appSeconds: { [DAY]: 60 } });
   });
 });
 

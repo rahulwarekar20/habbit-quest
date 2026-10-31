@@ -4,10 +4,12 @@
  */
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Footer, ParentHeader } from "../components/Headers";
-import { ApiError, errorText, getPoints, redeemPoints, type PointsHistory } from "../lib/api";
-import { screenText } from "../lib/guardrails";
-import { APP_LIMIT_OPTIONS, setAppLimit } from "../lib/playtime";
-import { REWARD_KIND_LABEL, defaultRewards, type RewardItem, type RewardKind } from "../lib/rewards";
+import {
+  ApiError, addReward, errorText, getFamilySettings, getPoints, listRewards, redeemPoints, removeReward, updateFamilySettings,
+  updateReward, type PointsHistory, type Reward, type RewardKind,
+} from "../lib/api";
+import { APP_LIMIT_OPTIONS } from "../lib/playtime";
+import { REWARD_KIND_LABEL } from "../lib/rewards";
 import { useStore } from "../lib/store";
 import { formatMinutes } from "../lib/time";
 import { updateChild } from "../lib/family";
@@ -15,8 +17,24 @@ import { updateChild } from "../lib/family";
 const EMOJIS = ["🎁", "📺", "🎮", "🍕", "🍦", "🌙", "🍿", "🛝", "🧸", "📚", "🎨", "⚽", "🏊", "🎢", "🧁", "⭐"];
 
 export default function RewardsPage() {
-  const { family, update } = useStore();
-  const fam = family!;
+  const { server } = useStore();
+  const familyId = server!.id;
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [appLimit, setAppLimit] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadRewards = useCallback(() => {
+    listRewards(familyId).then(setRewards).catch((e) => setError(errorText(e)));
+  }, [familyId]);
+
+  useEffect(() => {
+    loadRewards();
+    getFamilySettings(familyId).then((s) => setAppLimit(s.app_limit)).catch((e) => setError(errorText(e)));
+  }, [familyId, loadRewards]);
+
+  function chooseLimit(minutes: number) {
+    updateFamilySettings(familyId, { app_limit: minutes }).then((s) => setAppLimit(s.app_limit)).catch((e) => setError(errorText(e)));
+  }
 
   return (
     <div className="page page--app">
@@ -33,15 +51,16 @@ export default function RewardsPage() {
           </div>
         </div>
 
+        {error && <p className="form-error" role="alert">{error}</p>}
         <RecordReward />
 
         <section className="panel" aria-labelledby="limit-title">
           <h2 id="limit-title">Time in kid mode</h2>
-          <p className="muted">How long each child can use HabbitQuest per day on this device. When time's up they see a friendly break screen; you can add minutes with your PIN.</p>
+          <p className="muted">How long each child can use HabitQuest per day. When time's up they see a friendly break screen; you can add minutes with your PIN.</p>
           <div className="pill-choice" role="radiogroup" aria-label="Daily kid-mode limit">
             {APP_LIMIT_OPTIONS.map((m) => (
-              <button key={m} type="button" role="radio" aria-checked={fam.settings.appLimit === m}
-                className={fam.settings.appLimit === m ? "is-on" : ""} onClick={() => update((f) => setAppLimit(f, m))}>
+              <button key={m} type="button" role="radio" aria-checked={appLimit === m}
+                className={appLimit === m ? "is-on" : ""} onClick={() => chooseLimit(m)}>
                 {m === 0 ? "No limit" : formatMinutes(m)}
               </button>
             ))}
@@ -51,13 +70,12 @@ export default function RewardsPage() {
         <section className="panel" aria-labelledby="shop-title">
           <div className="panel__head">
             <h2 id="shop-title">Reward shop</h2>
-            <button className="btn btn--ghost btn--sm" onClick={() => update((f) => ({ ...f, rewards: defaultRewards() }))}>Reset to suggestions</button>
           </div>
-          <p className="muted">Children see these in kid mode and ask a grown-up. Your yes records the reward. The shop list stays on this device.</p>
+          <p className="muted">Children see these in kid mode. Asking holds their points until you say yes or "not this time".</p>
           <ul className="reward-admin">
-            {fam.rewards.map((r) => <RewardRow key={r.id} reward={r} />)}
+            {rewards.map((r) => <RewardRow key={r.id} reward={r} onChange={loadRewards} onError={setError} />)}
           </ul>
-          <AddReward />
+          <AddReward familyId={familyId} onAdded={loadRewards} />
         </section>
       </main>
       <Footer />
@@ -170,10 +188,14 @@ function RecordReward() {
   );
 }
 
-function RewardRow({ reward }: { reward: RewardItem }) {
-  const { update } = useStore();
-  const setCost = (cost: number) =>
-    update((f) => ({ ...f, rewards: f.rewards.map((r) => (r.id === reward.id ? { ...r, cost: Math.max(5, Math.min(5000, Math.round(cost))) } : r)) }));
+function RewardRow({ reward, onChange, onError }: { reward: Reward; onChange: () => void; onError: (message: string) => void }) {
+  const [cost, setCost] = useState(reward.cost);
+  const saveCost = () => {
+    const clean = Math.max(5, Math.min(5000, Math.round(cost)));
+    setCost(clean);
+    if (clean !== reward.cost) updateReward(reward.id, { cost: clean }).then(onChange).catch((e) => onError(errorText(e)));
+  };
+  const remove = () => removeReward(reward.id).then(onChange).catch((e) => onError(errorText(e)));
   return (
     <li className="reward-admin__row">
       <span className="reward__emoji" aria-hidden="true">{reward.emoji}</span>
@@ -183,16 +205,15 @@ function RewardRow({ reward }: { reward: RewardItem }) {
       </div>
       <label className="reward-admin__cost">
         <span className="sr-only">Cost in points</span>
-        <input type="number" min={5} max={5000} step={5} value={reward.cost} onChange={(e) => setCost(Number(e.target.value))} />
+        <input type="number" min={5} max={5000} step={5} value={cost} onChange={(e) => setCost(Number(e.target.value))} onBlur={saveCost} />
         <span>pts</span>
       </label>
-      <button className="btn btn--ghost btn--sm" onClick={() => update((f) => ({ ...f, rewards: f.rewards.filter((r) => r.id !== reward.id) }))}>Remove</button>
+      <button className="btn btn--ghost btn--sm" onClick={remove}>Remove</button>
     </li>
   );
 }
 
-function AddReward() {
-  const { update } = useStore();
+function AddReward({ familyId, onAdded }: { familyId: string; onAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [cost, setCost] = useState(100);
   const [emoji, setEmoji] = useState("🎁");
@@ -200,19 +221,18 @@ function AddReward() {
   const [minutes, setMinutes] = useState(15);
   const [error, setError] = useState<string | null>(null);
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     const clean = title.trim();
     if (!clean) return;
-    // Children read reward names in the shop, so they get the same local check.
-    if (!screenText(clean).ok) return setError("That name has words or details we keep out of kid mode.");
-    const reward: RewardItem = {
-      id: `rw${Date.now().toString(36)}`, title: clean.slice(0, 60), emoji, cost: Math.max(5, Math.round(cost)), kind,
-      ...(kind === "screen" ? { minutes } : {}),
-    };
-    update((f) => ({ ...f, rewards: [...f.rewards, reward] }));
-    setTitle("");
     setError(null);
+    try {
+      await addReward(familyId, { title: clean.slice(0, 60), emoji, cost: Math.max(5, Math.round(cost)), kind, minutes: kind === "screen" ? minutes : null });
+      setTitle("");
+      onAdded();
+    } catch (err) {
+      setError(errorText(err));
+    }
   }
 
   return (

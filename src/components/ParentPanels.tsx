@@ -1,70 +1,100 @@
 /**
- * Parent dashboard panels:
+ * Parent dashboard panels, all from the backend:
  *   SafetyAlerts     notes from a child that raised a safety concern (always shown first)
  *   RewardRequests   shop requests waiting for a yes (PIN) or "not this time" (points refunded)
  *   KidFeedback      the children's check-ins: mood, trickiest and favourite quests, messages
  *   SurprisePlanner  plant a surprise note with bonus points, or a double-points day
  */
-import { useState, type FormEvent } from "react";
-import { errorText, redeemPoints } from "../lib/api";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  approveRewardRequest, declineRewardRequest, errorText, listCheckins, listRewardRequests, listSurprises, markCheckinsRead,
+  plantSurprise, type Checkin, type FamilyRewardRequest, type Surprise,
+} from "../lib/api";
 import { updateChild, type Family } from "../lib/family";
-import { MOODS, STICKERS, markFeedbackSeen } from "../lib/feedback";
-import { PARENT_RISK_GUIDANCE, screenText } from "../lib/guardrails";
+import { MOODS, STICKERS } from "../lib/feedback";
 import { QUEST_BY_ID } from "../lib/habits";
-import { MAX_SURPRISE_POINTS, pendingRedemptions, plantSurprise, resolveRedemption, type Redemption } from "../lib/rewards";
 import { useStore } from "../lib/store";
 import { dayKey, lastDays, weekdayShort } from "../lib/time";
 import Buddy from "./Buddy";
 
-const nameOf = (family: Family, childId: string) => family.children.find((c) => c.id === childId)?.name ?? "A child";
+const MAX_SURPRISE_POINTS = 100;
+const PARENT_RISK_GUIDANCE =
+  "If a child may be in danger or talking about hurting themselves, please contact your local emergency number now, or a children's helpline or your doctor. HabitQuest can help with everyday habits, but not with emergencies.";
 
-export function SafetyAlerts({ family }: { family: Family }) {
-  const { update } = useStore();
-  const alerts = family.safety.filter((e) => e.action === "flagged" && e.excerpt);
+/** The family's check-ins, shared by the alert panel and the feedback panel. */
+export function useCheckins(familyId: string) {
+  const [items, setItems] = useState<Checkin[]>([]);
+  const load = useCallback(() => {
+    listCheckins(familyId).then(setItems).catch(() => {}); // the panels show what they already have
+  }, [familyId]);
+  useEffect(load, [load]);
+  const markRead = useCallback(async () => {
+    await markCheckinsRead(familyId);
+    load();
+  }, [familyId, load]);
+  return { items, markRead };
+}
+
+export function SafetyAlerts({ items, onDone }: { items: Checkin[]; onDone: () => void }) {
+  const alerts = items.filter((c) => c.flagged && !c.read_at);
   if (alerts.length === 0) return null;
   return (
     <section className="panel panel--alert" aria-labelledby="safety-title" role="alert">
       <div className="panel__head">
         <h2 id="safety-title">Please check in with your child</h2>
       </div>
-      <p>Something your child wrote may mean they're upset or unsafe. It wasn't shared with the AI. Talk with them gently and listen.</p>
+      <p>Something your child wrote may mean they're upset or unsafe. Talk with them gently and listen.</p>
       <ul className="mini-list">
         {alerts.map((a) => (
           <li key={a.id}>
-            <span><b>{nameOf(family, a.childId ?? "")}</b> · {new Date(a.at).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}: “{a.excerpt}”</span>
-            <button className="btn btn--ghost btn--sm"
-              onClick={() => update((f) => ({ ...f, safety: f.safety.map((e) => (e.id === a.id ? { ...e, excerpt: undefined } : e)) }))}>
-              I've talked with them
-            </button>
+            <span><b>{a.child_name}</b> · {new Date(a.created_at).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}: “{a.note}”</span>
           </li>
         ))}
       </ul>
+      <button className="btn btn--ghost btn--sm" onClick={onDone}>I've talked with them</button>
       <p className="hint">{PARENT_RISK_GUIDANCE}</p>
     </section>
   );
 }
 
-export function RewardRequests({ family }: { family: Family }) {
-  const { update, askPin } = useStore();
+export function RewardRequests({ family, familyId, onCount }: { family: Family; familyId: string; onCount: (count: number) => void }) {
+  const { update, askPinValue } = useStore();
+  const [pending, setPending] = useState<FamilyRewardRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const pending = pendingRedemptions(family);
-  if (pending.length === 0) return null;
 
-  async function decide(r: Redemption, child: string, approve: boolean) {
-    if (approve && !(await askPin(`Say yes to "${r.title}" for ${child}.`))) return;
-    setError(null);
-    // A request paid from the real balance is recorded on the backend; mystery prizes were paid in bonus points.
-    if (approve && r.asked) {
-      try {
-        const { points } = await redeemPoints(r.childId, r.cost, r.title);
-        update((f) => updateChild(f, r.childId, (c) => ({ ...c, balance: points })));
-      } catch (e) {
-        return setError(errorText(e));
-      }
+  const load = useCallback(async () => {
+    try {
+      const found = await listRewardRequests(familyId);
+      setPending(found);
+      onCount(found.length);
+    } catch (e) {
+      setError(errorText(e));
     }
-    update((f) => resolveRedemption(f, r.id, approve));
+  }, [familyId, onCount]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function decide(r: FamilyRewardRequest, approve: boolean) {
+    setError(null);
+    try {
+      let result;
+      if (approve) {
+        const pin = await askPinValue(`Say yes to "${r.title}" for ${r.child_name}.`);
+        if (!pin) return;
+        result = await approveRewardRequest(r.id, pin);
+      } else {
+        result = await declineRewardRequest(r.id);
+      }
+      update((f) => updateChild(f, r.child_id, (c) => ({ ...c, balance: result.points })));
+    } catch (e) {
+      setError(errorText(e));
+    }
+    await load();
   }
 
+  if (pending.length === 0) return error ? <p className="form-error">{error}</p> : null;
   return (
     <section className="panel panel--rewards" aria-labelledby="requests-title">
       <div className="panel__head">
@@ -73,40 +103,39 @@ export function RewardRequests({ family }: { family: Family }) {
       </div>
       <ul className="approvals">
         {pending.map((r) => {
-          const child = family.children.find((c) => c.id === r.childId);
+          const child = family.children.find((c) => c.id === r.child_id);
           return (
             <li key={r.id} className="approval">
               <span className="reward__emoji" aria-hidden="true">{r.emoji}</span>
               <div className="approval__text">
-                <span className="approval__who">{child && <Buddy buddy={child.buddy} accessory={child.wearing} size={24} />} {child?.name}{r.mystery ? " · from a mystery box" : ""}</span>
+                <span className="approval__who">{child && <Buddy buddy={child.buddy} accessory={child.wearing} size={24} />} {r.child_name}{r.mystery ? " · from a mystery box" : ""}</span>
                 <b>{r.title}</b>
-                <span className="muted">{r.cost} {r.asked ? "points when you say yes" : "bonus points spent"}{r.minutes ? ` · adds ${r.minutes} min of screen time` : ""}</span>
+                <span className="muted">{r.cost} points held{r.minutes ? ` · adds ${r.minutes} min of screen time` : ""}</span>
               </div>
               <div className="approval__actions">
-                <button className="btn btn--ghost btn--sm" onClick={() => decide(r, child?.name ?? "", false)}>Not this time</button>
-                <button className="btn btn--primary btn--sm" onClick={() => decide(r, child?.name ?? "", true)}>Yes!</button>
+                <button className="btn btn--ghost btn--sm" onClick={() => decide(r, false)}>Not this time</button>
+                <button className="btn btn--primary btn--sm" onClick={() => decide(r, true)}>Yes!</button>
               </div>
             </li>
           );
         })}
       </ul>
       {error && <p className="form-error">{error}</p>}
-      <p className="hint">"Yes!" records the reward and spends the points.</p>
+      <p className="hint">"Not this time" gives the points back.</p>
     </section>
   );
 }
 
-export function KidFeedback({ family }: { family: Family }) {
-  const { update } = useStore();
+export function KidFeedback({ items: all, onRead }: { items: Checkin[]; onRead: () => void }) {
   const recent = new Set(lastDays(7));
-  const items = family.feedback.filter((f) => recent.has(f.day)).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
-  const unseen = items.filter((f) => !f.seen).length;
+  const items = all.filter((f) => recent.has(f.day)).slice(0, 6);
+  const unseen = items.filter((f) => !f.read_at).length;
   return (
     <section className="panel" aria-labelledby="feedback-title">
       <div className="panel__head">
         <h2 id="feedback-title">From your kids</h2>
         {unseen > 0 ? (
-          <button className="btn btn--ghost btn--sm" onClick={() => update(markFeedbackSeen)}>Mark {unseen} as read</button>
+          <button className="btn btn--ghost btn--sm" onClick={onRead}>Mark {unseen} as read</button>
         ) : <span className="muted">Last 7 days</span>}
       </div>
       {items.length === 0 ? (
@@ -114,17 +143,16 @@ export function KidFeedback({ family }: { family: Family }) {
       ) : (
         <ul className="feedback-list">
           {items.map((f) => {
-            const child = family.children.find((c) => c.id === f.childId);
             const mood = MOODS.find((m) => m.id === f.mood);
             return (
-              <li key={f.id} className={`feedback ${f.seen ? "" : "is-new"}`}>
+              <li key={f.id} className={`feedback ${f.read_at ? "" : "is-new"}`}>
                 <span className="feedback__mood" aria-label={mood?.label}>{mood?.emoji}</span>
                 <div>
-                  <span className="approval__who">{child?.name} · {f.day === dayKey() ? "today" : weekdayShort(f.day)} · felt {mood?.label.toLowerCase()}</span>
+                  <span className="approval__who">{f.child_name} · {f.day === dayKey() ? "today" : weekdayShort(f.day)} · felt {mood?.label.toLowerCase()}</span>
                   {(f.hardest || f.favorite) && (
                     <p className="muted">
-                      {f.hardest && <>Tricky: <b>{QUEST_BY_ID[f.hardest]?.parentTitle}</b>. </>}
-                      {f.favorite && <>Favourite: <b>{QUEST_BY_ID[f.favorite]?.parentTitle}</b>.</>}
+                      {f.hardest && <>Tricky: <b>{QUEST_BY_ID[f.hardest]?.parentTitle ?? f.hardest}</b>. </>}
+                      {f.favorite && <>Favourite: <b>{QUEST_BY_ID[f.favorite]?.parentTitle ?? f.favorite}</b>.</>}
                     </p>
                   )}
                   {f.stickers.length > 0 && (
@@ -147,8 +175,7 @@ export function KidFeedback({ family }: { family: Family }) {
   );
 }
 
-export function SurprisePlanner({ family }: { family: Family }) {
-  const { update } = useStore();
+export function SurprisePlanner({ family, familyId }: { family: Family; familyId: string }) {
   const [childId, setChildId] = useState<string>("all");
   const [kind, setKind] = useState<"note" | "double">("note");
   const [message, setMessage] = useState("");
@@ -156,18 +183,28 @@ export function SurprisePlanner({ family }: { family: Family }) {
   const [when, setWhen] = useState<"today" | "tomorrow">("tomorrow");
   const [sent, setSent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const waiting = family.surprises.filter((s) => s.revealedBy.length === 0 && (s.kind === "note" || s.day >= dayKey()));
+  const [waiting, setWaiting] = useState<Surprise[]>([]);
 
-  function submit(e: FormEvent) {
+  const load = useCallback(() => {
+    listSurprises(familyId).then(setWaiting).catch(() => {});
+  }, [familyId]);
+  useEffect(load, [load]);
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    // Kids read this, so it gets the same local check as everything else they see.
-    const check = message.trim() ? screenText(message) : { ok: true };
-    if (!check.ok) return setError("That message has words or details we keep out of kid mode. Try rewording it.");
-    const day = when === "today" ? dayKey() : lastDaysAhead(1);
-    update((f) => plantSurprise(f, { childId, kind, message, points: kind === "note" ? points : 0, day }));
-    setSent(kind === "double" ? `Double points day set for ${when}.` : "Surprise planted! It pops up next time they open kid mode.");
-    setMessage("");
+    setSent(null);
+    const day = when === "today" || kind === "note" ? dayKey() : lastDaysAhead(1);
+    try {
+      await plantSurprise(familyId, {
+        kind, day, message, points: kind === "note" ? points : 0, ...(childId === "all" ? {} : { child_id: childId }),
+      });
+      setSent(kind === "double" ? `Double points day set for ${when}.` : "Surprise planted! It pops up next time they open kid mode.");
+      setMessage("");
+      load();
+    } catch (err) {
+      setError(errorText(err)); // the server refuses words we keep out of kid mode
+    }
   }
 
   return (

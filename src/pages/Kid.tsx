@@ -1,8 +1,7 @@
 /**
  * Kid mode: "Who's playing?", the child's picture quests for today, and world exploring.
  *
- * Today's quests, "I did it!" and the balance come from the backend with the kid token. Worlds,
- * chests, surprises, boosts and the time limit stay in the browser.
+ * Everything here comes from the backend with the kid token, which also pays the boosts.
  *
  * Children see pictures, clocks and big buttons instead of text-heavy lists. Each quest shows
  * the points it's worth and any boost (golden quest, streak, surprise double day). When a
@@ -25,20 +24,17 @@ import {
 import Logo from "../components/Logo";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
-import { aiState, type BuddyEvent, type BuddyRequest } from "../lib/agents";
-import { useBuddyLine } from "../lib/agentClient";
-import type { TodayHabit } from "../lib/api";
+import { getTodayCheckin, updateKidExtras, type TodayHabit } from "../lib/api";
+import { useBuddyLine, type BuddyEvent } from "../lib/buddy";
 import {
-  BOOST_LABEL, LEVELS, WORLDS, WORLD_BY_ID, boostFor, celebrationsDue, discover, isUnlocked, levelOf, markCelebrated,
-  streakOf, type Child, type QuestStatus, type WorldId,
+  BOOST_LABEL, LEVELS, WORLDS, WORLD_BY_ID, celebrationsDue, discover, isUnlocked, levelOf, markCelebrated,
+  type Child, type QuestStatus, type WorldId,
 } from "../lib/family";
-import { feedbackFor } from "../lib/feedback";
 import { QUEST_BY_ID } from "../lib/habits";
-import { dueSurprises } from "../lib/rewards";
 import { go } from "../lib/router";
 import { setKidMode } from "../lib/storage";
 import { useStore } from "../lib/store";
-import { boostExtra, creditBoost, localStatus } from "../lib/sync";
+import { localStatus } from "../lib/sync";
 import { formatTime, greeting } from "../lib/time";
 import { useKidDay } from "../lib/useKidDay";
 
@@ -107,28 +103,30 @@ export function KidQuests({ childId }: { childId: string }) {
   const { family, update } = useStore();
   const fam = family!;
   const child = fam.children.find((c) => c.id === childId);
-  const { today, error, lapsed, reload, submit, resume } = useKidDay(childId, true);
+  const { today, error, lapsed, surprises, dropSurprise, reload, submit, resume } = useKidDay(childId, true);
   const day = today?.day ?? "";
   const [celebrating, setCelebrating] = useState<Celebrating | null>(null);
   const [cheer, setCheer] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<TodayHabit | null>(null);
   const [checkIn, setCheckIn] = useState(false);
+  const [checkedIn, setCheckedIn] = useState(false);
   const secondsLeft = usePlaytime(child);
 
-  // Buddy lines: null request = buddy talk is off (or no child), so nothing is fetched.
-  const talk = !!child && aiState(fam).buddyTalk;
-  const buddyAsk = (event: BuddyEvent, quests: string[]): BuddyRequest | null =>
-    talk && child ? { event, buddy: child.buddy, name: child.name, age: child.age, quests, sparks: child.sparks } : null;
+  // Buddy lines: a null event means buddy talk is off (or no child), so nothing is fetched.
+  const talk = !!child && fam.settings.buddyTalk;
+  const buddyAsk = (event: BuddyEvent): BuddyEvent | null => (talk ? event : null);
   const quests = today?.habits ?? [];
   const remaining = quests.filter((q) => q.status !== "approved");
-  const greetLine = useBuddyLine(`${childId}:greet`, today ? buddyAsk("greet", remaining.map((h) => h.kid_title)) : null);
-  const submittedLine = useBuddyLine(`${childId}:submitted:${submitted?.habit_id}`,
-    submitted ? buddyAsk("submitted", [submitted.kid_title]) : null);
+  const greetLine = useBuddyLine(`${childId}:greet`, today && remaining.length > 0 ? buddyAsk("greet") : null);
+  const submittedLine = useBuddyLine(`${childId}:submitted:${submitted?.habit_id}`, submitted ? buddyAsk("submitted") : null);
   const celebrateLine = useBuddyLine(`${childId}:celebrate:${celebrating?.quests.map((h) => h.id).join("+")}`,
-    celebrating ? buddyAsk("celebrate", celebrating.quests.map((h) => h.kidTitle)) : null);
+    celebrating ? buddyAsk("celebrate") : null);
   const buddySays = submittedLine ?? greetLine;
 
-  const surprises = child && today ? dueSurprises(fam, child.id, day) : [];
+  useEffect(() => {
+    if (today) getTodayCheckin().then((found) => setCheckedIn(!!found)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today?.day, checkIn]);
 
   // Show a celebration for any approvals the child hasn't seen yet (after any surprise).
   const due = child && today ? celebrationsDue(fam, day, child.id) : [];
@@ -142,12 +140,10 @@ export function KidQuests({ childId }: { childId: string }) {
       unlocks.push(`Level up! You're a ${level.name} now${gainedTier ? ` and tier ${level.tier} quests are unlocked` : ""}!`);
     }
     const earned = due.flatMap((q) => quests.filter((h) => h.habit_id === q.id));
-    const points = earned.reduce((n, h) => n + h.points + boostExtra(fam, day, child.id, h.habit_id, h.points), 0);
+    const points = earned.reduce((n, h) => n + h.points * h.multiplier, 0);
     setCelebrating({ quests: due, points, unlocks });
-    update((f) => markCelebrated(
-      earned.reduce((next, h) => creditBoost(next, day, child.id, h.habit_id, h.kid_title, h.points), f),
-      day, child.id, due.map((h) => h.id),
-    ));
+    update((f) => markCelebrated(f, day, child.id, due.map((h) => h.id)));
+    if (level.level > child.levelSeen) updateKidExtras({ level_seen: level.level }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [due.length, child?.id, surprises.length, today]);
 
@@ -155,8 +151,8 @@ export function KidQuests({ childId }: { childId: string }) {
   if (lapsed) return <KidLapsed onResume={resume} />;
 
   const done = quests.filter((q) => q.status === "approved").length;
-  const streak = today ? streakOf(fam, child.id, day) : 0;
-  const checkedIn = today ? !!feedbackFor(fam, child.id, day) : false;
+  const streak = today?.streak ?? 0;
+  const doubleDay = quests.some((h) => h.boosts.includes("double"));
 
   async function didIt(quest: TodayHabit) {
     if (!(await submit(quest))) return;
@@ -194,7 +190,7 @@ export function KidQuests({ childId }: { childId: string }) {
           <div className="kid-hero__side">
             <LevelBadge child={child} />
             {streak >= 2 && <span className="streak">🔥 {streak}-day streak</span>}
-            {fam.doubleDays.includes(day) && <span className="streak streak--double">⚡ Double points day</span>}
+            {doubleDay && <span className="streak streak--double">⚡ Double points day</span>}
           </div>
         </section>
 
@@ -206,16 +202,13 @@ export function KidQuests({ childId }: { childId: string }) {
         )}
 
         <div className="quest-grid">
-          {quests.map((h) => {
-            const boost = boostFor(fam, day, child.id, h.habit_id);
-            return (
-              <QuestCard key={h.child_habit_id} habit={h} status={localStatus(h.status)} points={h.points * boost.multiplier}
-                boost={boost.reasons.map((r) => BOOST_LABEL[r])} multiplier={boost.multiplier} golden={boost.reasons.includes("golden")} onDone={() => didIt(h)} />
-            );
-          })}
+          {quests.map((h) => (
+            <QuestCard key={h.child_habit_id} habit={h} status={localStatus(h.status)} points={h.points * h.multiplier}
+              boost={h.boosts.map((r) => BOOST_LABEL[r])} multiplier={h.multiplier} golden={h.boosts.includes("golden")} onDone={() => didIt(h)} />
+          ))}
         </div>
 
-        {today && <ChestCard family={fam} child={child} day={day} />}
+        {today && <ChestCard child={child} today={today} />}
 
         <div className="kid-actions">
           <button className="kid-action kid-action--checkin" onClick={() => setCheckIn(true)}>
@@ -254,12 +247,13 @@ export function KidQuests({ childId }: { childId: string }) {
 
       <TimeWarning seconds={secondsLeft} />
       {cheer && <div className="toast" role="status">{cheer}</div>}
-      {surprises[0] && <SurpriseReveal surprise={surprises[0]} child={child} parentName={fam.parentName} />}
+      {surprises[0] && <SurpriseReveal key={surprises[0].id} surprise={surprises[0]} child={child} parentName={fam.parentName}
+        onDone={() => dropSurprise(surprises[0].id)} />}
       {!surprises[0] && celebrating && (
         <Celebration habits={celebrating.quests} name={child.name} points={celebrating.points} unlocks={celebrating.unlocks}
           buddyLine={celebrateLine} onDone={() => setCelebrating(null)} />
       )}
-      {checkIn && <CheckIn family={fam} child={child} onClose={() => setCheckIn(false)} />}
+      {checkIn && <CheckIn child={child} quests={quests.map((h) => ({ id: h.habit_id, kidTitle: h.kid_title }))} onClose={() => setCheckIn(false)} />}
       {secondsLeft === 0 && <BreakTime child={child} family={fam} />}
     </div>
   );
@@ -363,6 +357,7 @@ export function WorldExplore({ childId, worldId }: { childId: string; worldId: s
                   aria-label={seen(d.id) ? d.name : "Hidden treasure"}
                   onClick={() => {
                     update((f) => discover(f, child.id, `${world.id}:${d.id}`));
+                    updateKidExtras({ discover: `${world.id}:${d.id}` }).catch(() => {});
                     setFound(d.name);
                   }}>
                   {seen(d.id) ? <span className="hotspot__label">{d.name}</span> : <SparkIcon size={28} />}
