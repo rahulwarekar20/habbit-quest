@@ -36,7 +36,7 @@ export default function GoogleButton({ onCredential }: { onCredential: (credenti
       .then(() => {
         if (!live || !box.current || !window.google) return;
         window.google.accounts.id.initialize({ client_id: clientId, callback: (r) => callback.current(r.credential) });
-        window.google.accounts.id.renderButton(box.current, { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: 300 });
+        window.google.accounts.id.renderButton(box.current, { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: Math.min(300, box.current.clientWidth) });
       })
       .catch(() => live && setFailed(true));
     return () => {
