@@ -2,21 +2,22 @@
  * App shell: picks the page for the current hash route and applies the access rules.
  *
  *   #/                     Home
- *   #/register, #/login    Accounts
- *   #/demo                 Opens the demo family (shareable demo link)
- *   #/setup                Habits & times (parent)
+ *   #/login                Sign in (#/register lands here too)
+ *   #/welcome              First-time setup: family, then the first child
+ *   #/setup[/:child]       Child details and routine times (parent)
  *   #/parent               Dashboard (parent)
- *   #/quests[/:child]      Quest library: bonus quests per child (parent)
- *   #/rewards              Reward shop prices and time limits (parent)
+ *   #/quests[/:child]      Quest library: a child's plan (parent)
+ *   #/rewards              Record rewards, shop prices and time limits (parent)
  *   #/kid                  Who's playing?          (kid mode)
  *   #/kid/:child           Today's picture quests  (kid mode)
  *   #/world/:child/:world  Explore a world         (kid mode)
  *   #/shop/:child          Reward shop and buddy wardrobe (kid mode)
  *
- * Parent pages need a signed-in family; while kid mode is on they also need the parent PIN.
+ * Parent pages need a signed-in family with a child; while kid mode is on they also need the PIN.
  */
-import { useEffect, useRef } from "react";
-import { Login, Register } from "./pages/Auth";
+import { useEffect } from "react";
+import Logo from "./components/Logo";
+import { Login, Welcome } from "./pages/Auth";
 import HabitSetup from "./pages/HabitSetup";
 import Home from "./pages/Home";
 import { KidPicker, KidQuests, WorldExplore } from "./pages/Kid";
@@ -30,24 +31,31 @@ import { useStore } from "./lib/store";
 
 export default function App() {
   const [page, a, b] = useRoute();
-  const { family } = useStore();
+  const { family, phase, loadError, retry } = useStore();
 
   if (!page) return <Home />;
-  if (page === "register") return <Register />;
-  if (page === "login") return <Login />;
-  if (page === "demo") return <OpenDemo />;
+  if (phase === "booting") return <Holding message="Getting things ready…" />;
+  if (phase === "failed") return <Holding message={loadError ?? "We couldn't load your family."} onRetry={retry} />;
 
-  // Everything below belongs to a signed-in family.
-  if (!family) return <Redirect to="/login" />;
+  if (page === "login" || page === "register") {
+    if (phase === "ready") return <Redirect to="/parent" />;
+    if (phase === "noFamily") return <Redirect to="/welcome" />;
+    return <Login />;
+  }
 
-  if (page === "kid") return a ? <KidQuests childId={a} /> : <KidPicker />;
+  // Everything below belongs to a signed-in caregiver.
+  if (phase === "signedOut") return <Redirect to="/login" />;
+  if (phase === "noFamily" || !family) return <Welcome />;
+  if (family.children.length === 0) return <Welcome />;
+  if (page === "welcome") return <Redirect to="/parent" />;
+
+  if (page === "kid") return a ? <KidQuests key={a} childId={a} /> : <KidPicker />;
   if (page === "world" && a && b) return <WorldExplore childId={a} worldId={b} />;
   if (page === "shop" && a) return <KidShop childId={a} />;
 
   if (["setup", "parent", "quests", "rewards"].includes(page)) {
     if (getKidMode()) return <ParentLock />;
-    if (page !== "setup" && !family.habitsChosen) return <Redirect to="/setup" />;
-    if (page === "setup") return <HabitSetup />;
+    if (page === "setup") return <HabitSetup childId={a} />;
     if (page === "quests") return <QuestLibrary childId={a} />;
     if (page === "rewards") return <RewardsPage />;
     return <ParentDashboard />;
@@ -55,20 +63,20 @@ export default function App() {
   return <Home />;
 }
 
-function OpenDemo() {
-  const { startDemo } = useStore();
-  const started = useRef(false);
-  useEffect(() => {
-    if (started.current) return; // run once, even though startDemo changes after it saves
-    started.current = true;
-    startDemo().then(() => go("/parent"));
-  }, [startDemo]);
-  return null;
-}
-
 function Redirect({ to }: { to: string }) {
   useEffect(() => go(to), [to]);
   return null;
+}
+
+/** First load, or a load that failed: the waking-up notice shows on top of this. */
+function Holding({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="holding">
+      <Logo />
+      <p role="status">{message}</p>
+      {onRetry && <button className="btn btn--primary" onClick={onRetry}>Try again</button>}
+    </div>
+  );
 }
 
 /** Shown when a child in kid mode reaches a parent page: ask for the PIN or go back. */

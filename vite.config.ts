@@ -8,6 +8,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
     plugins: [react(), agentServer(env.GROQ_API_KEY || undefined)],
-    server: { host: true, port: 5180 },
+    server: { host: true, port: 5180, strictPort: true }, // the API and Google only allow this port
   };
 });

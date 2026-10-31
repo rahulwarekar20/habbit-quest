@@ -1,23 +1,27 @@
 /**
  * Parent PIN prompt. Protects approvals and grown-up pages from little fingers.
- * `onSubmit(pin)` resolves true when the PIN is right; `onSubmit(null)` cancels.
+ * `onSubmit(pin)` resolves true when the PIN is right, false when it is wrong, or a message when
+ * it couldn't be checked; `onSubmit(null)` cancels. The backend checks the PIN.
  */
 import { useState, type FormEvent } from "react";
 
 interface Props {
   reason: string;
-  onSubmit: (pin: string | null) => Promise<boolean>;
+  onSubmit: (pin: string | null) => Promise<boolean | string>;
 }
 
 export default function PinDialog({ reason, onSubmit }: Props) {
   const [pin, setPin] = useState("");
-  const [wrong, setWrong] = useState(false);
+  const [wrong, setWrong] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    setBusy(true);
     const ok = await onSubmit(pin);
-    if (!ok) {
-      setWrong(true);
+    setBusy(false);
+    if (ok !== true) {
+      setWrong(ok === false ? "That PIN isn't right. Try again." : ok);
       setPin("");
     }
   }
@@ -37,18 +41,18 @@ export default function PinDialog({ reason, onSubmit }: Props) {
           value={pin}
           onChange={(e) => {
             setPin(e.target.value.replace(/\D/g, ""));
-            setWrong(false);
+            setWrong(null);
           }}
           aria-label="4-digit PIN"
           placeholder="••••"
         />
-        {wrong && <p className="form-error">That PIN isn't right. Try again.</p>}
+        {wrong && <p className="form-error">{wrong}</p>}
         <div className="modal__actions">
           <button type="button" className="btn btn--ghost" onClick={() => onSubmit(null)}>
             Cancel
           </button>
-          <button type="submit" className="btn btn--primary" disabled={pin.length !== 4}>
-            Continue
+          <button type="submit" className="btn btn--primary" disabled={pin.length !== 4 || busy}>
+            {busy ? "Checking…" : "Continue"}
           </button>
         </div>
       </form>

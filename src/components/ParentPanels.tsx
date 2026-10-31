@@ -6,11 +6,12 @@
  *   SurprisePlanner  plant a surprise note with bonus points, or a double-points day
  */
 import { useState, type FormEvent } from "react";
-import type { Family } from "../lib/family";
+import { errorText, redeemPoints } from "../lib/api";
+import { updateChild, type Family } from "../lib/family";
 import { MOODS, STICKERS, markFeedbackSeen } from "../lib/feedback";
 import { PARENT_RISK_GUIDANCE, screenText } from "../lib/guardrails";
 import { QUEST_BY_ID } from "../lib/habits";
-import { MAX_SURPRISE_POINTS, pendingRedemptions, plantSurprise, resolveRedemption } from "../lib/rewards";
+import { MAX_SURPRISE_POINTS, pendingRedemptions, plantSurprise, resolveRedemption, type Redemption } from "../lib/rewards";
 import { useStore } from "../lib/store";
 import { dayKey, lastDays, weekdayShort } from "../lib/time";
 import Buddy from "./Buddy";
@@ -45,12 +46,23 @@ export function SafetyAlerts({ family }: { family: Family }) {
 
 export function RewardRequests({ family }: { family: Family }) {
   const { update, askPin } = useStore();
+  const [error, setError] = useState<string | null>(null);
   const pending = pendingRedemptions(family);
   if (pending.length === 0) return null;
 
-  async function decide(id: string, title: string, child: string, approve: boolean) {
-    if (approve && !(await askPin(`Say yes to "${title}" for ${child}.`))) return;
-    update((f) => resolveRedemption(f, id, approve));
+  async function decide(r: Redemption, child: string, approve: boolean) {
+    if (approve && !(await askPin(`Say yes to "${r.title}" for ${child}.`))) return;
+    setError(null);
+    // A request paid from the real balance is recorded on the backend; mystery prizes were paid in bonus points.
+    if (approve && r.asked) {
+      try {
+        const { points } = await redeemPoints(r.childId, r.cost, r.title);
+        update((f) => updateChild(f, r.childId, (c) => ({ ...c, balance: points })));
+      } catch (e) {
+        return setError(errorText(e));
+      }
+    }
+    update((f) => resolveRedemption(f, r.id, approve));
   }
 
   return (
@@ -68,17 +80,18 @@ export function RewardRequests({ family }: { family: Family }) {
               <div className="approval__text">
                 <span className="approval__who">{child && <Buddy buddy={child.buddy} accessory={child.wearing} size={24} />} {child?.name}{r.mystery ? " · from a mystery box" : ""}</span>
                 <b>{r.title}</b>
-                <span className="muted">{r.cost} points spent{r.minutes ? ` · adds ${r.minutes} min to today's screen time` : ""}</span>
+                <span className="muted">{r.cost} {r.asked ? "points when you say yes" : "bonus points spent"}{r.minutes ? ` · adds ${r.minutes} min of screen time` : ""}</span>
               </div>
               <div className="approval__actions">
-                <button className="btn btn--ghost btn--sm" onClick={() => decide(r.id, r.title, child?.name ?? "", false)}>Not this time</button>
-                <button className="btn btn--primary btn--sm" onClick={() => decide(r.id, r.title, child?.name ?? "", true)}>Yes!</button>
+                <button className="btn btn--ghost btn--sm" onClick={() => decide(r, child?.name ?? "", false)}>Not this time</button>
+                <button className="btn btn--primary btn--sm" onClick={() => decide(r, child?.name ?? "", true)}>Yes!</button>
               </div>
             </li>
           );
         })}
       </ul>
-      <p className="hint">"Not this time" gives the points back.</p>
+      {error && <p className="form-error">{error}</p>}
+      <p className="hint">"Yes!" records the reward and spends the points.</p>
     </section>
   );
 }

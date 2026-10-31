@@ -1,5 +1,9 @@
 /**
- * Family data model and pure state transitions.
+ * Browser-side family model and pure state transitions.
+ *
+ * The backend owns accounts, children, plans, completions, Sparks and the points balance. This
+ * model keeps what has no backend yet (worlds, chests, accessories, check-ins, surprises, boosts,
+ * kid-mode time) plus a mirror of the server's day (see sync.ts), so those rules keep working.
  *
  * Flow: a parent chooses routine habits (shared by every child) and can add bonus quests per
  * child -> the child submits ("I did it!") -> the parent approves -> the child earns one Spark
@@ -44,12 +48,14 @@ export interface Child {
   name: string;
   age: number;
   buddy: BuddyId;
-  sparks: number;
+  sparks: number; // mirrored from the backend
+  balance: number; // spendable points on the backend (mirrored); only a parent can spend them
+  plan?: PlanQuest[]; // today's quests from the backend (mirrored); absent means the family routine applies
   celebrated: string[]; // "<day>:<quest>" keys the child has already seen celebrated
   discoveries: string[]; // "<world>:<item>" keys found while exploring
-  points: number; // spendable balance
-  pointsEarned: number; // lifetime points earned
-  ledger: LedgerEntry[]; // most recent last, trimmed
+  points: number; // browser-only bonus points: chests, surprises, boosts. Spent on mystery boxes
+  pointsEarned: number; // lifetime bonus points earned
+  ledger: LedgerEntry[]; // bonus points, most recent last, trimmed
   bonusQuests: string[]; // library quest ids for this child
   levelSeen: number; // highest level the child has seen celebrated
   accessories: string[]; // buddy accessories collected
@@ -59,6 +65,14 @@ export interface Child {
   appSeconds: Record<string, number>; // day -> seconds spent in kid mode
   appExtraMinutes: Record<string, number>; // day -> extra minutes a parent allowed
   screenBonus: Record<string, number>; // day -> extra screen-time minutes won in the shop
+}
+
+/** One of today's quests as the backend names it. */
+export interface PlanQuest {
+  id: string;
+  kidTitle: string;
+  kidHint: string;
+  tier: number;
 }
 
 /** day -> child id -> quest id -> status */
@@ -72,8 +86,6 @@ export interface FamilySettings {
 export interface Family {
   email: string;
   parentName: string;
-  passwordHash: string;
-  pinHash: string;
   children: Child[];
   habits: HabitSettings;
   habitsChosen: boolean;
@@ -181,7 +193,7 @@ export function defaultHabits(): HabitSettings {
 }
 
 const CHILD_DEFAULTS: Omit<Child, "id" | "name" | "age" | "buddy"> = {
-  sparks: 0, celebrated: [], discoveries: [], points: 0, pointsEarned: 0, ledger: [], bonusQuests: [], levelSeen: 1,
+  sparks: 0, balance: 0, celebrated: [], discoveries: [], points: 0, pointsEarned: 0, ledger: [], bonusQuests: [], levelSeen: 1,
   accessories: [], wearing: null, goal: null, chests: [], appSeconds: {}, appExtraMinutes: {}, screenBonus: {},
 };
 
@@ -234,7 +246,18 @@ export function activeQuests(family: Family): QuestDef[] {
 export function questsFor(family: Family, childId: string): QuestDef[] {
   const child = family.children.find((c) => c.id === childId);
   if (!child) return [];
+  if (child.plan) return child.plan.map(planQuestDef);
   return [...activeQuests(family), ...child.bonusQuests.map((id) => QUEST_BY_ID[id]).filter((q): q is QuestDef => !!q && !q.routine)];
+}
+
+/** A backend quest as a QuestDef: the library's entry when there is one, in the backend's words. */
+function planQuestDef(q: PlanQuest): QuestDef {
+  const known = QUEST_BY_ID[q.id];
+  const base: QuestDef = known ?? {
+    id: q.id, parentTitle: q.kidTitle, description: q.kidHint, kidTitle: q.kidTitle, kidHint: q.kidHint,
+    setting: { kind: "none" }, tier: q.tier as Tier, category: "routine", emoji: "⭐", ages: [3, 13], routine: false,
+  };
+  return { ...base, kidTitle: q.kidTitle, kidHint: q.kidHint };
 }
 
 export const MAX_BONUS_QUESTS = 4;

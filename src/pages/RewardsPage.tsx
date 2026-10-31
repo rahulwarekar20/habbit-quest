@@ -1,25 +1,22 @@
 /**
- * Rewards & limits (parent): price the reward shop, set the daily kid-mode time limit and the
- * screen-time habit's daily limit, and see past reward requests.
+ * Rewards & limits (parent): record a reward (spends the child's points on the backend) with the
+ * points history, set the daily kid-mode time limit, and price the kid shop.
  */
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Footer, ParentHeader } from "../components/Headers";
-import { setHabits, MAX_MULTIPLIER, STREAK_DAYS, TIER_POINTS } from "../lib/family";
+import { ApiError, errorText, getPoints, redeemPoints, type PointsHistory } from "../lib/api";
 import { screenText } from "../lib/guardrails";
-import { HABIT_BY_ID } from "../lib/habits";
 import { APP_LIMIT_OPTIONS, setAppLimit } from "../lib/playtime";
 import { REWARD_KIND_LABEL, defaultRewards, type RewardItem, type RewardKind } from "../lib/rewards";
 import { useStore } from "../lib/store";
 import { formatMinutes } from "../lib/time";
+import { updateChild } from "../lib/family";
 
 const EMOJIS = ["🎁", "📺", "🎮", "🍕", "🍦", "🌙", "🍿", "🛝", "🧸", "📚", "🎨", "⚽", "🏊", "🎢", "🧁", "⭐"];
 
 export default function RewardsPage() {
   const { family, update } = useStore();
   const fam = family!;
-  const screen = HABIT_BY_ID.screen;
-  const screenSetting = fam.habits.screen;
-  const options = screen.setting.kind === "minutes" ? screen.setting.options : [];
 
   return (
     <div className="page page--app">
@@ -30,74 +27,146 @@ export default function RewardsPage() {
             <p className="eyebrow">Rewards &amp; limits</p>
             <h1>What can points buy?</h1>
             <p className="lead">
-              Children earn {TIER_POINTS[1]}-{TIER_POINTS[3]} points per approved quest, boosted up to {MAX_MULTIPLIER}x by the daily golden quest,
-              a {STREAK_DAYS}-day streak or your surprise double days. They spend points here, and you approve each request.
+              Children earn points for every quest you approve. When they use points on something, record it here.
+              Sparks are never spent.
             </p>
           </div>
         </div>
 
-        <div className="two-col">
-          <section className="panel" aria-labelledby="limit-title">
-            <h2 id="limit-title">Time in kid mode</h2>
-            <p className="muted">How long each child can use HabbitQuest per day. When time's up they see a friendly break screen; you can add minutes with your PIN.</p>
-            <div className="pill-choice" role="radiogroup" aria-label="Daily kid-mode limit">
-              {APP_LIMIT_OPTIONS.map((m) => (
-                <button key={m} type="button" role="radio" aria-checked={fam.settings.appLimit === m}
-                  className={fam.settings.appLimit === m ? "is-on" : ""} onClick={() => update((f) => setAppLimit(f, m))}>
-                  {m === 0 ? "No limit" : formatMinutes(m)}
-                </button>
-              ))}
-            </div>
-          </section>
+        <RecordReward />
 
-          <section className="panel" aria-labelledby="screen-title">
-            <h2 id="screen-title">Daily screen-time goal</h2>
-            <p className="muted">The "{screen.parentTitle}" quest: TV, tablet and games in total. Screen-time rewards add minutes to this for the day.</p>
-            <div className="pill-choice" role="radiogroup" aria-label="Daily screen-time limit">
-              <button type="button" role="radio" aria-checked={!screenSetting.enabled} className={!screenSetting.enabled ? "is-on" : ""}
-                onClick={() => update((f) => setHabits(f, { ...f.habits, screen: { ...f.habits.screen, enabled: false } }))}>Off</button>
-              {options.map((m) => {
-                const on = screenSetting.enabled && screenSetting.value === String(m);
-                return (
-                  <button key={m} type="button" role="radio" aria-checked={on} className={on ? "is-on" : ""}
-                    onClick={() => update((f) => setHabits(f, { ...f.habits, screen: { enabled: true, value: String(m) } }))}>
-                    {formatMinutes(m)}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </div>
+        <section className="panel" aria-labelledby="limit-title">
+          <h2 id="limit-title">Time in kid mode</h2>
+          <p className="muted">How long each child can use HabbitQuest per day on this device. When time's up they see a friendly break screen; you can add minutes with your PIN.</p>
+          <div className="pill-choice" role="radiogroup" aria-label="Daily kid-mode limit">
+            {APP_LIMIT_OPTIONS.map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={fam.settings.appLimit === m}
+                className={fam.settings.appLimit === m ? "is-on" : ""} onClick={() => update((f) => setAppLimit(f, m))}>
+                {m === 0 ? "No limit" : formatMinutes(m)}
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section className="panel" aria-labelledby="shop-title">
           <div className="panel__head">
             <h2 id="shop-title">Reward shop</h2>
             <button className="btn btn--ghost btn--sm" onClick={() => update((f) => ({ ...f, rewards: defaultRewards() }))}>Reset to suggestions</button>
           </div>
+          <p className="muted">Children see these in kid mode and ask a grown-up. Your yes records the reward. The shop list stays on this device.</p>
           <ul className="reward-admin">
             {fam.rewards.map((r) => <RewardRow key={r.id} reward={r} />)}
           </ul>
           <AddReward />
         </section>
-
-        <section className="panel" aria-labelledby="history-title">
-          <h2 id="history-title">Recent requests</h2>
-          {fam.redemptions.length === 0 ? <p className="empty">No requests yet.</p> : (
-            <ul className="mini-list">
-              {fam.redemptions.slice(-12).reverse().map((r) => (
-                <li key={r.id}>
-                  <span>{r.emoji} <b>{fam.children.find((c) => c.id === r.childId)?.name}</b>: {r.title} · {r.cost} pts</span>
-                  <span className={`status status--${r.status === "approved" ? "approved" : r.status === "pending" ? "submitted" : "notyet"}`}>
-                    {r.status === "approved" ? "Given" : r.status === "pending" ? "Waiting" : "Declined (refunded)"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </main>
       <Footer />
     </div>
+  );
+}
+
+function RecordReward() {
+  const { family, update } = useStore();
+  const fam = family!;
+  const [childId, setChildId] = useState(fam.children[0]?.id ?? "");
+  const [points, setPoints] = useState(20);
+  const [note, setNote] = useState("");
+  const [history, setHistory] = useState<PointsHistory | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const child = fam.children.find((c) => c.id === childId);
+
+  const load = useCallback(async () => {
+    if (!childId) return;
+    try {
+      setHistory(await getPoints(childId));
+      setUnavailable(false);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) setUnavailable(true);
+      else setError(errorText(e));
+    }
+  }, [childId]);
+
+  useEffect(() => {
+    setHistory(null);
+    setDone(null);
+    void load();
+  }, [load]);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!child || !note.trim()) return;
+    setBusy(true);
+    setError(null);
+    setDone(null);
+    try {
+      const result = await redeemPoints(child.id, points, note.trim());
+      update((f) => updateChild(f, child.id, (c) => ({ ...c, balance: result.points })));
+      setDone(`Recorded. ${child.name} has ${result.points} points left.`);
+      setNote("");
+      await load();
+    } catch (err) {
+      setError(errorText(err)); // "Not enough points: N available"
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="panel" aria-labelledby="record-title">
+      <div className="panel__head">
+        <h2 id="record-title">Record a reward</h2>
+        {history && <span className="chip chip--gold">🪙 {history.points} points · {history.earned} earned · {history.spent} spent</span>}
+      </div>
+      <form className="surprise-form" onSubmit={submit}>
+        <div className="field-row">
+          {fam.children.length > 1 && (
+            <label className="field field--narrow">
+              <span>For</span>
+              <select value={childId} onChange={(e) => setChildId(e.target.value)}>
+                {fam.children.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+          )}
+          <label className="field">
+            <span>What was it?</span>
+            <input required maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="30 minutes of tablet" />
+          </label>
+          <label className="field field--narrow">
+            <span>Points</span>
+            <input required type="number" min={1} max={100000} value={points} onChange={(e) => setPoints(Number(e.target.value))} />
+          </label>
+        </div>
+        {error && <p className="form-error">{error}</p>}
+        {done && <p className="form-ok" role="status">{done}</p>}
+        <div className="modal__actions">
+          <button className="btn btn--primary" disabled={busy || !child}>{busy ? "Recording…" : "Record reward"}</button>
+        </div>
+      </form>
+
+      <h3>History</h3>
+      {unavailable ? (
+        <p className="empty">The points history isn't available on this server yet.</p>
+      ) : !history ? (
+        <p className="empty">Loading…</p>
+      ) : history.entries.length === 0 ? (
+        <p className="empty">Nothing yet.</p>
+      ) : (
+        <ul className="mini-list">
+          {history.entries.map((entry) => (
+            <li key={entry.id}>
+              <span>
+                {entry.kid_title ?? entry.note ?? entry.reason}
+                <span className="muted"> · {new Date(entry.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}{entry.by ? ` · ${entry.by}` : ""}</span>
+              </span>
+              <b className={entry.amount >= 0 ? "pts-plus" : "pts-minus"}>{entry.amount >= 0 ? "+" : ""}{entry.amount}</b>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

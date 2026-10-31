@@ -106,7 +106,7 @@ export function SurpriseReveal({ surprise, child, parentName }: { surprise: Surp
               <>
                 <h2>From {parentName}</h2>
                 {surprise.message && <p className="gift__message">“{surprise.message}”</p>}
-                {surprise.points > 0 && <p className="celebrate__points">+{surprise.points} points</p>}
+                {surprise.points > 0 && <p className="celebrate__points">+{surprise.points} bonus points</p>}
               </>
             )}
             <button className="btn btn--gold btn--lg" onClick={close} autoFocus>Yay!</button>
@@ -119,10 +119,9 @@ export function SurpriseReveal({ surprise, child, parentName }: { surprise: Surp
 
 // ── Treasure chest ────────────────────────────────────────────────────────────
 
-export function ChestCard({ family, child }: { family: Family; child: Child }) {
+export function ChestCard({ family, child, day }: { family: Family; child: Child; day: string }) {
   const { update } = useStore();
   const [prize, setPrize] = useState<ChestPrize | null>(null);
-  const day = dayKey();
   const ready = canOpenChest(family, child.id, day);
   const opened = child.chests.includes(day);
   if (!ready && !prize) {
@@ -160,7 +159,7 @@ export function ChestCard({ family, child }: { family: Family; child: Child }) {
             ) : (
               <>
                 <h2>+{prize.points} bonus points!</h2>
-                <p>Treasure for a super quest day.</p>
+                <p>Treasure for a super quest day. Spend them on mystery boxes.</p>
               </>
             )}
             <button className="btn btn--gold btn--lg" onClick={() => setPrize(null)} autoFocus>Awesome!</button>

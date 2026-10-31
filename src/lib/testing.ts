@@ -4,7 +4,7 @@ import { normalizeFamily } from "./migrate";
 
 export function emptyFamily(): Family {
   return normalizeFamily({
-    email: "p@example.com", parentName: "Pat", passwordHash: "secret-hash", pinHash: "pin-hash", children: [],
+    email: "p@example.com", parentName: "Pat", children: [],
     habits: defaultHabits(), habitsChosen: true, log: {}, createdAt: "",
   });
 }

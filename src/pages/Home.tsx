@@ -1,9 +1,7 @@
 /**
  * Home page: what HabbitQuest is, how a day works, the habits parents can choose,
- * the worlds children unlock, and why parents can trust it. Two ways in: create an
- * account, or open the demo family.
+ * the worlds children unlock, and why parents can trust it.
  */
-import { useState } from "react";
 import Buddy from "../components/Buddy";
 import Clock from "../components/Clock";
 import HabitArt from "../components/HabitArt";
@@ -12,8 +10,6 @@ import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
 import { WORLDS } from "../lib/family";
 import { HABITS } from "../lib/habits";
-import { go } from "../lib/router";
-import { DEMO, useStore } from "../lib/store";
 import { formatMinutes, formatTime } from "../lib/time";
 
 const STEPS = [
@@ -25,15 +21,6 @@ const STEPS = [
 ];
 
 export default function Home() {
-  const { startDemo } = useStore();
-  const [loading, setLoading] = useState(false);
-
-  async function openDemo() {
-    setLoading(true);
-    await startDemo();
-    go("/parent");
-  }
-
   return (
     <div className="page page--home">
       <SiteHeader />
@@ -56,14 +43,8 @@ export default function Home() {
               new worlds to explore.
             </p>
             <div className="hero__ctas">
-              <a className="btn btn--primary btn--lg" href="#/register">Create your family account</a>
-              <button className="btn btn--soft btn--lg" onClick={openDemo} disabled={loading}>
-                {loading ? "Opening…" : "Try the demo family"}
-              </button>
+              <a className="btn btn--primary btn--lg" href="#/login">Get started</a>
             </div>
-            <p className="hero__note">
-              Demo sign-in: {DEMO.email} / {DEMO.password} · parent PIN {DEMO.pin}
-            </p>
           </div>
 
           <div className="hero__stage" aria-hidden="true">
@@ -202,7 +183,7 @@ export default function Home() {
             <h2>Start your family's first quest tonight</h2>
             <p>Two minutes to set up. One sparkle to win them over.</p>
           </div>
-          <a className="btn btn--gold btn--lg" href="#/register">Get started free</a>
+          <a className="btn btn--gold btn--lg" href="#/login">Get started free</a>
         </div>
       </section>
 

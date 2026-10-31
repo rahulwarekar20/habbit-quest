@@ -3,7 +3,7 @@ import { childDefaults, levelOf, type Family } from "./family";
 import { defaultRewards } from "./rewards";
 
 /** A family as saved by any version of the app: the original fields, plus whatever came later. */
-export type SavedFamily = Pick<Family, "email" | "parentName" | "passwordHash" | "pinHash" | "children" | "habits" | "habitsChosen" | "log" | "createdAt"> & Partial<Family>;
+export type SavedFamily = Pick<Family, "email" | "parentName" | "children" | "habits" | "habitsChosen" | "log" | "createdAt"> & Partial<Family>;
 
 export function normalizeFamily(f: SavedFamily): Family {
   return {

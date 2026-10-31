@@ -38,6 +38,7 @@ export interface Redemption {
   day: string;
   at: string;
   mystery?: boolean;
+  asked?: boolean; // a request paid from the backend balance: nothing is held, a parent records it
 }
 
 export const REWARD_KIND_LABEL: Record<RewardKind, string> = {
@@ -104,7 +105,23 @@ export function requestReward(family: Family, childId: string, rewardId: string,
   return { family: next, redemption, error: null };
 }
 
-/** Parent approves (fulfils) or declines a request. Declining refunds the points. Approval must be PIN-checked by the caller. */
+/**
+ * A child asks a grown-up for a reward. The balance lives on the backend and only a parent can
+ * spend it, so nothing is held here: the parent's "yes" records the redemption.
+ */
+export function askForReward(family: Family, childId: string, rewardId: string, day: string, rng = Math.random, now = new Date()): ShopResult {
+  const child = family.children.find((c) => c.id === childId);
+  const reward = family.rewards.find((r) => r.id === rewardId);
+  if (!child || !reward) return { family, redemption: null, error: "That reward isn't in the shop." };
+  if (child.balance < reward.cost) return { family, redemption: null, error: `You need ${reward.cost - child.balance} more points.` };
+  const redemption: Redemption = {
+    id: newId("r", now, rng), childId, rewardId, title: reward.title, emoji: reward.emoji, minutes: reward.minutes,
+    cost: reward.cost, day, at: now.toISOString(), status: "pending", asked: true,
+  };
+  return { family: { ...family, redemptions: [...family.redemptions, redemption].slice(-100) }, redemption, error: null };
+}
+
+/** Parent approves (fulfils) or declines a request. Declining refunds held points. Approval must be PIN-checked by the caller. */
 export function resolveRedemption(family: Family, id: string, approve: boolean, now = new Date()): Family {
   const r = family.redemptions.find((x) => x.id === id);
   if (!r || r.status !== "pending") return family;
@@ -112,7 +129,7 @@ export function resolveRedemption(family: Family, id: string, approve: boolean, 
   if (approve && r.minutes) {
     next = updateChild(next, r.childId, (c) => ({ ...c, screenBonus: { ...c.screenBonus, [r.day]: (c.screenBonus[r.day] ?? 0) + r.minutes! } }));
   }
-  if (!approve) next = updateChild(next, r.childId, (c) => creditPoints(c, r.cost, `Refund: ${r.title}`, "refund", r.day, now));
+  if (!approve && !r.asked) next = updateChild(next, r.childId, (c) => creditPoints(c, r.cost, `Refund: ${r.title}`, "refund", r.day, now));
   return next;
 }
 

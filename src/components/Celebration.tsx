@@ -9,7 +9,7 @@ import HabitArt from "./HabitArt";
 import { SparkIcon } from "./Spark";
 
 interface Props {
-  habits: QuestDef[];
+  habits: Pick<QuestDef, "id" | "kidTitle">[];
   name: string;
   points?: number;
   unlocks?: string[];

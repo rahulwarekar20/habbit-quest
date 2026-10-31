@@ -1,53 +1,102 @@
 /**
- * Parent dashboard: safety alerts, quests and reward requests waiting for approval
- * (PIN-protected), each child's day, week, level, points and kid-mode time, the children's
- * check-ins, the surprise planner, adding a child, a button to hand the device over in kid
- * mode, and the AI helpers (coach, planner, reviewer) whose suggestions the parent approves.
+ * Parent dashboard: safety alerts, quests waiting for approval (from the backend, PIN-protected),
+ * reward requests, each child's day, level, Sparks and points, the family's invite code and
+ * caregivers, check-ins, the surprise planner, adding a child, and "Describe a problem".
  */
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AiHelpers from "../components/AiHelpers";
 import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner } from "../components/ParentPanels";
-import Buddy, { BUDDIES } from "../components/Buddy";
-import Clock from "../components/Clock";
+import Buddy from "../components/Buddy";
+import Celebration from "../components/Celebration";
+import { ChildForm } from "../components/ChildForm";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
-  activeQuests, addChild, approveQuest, approvedCount, boostFor, declineQuest, levelOf, newChild, nextLevel, nextWorld,
-  pendingApprovals, pointsFor, questWhen, questsFor, statusOf, streakOf, type BuddyId, type Child, type Family, type QuestStatus,
-} from "../lib/family";
-import { MAX_AGE, MIN_AGE, type HabitId, type QuestDef } from "../lib/habits";
+  addChild, approveCompletion, errorText, getChildToday, listApprovals, newInviteCode, rejectCompletion,
+  type Approval, type ChildInput, type Today,
+} from "../lib/api";
+import { approvedCount, nextWorld, streakOf, type Child, type Family, type QuestStatus } from "../lib/family";
 import { appAllowance, appUsedSeconds } from "../lib/playtime";
 import { pendingRedemptions } from "../lib/rewards";
 import { go } from "../lib/router";
-import { setKidMode } from "../lib/storage";
 import { useStore } from "../lib/store";
+import { applyProgress, applyToday, localStatus } from "../lib/sync";
 import { dayKey, greeting, lastDays, weekdayShort } from "../lib/time";
 
+const POLL_MS = 30_000;
 const STATUS_LABEL: Record<QuestStatus, string> = {
   todo: "To do", submitted: "Waiting for you", approved: "Spark earned", notyet: "Trying again",
 };
 
+interface LevelUp { habit: { id: string; kidTitle: string }; name: string; points: number; message: string }
+
 export default function ParentDashboard() {
-  const { family, update, askPin } = useStore();
+  const { family, server, update, askPin, reload, enterKidMode } = useStore();
   const fam = family!;
-  const today = dayKey();
-  const pending = pendingApprovals(fam, today);
-  const quests = activeQuests(fam);
+  const familyId = server!.id;
+  const childIds = fam.children.map((c) => c.id).join();
+  const [approvals, setApprovals] = useState<Approval[] | null>(null);
+  const [days, setDays] = useState<Record<string, Today>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [deciding, setDeciding] = useState<string | null>(null);
+  const [levelUp, setLevelUp] = useState<LevelUp | null>(null);
 
-  const requests = pendingRedemptions(fam).length;
+  const load = useCallback(async () => {
+    try {
+      const ids = childIds ? childIds.split(",") : [];
+      const [waiting, todays] = await Promise.all([listApprovals(familyId), Promise.all(ids.map(getChildToday))]);
+      setApprovals(waiting);
+      setDays(Object.fromEntries(todays.map((t) => [t.child.id, t])));
+      update((f) => todays.reduce(applyToday, f));
+      setError(null);
+    } catch (e) {
+      setError(errorText(e));
+    }
+  }, [childIds, familyId, update]);
 
-  async function decide(child: Child, habit: QuestDef, approve: boolean) {
-    const ok = await askPin(approve ? `Approve "${habit.parentTitle}" for ${child.name}.` : `Send "${habit.parentTitle}" back to ${child.name}.`);
+  useEffect(() => {
+    void load();
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [load]);
+
+  async function decide(item: Approval, approve: boolean) {
+    const ok = await askPin(approve ? `Approve "${item.title}" for ${item.child_name}.` : `Send "${item.title}" back to ${item.child_name}.`);
     if (!ok) return;
-    update((f) => (approve ? approveQuest : declineQuest)(f, today, child.id, habit.id));
+    setDeciding(item.completion_id);
+    setError(null);
+    const before = days[item.child_id]?.progress.level;
+    try {
+      const result = await (approve ? approveCompletion : rejectCompletion)(item.completion_id);
+      update((f) => applyProgress(f, result.child_id, result.progress, result.points));
+      if (approve && before !== undefined && result.progress.level > before) {
+        setLevelUp({
+          habit: { id: item.habit_id, kidTitle: item.kid_title }, name: item.child_name, points: item.points,
+          message: `Level up! ${item.child_name} is a ${result.progress.level_name} now.`,
+        });
+      }
+    } catch (e) {
+      setError(errorText(e)); // e.g. another caregiver decided first
+    }
+    setDeciding(null);
+    await load();
   }
 
   function openKidMode(childId?: string) {
-    setKidMode(true);
+    enterKidMode();
     go(childId ? `/kid/${childId}` : "/kid");
   }
 
+  async function add(input: ChildInput) {
+    await addChild(familyId, input);
+    await reload();
+  }
+
+  const pending = approvals ?? [];
+  const requests = pendingRedemptions(fam).length;
   return (
     <div className="page page--app">
       <ParentHeader active="dashboard" />
@@ -68,11 +117,12 @@ export default function ParentDashboard() {
             </p>
           </div>
           <div className="page-head__actions">
-            <a className="btn btn--soft" href="#/setup">Edit habits &amp; times</a>
+            <a className="btn btn--soft" href="#/setup">Child details</a>
             <button className="btn btn--gold" onClick={() => openKidMode()}>Open kid mode</button>
           </div>
         </div>
 
+        {error && <p className="form-error" role="alert">{error}</p>}
         <SafetyAlerts family={fam} />
 
         {/* ── Waiting for approval ─────────────────────────────────────── */}
@@ -81,31 +131,34 @@ export default function ParentDashboard() {
             <h2 id="approvals-title">Waiting for your OK</h2>
             <span className="count-badge">{pending.length}</span>
           </div>
-          {pending.length === 0 ? (
+          {approvals === null ? (
+            <p className="empty">Checking for quests…</p>
+          ) : pending.length === 0 ? (
             <p className="empty">
               When your child taps &ldquo;I did it!&rdquo;, the quest shows up here for you to approve.
             </p>
           ) : (
             <ul className="approvals">
-              {pending.map(({ child, habit }) => (
-                <li key={`${child.id}-${habit.id}`} className="approval">
-                  <HabitArt habit={habit.id} className="approval__art" />
-                  <div className="approval__text">
-                    <span className="approval__who"><Buddy buddy={child.buddy} size={24} /> {child.name}</span>
-                    <b>{habit.parentTitle}</b>
-                    <span className="muted">
-                      {questWhen(fam, habit, child, today) ?? "Today"} · marked done · worth {pointsFor(fam, today, child.id, habit.id)} points
-                      {boostFor(fam, today, child.id, habit.id).multiplier > 1 && ` (${boostFor(fam, today, child.id, habit.id).multiplier}x)`}
-                    </span>
-                  </div>
-                  <div className="approval__actions">
-                    <button className="btn btn--ghost btn--sm" onClick={() => decide(child, habit, false)}>Not yet</button>
-                    <button className="btn btn--primary btn--sm" onClick={() => decide(child, habit, true)}>
-                      Approve <SparkIcon size={14} /> +1
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {pending.map((item) => {
+                const child = fam.children.find((c) => c.id === item.child_id);
+                const dayOf = days[item.child_id]?.day ?? dayKey();
+                return (
+                  <li key={item.completion_id} className="approval">
+                    <HabitArt habit={item.habit_id} className="approval__art" />
+                    <div className="approval__text">
+                      <span className="approval__who">{child && <Buddy buddy={child.buddy} size={24} />} {item.child_name}</span>
+                      <b>{item.title}</b>
+                      <span className="muted">{item.day === dayOf ? "Today" : weekdayShort(item.day)} · marked done · worth {item.points} points</span>
+                    </div>
+                    <div className="approval__actions">
+                      <button className="btn btn--ghost btn--sm" disabled={deciding === item.completion_id} onClick={() => decide(item, false)}>Not yet</button>
+                      <button className="btn btn--primary btn--sm" disabled={deciding === item.completion_id} onClick={() => decide(item, true)}>
+                        Approve <SparkIcon size={14} /> +1
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -115,55 +168,39 @@ export default function ParentDashboard() {
         {/* ── Children ─────────────────────────────────────────────────── */}
         <div className="kids-grid">
           {fam.children.map((child) => (
-            <ChildCard key={child.id} family={fam} child={child} today={today} onOpen={() => openKidMode(child.id)} />
+            <ChildCard key={child.id} family={fam} child={child} today={days[child.id]} onOpen={() => openKidMode(child.id)} />
           ))}
-          <AddChildCard onAdd={(name, age, buddy) => update((f) => addChild(f, newChild(name, age, buddy)))} />
+          <AddChildCard onAdd={add} />
         </div>
+
+        <FamilyPanel />
 
         <div className="two-col">
           <KidFeedback family={fam} />
           <SurprisePlanner family={fam} />
         </div>
 
-        {/* ── AI helpers ───────────────────────────────────────────────── */}
-        <AiHelpers family={fam} />
-
-        {/* ── Today's routine ──────────────────────────────────────────── */}
-        <section className="panel" aria-labelledby="routine-title">
-          <div className="panel__head">
-            <h2 id="routine-title">Today's routine</h2>
-            <a href="#/setup" className="link">Change</a>
-          </div>
-          <div className="routine">
-            {quests.map((h) => (
-              <div key={h.id} className="routine__item">
-                {h.setting.kind === "time" && fam.habits[h.id as HabitId].value
-                  ? <Clock time={fam.habits[h.id as HabitId].value!} size={40} />
-                  : <HabitArt habit={h.id} className="routine__art" />}
-                <div>
-                  <b>{h.parentTitle}</b>
-                  <span className="muted">{questWhen(fam, h) ?? "Every day"}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <AiHelpers family={fam} onPlanSaved={() => void load()} />
       </main>
       <Footer />
+      {levelUp && (
+        <Celebration habits={[levelUp.habit]} name={levelUp.name} points={levelUp.points} unlocks={[levelUp.message]} onDone={() => setLevelUp(null)} />
+      )}
     </div>
   );
 }
 
-function ChildCard({ family, child, today, onOpen }: { family: Family; child: Child; today: string; onOpen: () => void }) {
-  const quests = questsFor(family, child.id);
-  const done = approvedCount(family, today, child.id);
-  const next = nextWorld(child.sparks);
+function ChildCard({ family, child, today, onOpen }: { family: Family; child: Child; today?: Today; onOpen: () => void }) {
+  const day = today?.day ?? dayKey();
+  const quests = today?.habits ?? [];
+  const done = quests.filter((h) => h.status === "approved").length;
+  const sparks = today?.progress.sparks ?? child.sparks;
+  const next = nextWorld(sparks);
   const week = lastDays(7);
-  const level = levelOf(child.sparks);
-  const upcoming = nextLevel(child.sparks);
-  const streak = streakOf(family, child.id, today);
-  const allowance = appAllowance(family, child, today);
-  const usedMin = Math.round(appUsedSeconds(child, today) / 60);
+  const streak = streakOf(family, child.id, day);
+  const allowance = appAllowance(family, child, day);
+  const usedMin = Math.round(appUsedSeconds(child, day) / 60);
+  const nextAt = today?.progress.next_level_at;
 
   return (
     <article className="kid-card">
@@ -173,14 +210,16 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
           <h3>{child.name}</h3>
           <span className="muted">Age {child.age} · {done} of {quests.length} today</span>
         </div>
-        <SparkCount count={child.sparks} />
+        <SparkCount count={sparks} />
       </header>
 
       <div className="kid-card__stats">
-        <span title={upcoming ? `${upcoming.sparks - child.sparks} Sparks to level ${upcoming.level}` : "Top level"}>
-          <b>Level {level.level}</b> {level.name}
-        </span>
-        <span><b>🪙 {child.points}</b> points</span>
+        {today && (
+          <span title={nextAt != null ? `${nextAt - sparks} Sparks to the next level` : "Top level"}>
+            <b>Level {today.progress.level}</b> {today.progress.level_name}
+          </span>
+        )}
+        <span><b>🪙 {child.balance}</b> points</span>
         {streak >= 2 && <span><b>🔥 {streak}</b> days</span>}
         <span className={allowance !== null && usedMin >= allowance ? "is-over" : ""}>
           <b>⏱ {usedMin}{allowance !== null ? ` / ${allowance}` : ""}</b> min in app
@@ -192,33 +231,34 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
           <>
             <div className="progress-block__label">
               <span>Next world: <b>{next.name}</b></span>
-              <span>{child.sparks} / {next.sparks}</span>
+              <span>{sparks} / {next.sparks}</span>
             </div>
-            <div className="bar"><span style={{ width: `${Math.min(100, (child.sparks / next.sparks) * 100)}%` }} /></div>
+            <div className="bar"><span style={{ width: `${Math.min(100, (sparks / next.sparks) * 100)}%` }} /></div>
           </>
         ) : (
           <div className="progress-block__label"><span>Every world unlocked!</span></div>
         )}
       </div>
 
+      {today && quests.length === 0 && <p className="empty">No quests today. Describe a problem below, or pick quests in the library.</p>}
       <ul className="kid-card__quests">
         {quests.map((h) => {
-          const status = statusOf(family, today, child.id, h.id);
+          const status = localStatus(h.status);
           return (
-            <li key={h.id}>
-              <HabitArt habit={h.id} className="mini-art" />
-              <span>{h.parentTitle}{!h.routine && <small className="tier-tag">Tier {h.tier}</small>}</span>
+            <li key={h.child_habit_id}>
+              <HabitArt habit={h.habit_id} className="mini-art" />
+              <span>{h.kid_title}<small className="tier-tag">Tier {h.tier}</small></span>
               <span className={`status status--${status}`}>{STATUS_LABEL[status]}</span>
             </li>
           );
         })}
       </ul>
 
-      <div className="week" aria-label="Sparks earned in the last 7 days">
+      <div className="week" aria-label="Sparks earned in the last 7 days, as seen on this device">
         {week.map((d) => {
           const n = approvedCount(family, d, child.id);
           return (
-            <div key={d} className={`week__day ${d === today ? "is-today" : ""}`}>
+            <div key={d} className={`week__day ${d === day ? "is-today" : ""}`}>
               <span className="week__dots">
                 {n > 0 ? <SparkIcon size={n > 2 ? 22 : 16} /> : <i />}
               </span>
@@ -230,26 +270,55 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
       </div>
 
       <div className="kid-card__buttons">
-        <a className="btn btn--ghost btn--sm" href={`#/quests/${child.id}`}>Bonus quests</a>
+        <a className="btn btn--ghost btn--sm" href={`#/quests/${child.id}`}>Quests</a>
+        <a className="btn btn--ghost btn--sm" href={`#/setup/${child.id}`}>Edit</a>
         <button className="btn btn--soft btn--sm" onClick={onOpen}>Open {child.name}'s quests</button>
       </div>
     </article>
   );
 }
 
-function AddChildCard({ onAdd }: { onAdd: (name: string, age: number, buddy: BuddyId) => void }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [age, setAge] = useState(6);
-  const [buddy, setBuddy] = useState<BuddyId>("owl");
+function FamilyPanel() {
+  const { server, setServer } = useStore();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fam = server!;
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    onAdd(name, age, buddy);
-    setName("");
-    setOpen(false);
+  async function refreshCode() {
+    setBusy(true);
+    setError(null);
+    try {
+      setServer(await newInviteCode(fam.id));
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
   }
+
+  return (
+    <section className="panel" aria-labelledby="family-title">
+      <div className="panel__head">
+        <h2 id="family-title">{fam.name}</h2>
+        <span className="muted">{fam.timezone}</span>
+      </div>
+      <div className="invite">
+        <div>
+          <span className="muted">Invite code for another grown-up</span>
+          <code className="invite__code">{fam.invite_code}</code>
+        </div>
+        <button className="btn btn--ghost btn--sm" disabled={busy} onClick={refreshCode}>New code</button>
+      </div>
+      <ul className="mini-list">
+        {fam.caregivers.map((c) => <li key={c.user_id}><span>{c.display_name}</span><span className="muted">{c.role}</span></li>)}
+      </ul>
+      {error && <p className="form-error">{error}</p>}
+    </section>
+  );
+}
+
+function AddChildCard({ onAdd }: { onAdd: (input: ChildInput) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
 
   if (!open) {
     return (
@@ -262,32 +331,10 @@ function AddChildCard({ onAdd }: { onAdd: (name: string, age: number, buddy: Bud
   }
 
   return (
-    <form className="kid-card kid-card--form" onSubmit={submit}>
+    <div className="kid-card kid-card--form">
       <h3>Add a child</h3>
-      <div className="field-row">
-        <label className="field">
-          <span>First name</span>
-          <input required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label className="field field--narrow">
-          <span>Age</span>
-          <select value={age} onChange={(e) => setAge(Number(e.target.value))}>
-            {Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => i + MIN_AGE).map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-        </label>
-      </div>
-      <div className="buddy-picker buddy-picker--sm" role="radiogroup" aria-label="Buddy">
-        {BUDDIES.map((b) => (
-          <button type="button" key={b.id} role="radio" aria-checked={buddy === b.id}
-            className={`buddy-option ${buddy === b.id ? "is-on" : ""}`} onClick={() => setBuddy(b.id)}>
-            <Buddy buddy={b.id} size={42} />
-          </button>
-        ))}
-      </div>
-      <div className="modal__actions">
-        <button type="button" className="btn btn--ghost" onClick={() => setOpen(false)}>Cancel</button>
-        <button className="btn btn--primary">Add child</button>
-      </div>
-    </form>
+      <ChildForm submitLabel="Add child" onCancel={() => setOpen(false)}
+        onSubmit={async (input) => { await onAdd(input); setOpen(false); }} />
+    </div>
   );
 }
