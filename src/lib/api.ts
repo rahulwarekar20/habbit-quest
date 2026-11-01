@@ -251,6 +251,7 @@ export interface CoachMessage {
   role: "parent" | "coach";
   content: string;
   sources: { ref: string; title: string }[];
+  no_habit_match: boolean;
   created_at: string;
 }
 export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[] }

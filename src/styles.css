@@ -686,6 +686,7 @@ input, select { font: inherit; color: inherit; }
 .bubble-wrap--parent { justify-items: end; }
 .bubble-wrap--assistant { justify-items: start; }
 .bubble__sources { margin: 0 4px; font-size: 0.78rem; color: var(--muted); font-weight: 700; max-width: 88%; }
+.bubble__warning { margin: 2px 4px 0; padding: 8px 12px; max-width: 88%; border-radius: 12px; border: 1px solid #ffe3a3; background: var(--gold-soft); color: #8a5200; font-size: 0.85rem; font-weight: 700; }
 .recs { border: 1.5px solid #ddd2ff; border-radius: 20px; padding: 14px; background: linear-gradient(160deg, #fff, #f8f5ff); display: grid; gap: 10px; }
 .recs__head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .recs__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

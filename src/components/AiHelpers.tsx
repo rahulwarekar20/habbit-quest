@@ -389,6 +389,7 @@ function Coach({ family, onChange }: { family: Family; onChange: () => Promise<v
             <div key={m.id} className={`bubble-wrap bubble-wrap--${from}`}>
               <p className={`bubble bubble--${from}`}>{from === "parent" ? m.content : plainText(m.content)}</p>
               {m.sources.length > 0 && <p className="bubble__sources">Sources: {m.sources.map((s) => s.title).join(" · ")}</p>}
+              {m.no_habit_match && <p className="bubble__warning" role="note">⚠️ We don't have an approved habit for this problem yet, so none is suggested.</p>}
             </div>
           );
         })}
