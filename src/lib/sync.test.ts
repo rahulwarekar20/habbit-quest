@@ -7,13 +7,16 @@ import { applyExtras, applyToday } from "./sync";
 import { emptyFamily } from "./testing";
 
 const DAY = "2026-10-27";
-const progress = { sparks: 7, level: 2, level_name: "Explorer", unlocked_tier: 2, next_level_at: 15 };
+const progress = {
+  sparks: 7, pending_sparks: 0, level: 2, level_name: "Forest Explorer", world: "mosswood" as const, unlocked_tier: 2,
+  next_level_at: 90, next_landmark: null,
+};
 const habit = (habit_id: string, status: api.HabitStatus): api.TodayHabit => ({
   child_habit_id: `ch-${habit_id}`, habit_id, kid_title: `Kid ${habit_id}`, kid_hint: "Hint", icon: "x", anchor: "morning",
-  tier: 1, points: 10, cue_time: "07:00", status, completion_id: null, boosts: [], multiplier: 1,
+  tier: 1, points: 10, cue_time: "07:00", status, completion_id: null, boosts: [], multiplier: 1, stars: 0,
 });
 const today = (habits: api.TodayHabit[], day = DAY): api.Today => ({
-  child: { id: "a", name: "Alex", buddy: "fox", world: "camp" }, day, progress, points: 40, habits, streak: 3, week: { [DAY]: 1 },
+  child: { id: "a", name: "Alex", buddy: "fox", world: "camp" }, day, welcome_back: false, rest_day: false, next_quest_day: null, progress, points: 40, habits, streak: 3, week: { [DAY]: 1 },
 });
 const family = (): Family => addChild(emptyFamily(), { ...newChild("Alex", 8, "fox"), id: "a" });
 

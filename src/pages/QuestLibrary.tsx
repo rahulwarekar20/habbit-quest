@@ -8,8 +8,9 @@ import Buddy from "../components/Buddy";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
 import PlanEditor from "../components/PlanEditor";
-import { errorText, getPlan, updateChildHabit, type Plan, type PlanHabit } from "../lib/api";
-import { LEVELS } from "../lib/family";
+import { errorText, getPlan, updateChildHabit, type DayName, type Plan, type PlanHabit } from "../lib/api";
+import { WORLDS } from "../lib/family";
+import { DAY_PRESETS, WEEK, presetFor, toggleDay } from "../lib/schedule";
 import { MAX_HABITS } from "../lib/plan";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
@@ -104,6 +105,7 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
                           <input type="time" defaultValue={h.cue_time} key={h.cue_time} aria-label={`Time for ${h.title}`}
                             onBlur={(e) => { if (e.target.value && e.target.value !== h.cue_time) void change(h, { cue_time: e.target.value }); }} />
                         </label>
+                        <DayPicker title={h.title} days={h.days} onChange={(days) => change(h, { days })} />
                         <div className="lib-card__actions">
                           <button className="btn btn--ghost btn--sm" onClick={() => change(h, { status: h.status === "paused" ? "active" : "paused" })}>
                             {h.status === "paused" ? "Resume" : "Pause"}
@@ -126,9 +128,31 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
           </>
         )}
 
-        <p className="hint">Levels: {LEVELS.map((l) => `${l.level} ${l.name} (${l.sparks} Sparks)`).join(" · ")}</p>
+        <p className="hint">Tier 2 quests open in {WORLDS[1].name} ({WORLDS[1].sparks} Sparks) and tier 3 in {WORLDS[2].name} ({WORLDS[2].sparks} Sparks). You can change this in Child details.</p>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+/** Which days a quest runs on: a quick choice, or any days the parent taps. */
+function DayPicker({ title, days, onChange }: { title: string; days: DayName[]; onChange: (days: DayName[]) => void }) {
+  const preset = presetFor(days);
+  return (
+    <div className="day-picker">
+      <select aria-label={`Days for ${title}`} value={preset ?? "custom"}
+        onChange={(e) => { const next = DAY_PRESETS.find((p) => p.label === e.target.value); if (next) onChange(next.days); }}>
+        {DAY_PRESETS.map((p) => <option key={p.label}>{p.label}</option>)}
+        {!preset && <option value="custom">Custom days</option>}
+      </select>
+      <div className="day-picker__days">
+        {WEEK.map((d) => (
+          <button key={d.id} type="button" aria-pressed={days.includes(d.id)} aria-label={d.short}
+            className={days.includes(d.id) ? "is-on" : ""} onClick={() => onChange(toggleDay(days, d.id))}>
+            {d.short[0]}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

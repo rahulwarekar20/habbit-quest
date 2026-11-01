@@ -21,6 +21,7 @@ import { appAllowance, appUsedSeconds } from "../lib/playtime";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 import { applyExtras, applyProgress, applyToday, localStatus } from "../lib/sync";
+import { weekdayName } from "../lib/schedule";
 import { dayKey, greeting, weekdayShort } from "../lib/time";
 
 const POLL_MS = 30_000;
@@ -28,7 +29,7 @@ const STATUS_LABEL: Record<QuestStatus, string> = {
   todo: "To do", submitted: "Waiting for you", approved: "Spark earned", notyet: "Trying again",
 };
 
-interface LevelUp { habit: { id: string; kidTitle: string }; name: string; points: number; message: string }
+interface LevelUp { habit: { id: string; kidTitle: string }; name: string; buddy: Child["buddy"]; sparks: number; points: number; message: string }
 
 export default function ParentDashboard() {
   const { family, server, update, askPin, reload, enterKidMode } = useStore();
@@ -71,13 +72,15 @@ export default function ParentDashboard() {
     if (!ok) return;
     setDeciding(item.completion_id);
     setError(null);
-    const before = days[item.child_id]?.progress.level;
+    const before = days[item.child_id]?.progress;
     try {
       const result = await (approve ? approveCompletion : rejectCompletion)(item.completion_id);
       update((f) => applyProgress(f, result.child_id, result.progress, result.points));
-      if (approve && before !== undefined && result.progress.level > before) {
+      if (approve && before !== undefined && result.progress.level > before.level) {
         setLevelUp({
           habit: { id: item.habit_id, kidTitle: item.kid_title }, name: item.child_name, points: item.points,
+          buddy: fam.children.find((c) => c.id === item.child_id)?.buddy ?? "fox",
+          sparks: result.progress.sparks - before.sparks,
           message: `Level up! ${item.child_name} is a ${result.progress.level_name} now.`,
         });
       }
@@ -186,7 +189,7 @@ export default function ParentDashboard() {
       </main>
       <Footer />
       {levelUp && (
-        <Celebration habits={[levelUp.habit]} name={levelUp.name} points={levelUp.points} unlocks={[levelUp.message]} onDone={() => setLevelUp(null)} />
+        <Celebration habits={[levelUp.habit]} name={levelUp.name} buddy={levelUp.buddy} sparks={levelUp.sparks} points={levelUp.points} unlocks={[levelUp.message]} onDone={() => setLevelUp(null)} />
       )}
     </div>
   );
@@ -242,7 +245,13 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
         )}
       </div>
 
-      {today && quests.length === 0 && <p className="empty">No quests today. Describe a problem below, or pick quests in the library.</p>}
+      {today && quests.length === 0 && (
+        <p className="empty">
+          {today.rest_day && today.next_quest_day
+            ? `Rest day. Next quests on ${weekdayName(today.next_quest_day)}.`
+            : "No quests today. Describe a problem below, or pick quests in the library."}
+        </p>
+      )}
       <ul className="kid-card__quests">
         {quests.map((h) => {
           const status = localStatus(h.status);

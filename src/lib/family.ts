@@ -1,16 +1,16 @@
 /**
  * Browser-side family model: a mirror of what the backend owns (see sync.ts), which the pages read
- * from, plus level and world definitions and which celebrations this device has shown.
+ * from, plus the list of worlds and which celebrations this device has shown.
  *
- *   Sparks  are lifetime progress: they raise the child's level (unlocking harder quest tiers)
- *           and unlock worlds. They are never taken away.
+ *   Sparks  are steps on the child's journey. A quest earns its tier in Sparks, up to 6 a day. Each
+ *           world brings a new level and rank and may open harder quests. Sparks are never lost.
  *   Points  are the spendable currency for the reward shop. The backend pays a quest's tier value
  *           times a multiplier: 1x normally, +1x for the day's golden quest, +1x on a 3-day streak,
- *           +1x on a parent's surprise double-points day (max 3x).
+ *           +1x on a parent's surprise double-points day, +1x on the day back after a break (max 3x).
  *
  * Every function returns a new Family and never mutates its input.
  */
-import type { Boost } from "./api";
+import type { Boost, Progress, ThemeWorld } from "./api";
 import { HABITS, QUEST_BY_ID, type HabitId, type QuestDef, type Tier } from "./habits";
 
 export type QuestStatus = "todo" | "submitted" | "approved" | "notyet";
@@ -28,6 +28,7 @@ export interface Child {
   age: number;
   buddy: BuddyId;
   sparks: number; // mirrored from the backend
+  progress: Progress | null; // the journey as the backend last sent it
   balance: number; // spendable points on the backend (mirrored); only a parent can spend them
   plan?: PlanQuest[]; // today's quests from the backend (mirrored); absent means the family routine applies
   celebrated: string[]; // "<day>:<quest>" keys the child has already seen celebrated
@@ -75,46 +76,25 @@ export interface Family {
 
 // ── Worlds ────────────────────────────────────────────────────────────────────
 
-export type WorldId = "camp" | "mosswood" | "sky";
+export type WorldId = ThemeWorld;
 
+/** The summary shown before sign-in and to parents. The landmarks come from the backend (see Journey). */
 export interface World {
   id: WorldId;
   name: string;
   sparks: number; // lifetime Sparks needed to unlock
+  tier: Tier; // highest quest tier this world opens
   blurb: string;
-  discoveries: { id: string; name: string; x: number; y: number }[]; // x/y in % of the scene
 }
 
 export const WORLDS: World[] = [
-  {
-    id: "camp", name: "Starter Camp", sparks: 0, blurb: "A cosy campfire where every adventure begins.",
-    discoveries: [
-      { id: "lantern", name: "Glowing lantern", x: 20, y: 62 },
-      { id: "owl", name: "Sleepy owl", x: 80, y: 30 },
-      { id: "map", name: "Treasure map", x: 60, y: 82 },
-    ],
-  },
-  {
-    id: "mosswood", name: "Mosswood Forest", sparks: 5, blurb: "Giant trees, glowing mushrooms and a hidden portal.",
-    discoveries: [
-      { id: "mushroom", name: "Glow mushroom", x: 18, y: 80 },
-      { id: "fox", name: "Friendly fox", x: 72, y: 78 },
-      { id: "portal", name: "Purple portal", x: 50, y: 50 },
-      { id: "nest", name: "Bird's nest", x: 86, y: 24 },
-    ],
-  },
-  {
-    id: "sky", name: "Sky Islands", sparks: 20, blurb: "Floating islands, waterfalls and a balloon airship.",
-    discoveries: [
-      { id: "balloon", name: "Balloon airship", x: 80, y: 22 },
-      { id: "waterfall", name: "Cloud waterfall", x: 28, y: 66 },
-      { id: "castle", name: "Tiny castle", x: 52, y: 36 },
-      { id: "kite", name: "Rainbow kite", x: 14, y: 20 },
-    ],
-  },
+  { id: "camp", name: "Starter Camp", sparks: 0, tier: 1, blurb: "A cosy campfire where every adventure begins." },
+  { id: "mosswood", name: "Mosswood Forest", sparks: 30, tier: 2, blurb: "Giant trees, glowing mushrooms and a hidden portal." },
+  { id: "sky", name: "Sky Islands", sparks: 90, tier: 3, blurb: "Floating islands, waterfalls and a balloon airship." },
+  { id: "coral", name: "Coral Cove", sparks: 180, tier: 3, blurb: "Bright reefs, friendly turtles and a sunken ship." },
+  { id: "crystal", name: "Crystal Caves", sparks: 300, tier: 3, blurb: "Glittering tunnels, gentle dragons and hidden gems." },
+  { id: "star", name: "Star Harbour", sparks: 450, tier: 3, blurb: "A harbour in the night sky, with new trails to chart." },
 ];
-
-export const WORLD_BY_ID = Object.fromEntries(WORLDS.map((w) => [w.id, w])) as Record<WorldId, World>;
 
 export const isUnlocked = (world: World, sparks: number) => sparks >= world.sparks;
 
@@ -122,33 +102,6 @@ export const isUnlocked = (world: World, sparks: number) => sparks >= world.spar
 export function nextWorld(sparks: number): World | null {
   return WORLDS.find((w) => !isUnlocked(w, sparks)) ?? null;
 }
-
-// ── Levels (unlock harder quest tiers) ────────────────────────────────────────
-
-export interface Level {
-  level: number;
-  name: string;
-  sparks: number; // lifetime Sparks needed
-  tier: Tier; // highest quest tier unlocked at this level
-}
-
-export const LEVELS: Level[] = [
-  { level: 1, name: "Sprout", sparks: 0, tier: 1 },
-  { level: 2, name: "Explorer", sparks: 5, tier: 2 },
-  { level: 3, name: "Adventurer", sparks: 15, tier: 3 },
-  { level: 4, name: "Hero", sparks: 30, tier: 3 },
-  { level: 5, name: "Legend", sparks: 50, tier: 3 },
-];
-
-export function levelOf(sparks: number): Level {
-  return [...LEVELS].reverse().find((l) => sparks >= l.sparks) ?? LEVELS[0];
-}
-
-export function nextLevel(sparks: number): Level | null {
-  return LEVELS.find((l) => l.sparks > sparks) ?? null;
-}
-
-/** The level at which a quest tier unlocks. */
 
 // ── Creating things ───────────────────────────────────────────────────────────
 
@@ -164,7 +117,7 @@ export function defaultHabits(): HabitSettings {
 }
 
 const CHILD_DEFAULTS: Omit<Child, "id" | "name" | "age" | "buddy"> = {
-  sparks: 0, balance: 0, celebrated: [], discoveries: [], streak: 0, week: {}, levelSeen: 1,
+  sparks: 0, progress: null, balance: 0, celebrated: [], discoveries: [], streak: 0, week: {}, levelSeen: 1,
   accessories: [], wearing: null, goal: null, chests: [], appSeconds: {}, appExtraMinutes: {}, screenBonus: {},
 };
 
@@ -214,7 +167,7 @@ export function statusOf(family: Family, day: string, childId: string, quest: st
 }
 
 export const BOOST_LABEL: Record<Boost, string> = {
-  golden: "Golden quest", streak: "3-day streak", double: "Surprise double day",
+  golden: "Golden quest", streak: "3-day streak", double: "Surprise double day", welcome: "Welcome back",
 };
 
 /** Approved quests the child hasn't seen celebrated yet. */
@@ -230,7 +183,7 @@ export function markCelebrated(family: Family, day: string, childId: string, que
   return updateChild(family, childId, (c) => ({
     ...c,
     celebrated: [...new Set([...c.celebrated, ...quests.map((h) => `${day}:${h}`)])],
-    levelSeen: Math.max(c.levelSeen, levelOf(c.sparks).level),
+    levelSeen: Math.max(c.levelSeen, c.progress?.level ?? 1),
   }));
 }
 

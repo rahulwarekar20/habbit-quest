@@ -4,9 +4,9 @@
  * Everything here comes from the backend with the kid token, which also pays the boosts.
  *
  * Children see pictures, clocks and big buttons instead of text-heavy lists. Each quest shows
- * the points it's worth and any boost (golden quest, streak, surprise double day). When a
- * grown-up approves a quest, the child sees a sparkle celebration with points, new worlds and
- * level-ups (which unlock harder quest tiers). Finishing every quest opens a treasure chest.
+ * the points it's worth and any boost (golden quest, streak, surprise double day, welcome back).
+ * When a grown-up approves a quest, the child sees a celebration with Sparks, points, new finds,
+ * worlds and level-ups, and their buddy walks along the path. Finishing every quest opens a chest.
  * Parents' surprises pop up as presents. When the parent allows it, the child's buddy says
  * short AI-written encouragement (safety-checked on the server).
  *
@@ -18,22 +18,26 @@ import Buddy from "../components/Buddy";
 import Celebration from "../components/Celebration";
 import Clock from "../components/Clock";
 import HabitArt from "../components/HabitArt";
+import { JourneyCard, WorldPath } from "../components/Journey";
 import {
   BreakTime, ChestCard, CheckIn, LevelBadge, PointsPill, SurpriseReveal, TimeWarning, usePlaytime,
 } from "../components/KidExtras";
 import Logo from "../components/Logo";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
-import { getTodayCheckin, updateKidExtras, type TodayHabit } from "../lib/api";
+import { getTodayCheckin, updateKidExtras, type Landmark, type TodayHabit } from "../lib/api";
 import { useBuddyLine, type BuddyEvent } from "../lib/buddy";
+import { BUDDY_THEME, buddyNudge } from "../lib/buddyTheme";
 import {
-  BOOST_LABEL, LEVELS, WORLDS, WORLD_BY_ID, celebrationsDue, discover, isUnlocked, levelOf, markCelebrated,
-  type Child, type QuestStatus, type WorldId,
+  BOOST_LABEL, WORLDS, celebrationsDue, discover, isUnlocked, markCelebrated,
+  type Child, type QuestStatus,
 } from "../lib/family";
 import { QUEST_BY_ID } from "../lib/habits";
+import { landmarkKey, readyLandmarks } from "../lib/journeyPath";
 import { go } from "../lib/router";
 import { setKidMode } from "../lib/storage";
 import { useStore } from "../lib/store";
+import { weekdayName } from "../lib/schedule";
 import { localStatus } from "../lib/sync";
 import { formatTime, greeting } from "../lib/time";
 import { useKidDay } from "../lib/useKidDay";
@@ -95,6 +99,7 @@ export function KidPicker() {
 
 interface Celebrating {
   quests: { id: string; kidTitle: string }[];
+  sparks: number;
   points: number;
   unlocks: string[];
 }
@@ -103,7 +108,7 @@ export function KidQuests({ childId }: { childId: string }) {
   const { family, update } = useStore();
   const fam = family!;
   const child = fam.children.find((c) => c.id === childId);
-  const { today, error, lapsed, surprises, dropSurprise, reload, submit, resume } = useKidDay(childId, true);
+  const { today, journey, error, lapsed, surprises, dropSurprise, reload, submit, resume } = useKidDay(childId, true);
   const day = today?.day ?? "";
   const [celebrating, setCelebrating] = useState<Celebrating | null>(null);
   const [cheer, setCheer] = useState<string | null>(null);
@@ -122,6 +127,12 @@ export function KidQuests({ childId }: { childId: string }) {
   const celebrateLine = useBuddyLine(`${childId}:celebrate:${celebrating?.quests.map((h) => h.id).join("+")}`,
     celebrating ? buddyAsk("celebrate") : null);
   const buddySays = submittedLine ?? greetLine;
+  const progress = today?.progress;
+  const waitingFind = child && journey && progress && readyLandmarks(journey.worlds, progress.sparks, child.discoveries).length > 0;
+  const buddyNote = !child || !progress ? null
+    : today.welcome_back ? BUDDY_THEME[child.buddy].welcomeBack
+      : waitingFind ? BUDDY_THEME[child.buddy].waiting
+        : progress.next_landmark ? buddyNudge(child.buddy, progress.next_landmark.sparks - progress.sparks) : null;
 
   useEffect(() => {
     if (today) getTodayCheckin().then((found) => setCheckedIn(!!found)).catch(() => {});
@@ -132,18 +143,22 @@ export function KidQuests({ childId }: { childId: string }) {
   const due = child && today ? celebrationsDue(fam, day, child.id) : [];
   useEffect(() => {
     if (!child || !today || due.length === 0 || celebrating || surprises.length > 0) return;
-    const before = child.sparks - due.length;
-    const unlocks = WORLDS.filter((w) => w.sparks > 0 && before < w.sparks && child.sparks >= w.sparks).map((w) => `New world unlocked: ${w.name}!`);
-    const level = levelOf(child.sparks);
-    if (level.level > child.levelSeen) {
-      const gainedTier = level.tier > (LEVELS.find((l) => l.level === child.levelSeen)?.tier ?? 1);
-      unlocks.push(`Level up! You're a ${level.name} now${gainedTier ? ` and tier ${level.tier} quests are unlocked` : ""}!`);
-    }
     const earned = due.flatMap((q) => quests.filter((h) => h.habit_id === q.id));
+    const sparks = earned.reduce((n, h) => n + h.tier, 0);
+    const before = child.sparks - sparks;
+    const unlocks = WORLDS.filter((w) => w.sparks > 0 && before < w.sparks && child.sparks >= w.sparks).map((w) => `New world unlocked: ${w.name}!`);
+    const finds = journey?.worlds.flatMap((w) => w.landmarks).filter((m) => before < m.sparks && child.sparks >= m.sparks) ?? [];
+    if (finds.length > 0) unlocks.push("You reached a new find on your path!");
+    const level = today.progress.level;
+    if (level > child.levelSeen) {
+      const tier = WORLDS[level - 1].tier;
+      const gainedTier = tier > WORLDS[child.levelSeen - 1].tier;
+      unlocks.push(`Level up! You're a ${today.progress.level_name} now${gainedTier ? " and harder quests are open" : ""}!`);
+    }
     const points = earned.reduce((n, h) => n + h.points * h.multiplier, 0);
-    setCelebrating({ quests: due, points, unlocks });
+    setCelebrating({ quests: due, sparks, points, unlocks });
     update((f) => markCelebrated(f, day, child.id, due.map((h) => h.id)));
-    if (level.level > child.levelSeen) updateKidExtras({ level_seen: level.level }).catch(() => {});
+    if (level > child.levelSeen) updateKidExtras({ level_seen: level }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [due.length, child?.id, surprises.length, today]);
 
@@ -161,8 +176,12 @@ export function KidQuests({ childId }: { childId: string }) {
     window.setTimeout(() => setCheer(null), 3500);
   }
 
+  const teaser = progress?.next_landmark
+    ? `Tomorrow, you're only ${progress.next_landmark.sparks - progress.sparks} Sparks from your next find!`
+    : "You finished every quest today. Super star!";
+
   return (
-    <div className="page page--kid">
+    <div className="page page--kid" data-buddy={child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <section className="kid-hero">
@@ -173,12 +192,16 @@ export function KidQuests({ childId }: { childId: string }) {
               {!today
                 ? "Getting your quests…"
                 : quests.length === 0
-                  ? "No quests today. Enjoy your day!"
+                  ? today.rest_day && today.next_quest_day
+                    ? `Rest day! Your next quests are on ${weekdayName(today.next_quest_day)}.`
+                    : "No quests today. Enjoy your day!"
                   : done === quests.length
-                    ? "You finished every quest today. Super star!"
-                    : `You've earned ${done} of ${quests.length} Sparks today. Let's go!`}
+                    ? teaser
+                    : remaining.length === 1
+                      ? "One more quest and today's chest opens!"
+                      : `You've done ${done} of ${quests.length} quests today. Let's go!`}
             </p>
-            {buddySays && <p className="speech" aria-live="polite">{buddySays}</p>}
+            {(buddyNote ?? buddySays) && <p className="speech" aria-live="polite">{today?.welcome_back ? buddyNote : buddySays ?? buddyNote}</p>}
             <div className="star-path" aria-label={`${done} of ${quests.length} quests done`}>
               {quests.map((h) => (
                 <span key={h.child_habit_id} className={h.status === "approved" ? "is-lit" : ""}>
@@ -194,6 +217,8 @@ export function KidQuests({ childId }: { childId: string }) {
           </div>
         </section>
 
+        {progress && <JourneyCard child={child} journey={journey} progress={progress} />}
+
         {error && (
           <div className="kid-error">
             <p className="form-error" role="alert">{error}</p>
@@ -208,7 +233,7 @@ export function KidQuests({ childId }: { childId: string }) {
           ))}
         </div>
 
-        {today && <ChestCard child={child} today={today} />}
+        {today && quests.length > 0 && <ChestCard child={child} today={today} />}
 
         <div className="kid-actions">
           <button className="kid-action kid-action--checkin" onClick={() => setCheckIn(true)}>
@@ -218,6 +243,10 @@ export function KidQuests({ childId }: { childId: string }) {
           <a className="kid-action kid-action--shop" href={`#/shop/${child.id}`}>
             <span aria-hidden="true">🛍️</span>
             <div><b>Reward shop</b><span>You have {today?.points ?? child.balance} points</span></div>
+          </a>
+          <a className="kid-action kid-action--journal" href={`#/journal/${child.id}`}>
+            <span aria-hidden="true">📔</span>
+            <div><b>Field journal</b><span>{child.discoveries.length} {child.discoveries.length === 1 ? "sticker" : "stickers"} found</span></div>
           </a>
         </div>
 
@@ -250,7 +279,7 @@ export function KidQuests({ childId }: { childId: string }) {
       {surprises[0] && <SurpriseReveal key={surprises[0].id} surprise={surprises[0]} child={child} parentName={fam.parentName}
         onDone={() => dropSurprise(surprises[0].id)} />}
       {!surprises[0] && celebrating && (
-        <Celebration habits={celebrating.quests} name={child.name} points={celebrating.points} unlocks={celebrating.unlocks}
+        <Celebration habits={celebrating.quests} name={child.name} buddy={child.buddy} sparks={celebrating.sparks} points={celebrating.points} unlocks={celebrating.unlocks} forKid
           buddyLine={celebrateLine} onDone={() => setCelebrating(null)} />
       )}
       {checkIn && <CheckIn child={child} quests={quests.map((h) => ({ id: h.habit_id, kidTitle: h.kid_title }))} onClose={() => setCheckIn(false)} />}
@@ -283,6 +312,7 @@ function QuestCard({ habit, status, points, boost, multiplier, golden, onDone }:
         </div>
         <div className="quest__chips">
           <span className="chip">by {formatTime(habit.cue_time)}</span>
+          {habit.stars > 0 && <span className="chip chip--gold" aria-label={`${habit.stars} of 3 stars`}>{"⭐".repeat(habit.stars)}</span>}
           {status !== "approved" && (
             <span className={`chip ${boost.length ? "chip--gold" : ""}`} title={boost.join(" + ")}>
               🪙 {points} pts{multiplier > 1 ? ` · ${multiplier}x` : ""}
@@ -317,57 +347,67 @@ function QuestCard({ habit, status, points, boost, multiplier, golden, onDone }:
 export function WorldExplore({ childId, worldId }: { childId: string; worldId: string }) {
   const { family, update } = useStore();
   const child = family!.children.find((c) => c.id === childId);
-  const world = WORLD_BY_ID[worldId as WorldId];
-  const { lapsed, resume } = useKidDay(childId); // keeps Sparks current on a direct visit
-  const [found, setFound] = useState<string | null>(null);
+  const { today, journey, lapsed, resume } = useKidDay(childId); // keeps Sparks current on a direct visit
+  const [found, setFound] = useState<Landmark | null>(null);
   const secondsLeft = usePlaytime(child);
 
-  if (!child || !world) return <NotFound />;
+  const world = journey?.worlds.find((w) => w.id === worldId);
+  if (!child) return <NotFound />;
   if (lapsed) return <KidLapsed onResume={resume} />;
-  const open = isUnlocked(world, child.sparks);
-  const seen = (id: string) => child.discoveries.includes(`${world.id}:${id}`);
-  const foundCount = world.discoveries.filter((d) => seen(d.id)).length;
+  if (journey && !world) return <NotFound />;
+  const summary = WORLDS.find((w) => w.id === worldId);
+  if (!summary) return <NotFound />;
+  const open = isUnlocked(summary, child.sparks);
+  const foundCount = world?.landmarks.filter((m) => child.discoveries.includes(landmarkKey(world, m))).length ?? 0;
+  const progress = today?.progress;
+  const next = progress?.next_landmark;
+
+  function reveal(mark: Landmark) {
+    setFound(mark);
+    const key = `${worldId}:${mark.id}`;
+    update((f) => discover(f, childId, key));
+    updateKidExtras({ discover: key }).catch(() => {});
+  }
 
   return (
-    <div className="page page--kid">
+    <div className="page page--kid" data-buddy={child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>
         <div className="explore-head">
-          <h1>{world.name}</h1>
-          {open && <span className="chip chip--gold">Found {foundCount} of {world.discoveries.length}</span>}
+          <h1>{summary.name}</h1>
+          {open && world && <span className="chip chip--gold">Found {foundCount} of {world.landmarks.length}</span>}
         </div>
 
         {!open ? (
           <div className="explore-locked">
-            <WorldArt world={world.id} />
+            <WorldArt world={summary.id} />
             <div>
               <LockIcon />
-              <p>Earn {world.sparks - child.sparks} more Sparks to open {world.name}!</p>
+              <p>Earn {summary.sparks - child.sparks} more Sparks to open {summary.name}!</p>
             </div>
           </div>
-        ) : (
+        ) : world && progress ? (
           <>
-            <p className="lead">{world.blurb} Tap the sparkles to find hidden treasures.</p>
-            <div className="explore-scene">
-              <WorldArt world={world.id} />
-              {world.discoveries.map((d) => (
-                <button key={d.id} className={`hotspot ${seen(d.id) ? "is-found" : ""}`}
-                  style={{ left: `${d.x}%`, top: `${d.y}%` }}
-                  aria-label={seen(d.id) ? d.name : "Hidden treasure"}
-                  onClick={() => {
-                    update((f) => discover(f, child.id, `${world.id}:${d.id}`));
-                    updateKidExtras({ discover: `${world.id}:${d.id}` }).catch(() => {});
-                    setFound(d.name);
-                  }}>
-                  {seen(d.id) ? <span className="hotspot__label">{d.name}</span> : <SparkIcon size={28} />}
-                </button>
-              ))}
-            </div>
-            {found && <div className="toast" role="status" onAnimationEnd={() => setFound(null)}>You found: {found}!</div>}
+            <p className="lead">{world.blurb}</p>
+            <WorldPath child={child} world={world} progress={progress} onReveal={reveal} />
+            {next?.world === world.id && (
+              <p className="path__next"><SparkIcon size={20} /> {next.sparks - progress.sparks} more {next.sparks - progress.sparks === 1 ? "Spark" : "Sparks"} to reveal the next find!</p>
+            )}
+            {progress.pending_sparks > 0 && <p className="hint">The dotted steps are quests waiting for a grown-up.</p>}
           </>
-        )}
+        ) : <p className="lead">Getting your map…</p>}
       </main>
+      {found && (
+        <div className="kid-overlay" role="dialog" aria-modal="true" aria-label={`You found ${found.name}`} onClick={() => setFound(null)}>
+          <div className="kid-overlay__card" onClick={(e) => e.stopPropagation()}>
+            <div className="reveal__emoji" aria-hidden="true">{found.emoji}</div>
+            <h2>You found the {found.name}!</h2>
+            <p>It's in your field journal now.</p>
+            <button className="btn btn--gold btn--lg" onClick={() => setFound(null)} autoFocus>Yay!</button>
+          </div>
+        </div>
+      )}
       <TimeWarning seconds={secondsLeft} />
       {secondsLeft === 0 && <BreakTime child={child} family={family!} />}
     </div>

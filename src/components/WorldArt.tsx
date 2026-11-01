@@ -1,5 +1,5 @@
 /**
- * Layered 2D scenes for the three worlds: Starter Camp, Mosswood Forest and Sky Islands.
+ * Layered 2D scenes for the six worlds, from Starter Camp to Star Harbour.
  * Used on the home page, the kid screen and the explore page.
  */
 import type { WorldId } from "../lib/family";
@@ -122,6 +122,107 @@ const SCENES: Record<WorldId, JSX.Element> = {
         <path d="M0 -14 L0 14 M-12 0 L12 0" stroke="#fff" strokeWidth="1.2" />
         <path d="M0 14 q4 10 -2 18 q6 6 0 14" stroke="#7B5CF0" strokeWidth="1.5" fill="none" />
       </g>
+    </>
+  ),
+  coral: (
+    <>
+      <defs>
+        <linearGradient id="wa-coral" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7FE3E8" />
+          <stop offset=".55" stopColor="#2FA8C9" />
+          <stop offset="1" stopColor="#14628F" />
+        </linearGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#wa-coral)" />
+      <g fill="#fff" opacity=".28">
+        <path d="M60 0 L92 0 L140 180 L100 180Z" />
+        <path d="M210 0 L232 0 L262 180 L232 180Z" />
+      </g>
+      <path d="M0 150 Q80 134 170 150 T320 144 V180 H0Z" fill="#F2D49B" />
+      <g fill="#FF7E8A">
+        <path d="M34 152 q-6 -26 2 -40 q6 12 6 18 q8 -10 14 -10 q-2 16 -12 32z" />
+        <path d="M268 148 q-8 -22 0 -36 q6 10 6 16 q8 -8 14 -8 q-2 14 -10 28z" />
+      </g>
+      <path d="M92 156 q-2 -20 6 -30 q2 14 4 18 q6 -10 10 -10 q0 14 -8 22z" fill="#FFB04D" />
+      <g transform="translate(232 112) rotate(-14)">
+        <path d="M-34 0 H34 L24 18 H-24Z" fill="#8A5A34" />
+        <rect x="-3" y="-34" width="5" height="34" fill="#6B4426" />
+        <path d="M2 -32 L24 -12 H2Z" fill="#F3E8D2" opacity=".85" />
+      </g>
+      <g transform="translate(150 96)">
+        <ellipse cx="0" cy="0" rx="20" ry="13" fill="#4FA36A" />
+        <path d="M-12 -2 L0 -10 L12 -2 L0 8Z" fill="#3A7D50" />
+        <circle cx="24" cy="-2" r="6" fill="#7BC88F" />
+        <circle cx="26" cy="-3" r="1.2" fill="#14324A" />
+      </g>
+      <g fill="#fff" opacity=".7">
+        <circle cx="70" cy="70" r="3" /><circle cx="78" cy="56" r="2" /><circle cx="196" cy="60" r="2.4" />
+        <circle cx="290" cy="74" r="3" /><circle cx="284" cy="60" r="1.8" />
+      </g>
+    </>
+  ),
+  crystal: (
+    <>
+      <defs>
+        <linearGradient id="wa-crystal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1E1650" />
+          <stop offset="1" stopColor="#4A2C8F" />
+        </linearGradient>
+        <linearGradient id="wa-gem" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9FF0FF" />
+          <stop offset="1" stopColor="#7B5CF0" />
+        </linearGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#wa-crystal)" />
+      <path d="M0 0 H320 V30 L290 54 L262 28 L226 60 L190 26 L150 52 L112 24 L74 58 L40 26 L0 48Z" fill="#150F3A" />
+      <path d="M0 152 Q90 138 170 152 T320 148 V180 H0Z" fill="#2B1E66" />
+      <ellipse cx="124" cy="154" rx="52" ry="9" fill="#6EE7F9" opacity=".45" />
+      <g fill="url(#wa-gem)">
+        <path d="M30 152 L42 96 L56 152Z" />
+        <path d="M52 152 L60 118 L72 152Z" />
+        <path d="M254 150 L270 84 L288 150Z" />
+        <path d="M284 150 L294 112 L306 150Z" />
+        <path d="M184 152 L192 124 L202 152Z" />
+      </g>
+      <g fill="#FF8FE0" opacity=".85">
+        <path d="M222 150 L230 118 L238 150Z" />
+        <path d="M90 150 L96 128 L104 150Z" />
+      </g>
+      <g fill="#fff">
+        <circle cx="46" cy="110" r="1.6" /><circle cx="272" cy="100" r="1.8" /><circle cx="192" cy="130" r="1.2" />
+      </g>
+    </>
+  ),
+  star: (
+    <>
+      <defs>
+        <linearGradient id="wa-star" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0E1140" />
+          <stop offset=".7" stopColor="#3B2F7A" />
+          <stop offset="1" stopColor="#7B5CF0" />
+        </linearGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#wa-star)" />
+      <g fill="#FFF4CF">
+        <circle cx="30" cy="20" r="1.5" /><circle cx="78" cy="44" r="1" /><circle cx="118" cy="16" r="1.8" />
+        <circle cx="168" cy="38" r="1.2" /><circle cx="214" cy="14" r="1.5" /><circle cx="300" cy="30" r="1.4" />
+        <circle cx="56" cy="74" r="1.2" /><circle cx="252" cy="68" r="1.6" />
+      </g>
+      <circle cx="262" cy="40" r="20" fill="#FFE9A8" />
+      <circle cx="270" cy="34" r="17" fill="#141650" />
+      <g transform="translate(84 64)">
+        <circle r="15" fill="#FF9F7A" />
+        <ellipse rx="26" ry="6" fill="none" stroke="#FFD27A" strokeWidth="3" />
+      </g>
+      <path d="M0 146 Q90 130 180 146 T320 140 V180 H0Z" fill="#23195C" />
+      <g transform="translate(164 108)">
+        <path d="M-40 16 H40 L28 34 H-28Z" fill="#8A5A34" />
+        <rect x="-3" y="-34" width="5" height="50" fill="#6B4426" />
+        <path d="M2 -32 L32 8 H2Z" fill="#FFF4CF" />
+        <path d="M-3 -28 L-28 8 H-3Z" fill="#E9DFFF" />
+        <path d="M2 -44 L14 -39 L2 -34Z" fill="#FFC23D" />
+      </g>
+      <path d="M0 158 h320" stroke="#FFC23D" strokeWidth="1.5" strokeDasharray="4 8" opacity=".6" />
     </>
   ),
 };

@@ -16,7 +16,7 @@ import {
 
 export type Role = "father" | "mother" | "guardian" | "other";
 export type Buddy = "fox" | "owl" | "bear" | "bunny";
-export type ThemeWorld = "camp" | "mosswood" | "sky";
+export type ThemeWorld = "camp" | "mosswood" | "sky" | "coral" | "crystal" | "star";
 export type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
 export const ROUTINE_PARTS = ["morning", "midday", "after_school", "evening", "bedtime"] as const;
@@ -50,18 +50,34 @@ export interface ApiChild {
   age: number;
   buddy: Buddy;
   world: ThemeWorld;
+  tier_override: number; // highest quest tier to allow; 0 follows the child's world
   routine_times: RoutineTimes;
   created_at: string;
 }
-export type ChildInput = Pick<ApiChild, "name" | "age" | "buddy" | "world" | "routine_times">;
+export type ChildInput = Pick<ApiChild, "name" | "age" | "buddy" | "routine_times"> & { tier_override?: number };
 
+export interface Landmark { id: string; name: string; emoji: string; sparks: number; x: number; y: number }
+export interface JourneyWorld {
+  id: ThemeWorld;
+  name: string;
+  sparks: number;
+  rank: string;
+  tier: number;
+  blurb: string;
+  landmarks: Landmark[];
+}
 export interface Progress {
   sparks: number;
+  pending_sparks: number; // waiting for a grown-up
   level: number;
   level_name: string;
+  world: ThemeWorld;
   unlocked_tier: number;
   next_level_at: number | null;
+  next_landmark: (Landmark & { world: ThemeWorld }) | null;
 }
+export interface QuestStars { habit_id: string; kid_title: string; icon: string; approvals: number; stars: number; targets: number[] }
+export interface Journey { progress: Progress; worlds: JourneyWorld[]; discoveries: string[]; quest_stars: QuestStars[] }
 
 export interface HabitText {
   goal_id: string;
@@ -108,7 +124,7 @@ export interface PainPointResult {
 export interface Goal { id: string; title: string; description: string }
 
 export type HabitStatus = "todo" | "submitted" | "approved" | "rejected";
-export type Boost = "golden" | "streak" | "double";
+export type Boost = "golden" | "streak" | "double" | "welcome";
 export interface TodayHabit {
   child_habit_id: string;
   habit_id: string;
@@ -123,10 +139,14 @@ export interface TodayHabit {
   completion_id: string | null;
   boosts: Boost[];
   multiplier: number;
+  stars: number;
 }
 export interface Today {
   child: { id: string; name: string; buddy: Buddy; world: ThemeWorld };
   day: string;
+  welcome_back: boolean;
+  rest_day: boolean; // the child has a plan, but no quests today
+  next_quest_day: string | null;
   progress: Progress;
   points: number;
   habits: TodayHabit[];
@@ -216,7 +236,7 @@ export interface Suggestion {
   id: string;
   child_id: string;
   child_name: string;
-  source: "coach" | "planner" | "reviewer";
+  source: "coach" | "planner" | "reviewer" | "mastery";
   kind: "add" | "retime" | "pause" | "resume" | "remove";
   habit_id: string;
   title: string;
@@ -508,7 +528,8 @@ export const openSurprise = (id: string) =>
 // ── Kid extras and settings ───────────────────────────────────────────────────
 
 export const getKidExtras = () => request<Extras>("GET", "/v1/kid/extras", undefined, KID);
-export const updateKidExtras = (changes: { discover?: string; wearing?: string; goal?: string; clear_goal?: boolean; level_seen?: number }) =>
+export const getKidJourney = () => request<Journey>("GET", "/v1/kid/journey", undefined, KID);
+export const updateKidExtras = (changes: { discover?: string; wearing?: string; goal?: string; clear_goal?: boolean; level_seen?: number; buddy?: Buddy }) =>
   request<Extras>("PATCH", "/v1/kid/extras", changes, KID);
 export const openChest = () =>
   request<{ prize: ChestPrize; points: number; extras: Extras }>("POST", "/v1/kid/chest", undefined, KID);

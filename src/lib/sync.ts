@@ -14,7 +14,9 @@ export function applyToday(family: Family, today: Today): Family {
   const statuses = Object.fromEntries(today.habits.map((h) => [h.habit_id, localStatus(h.status)]));
   const next = updateChild(family, childId, (c) => ({
     ...c,
+    buddy: today.child.buddy,
     sparks: today.progress.sparks,
+    progress: today.progress,
     balance: today.points,
     plan: today.habits.map((h) => ({ id: h.habit_id, kidTitle: h.kid_title, kidHint: h.kid_hint, tier: h.tier })),
     streak: today.streak,
@@ -24,7 +26,7 @@ export function applyToday(family: Family, today: Today): Family {
 }
 
 export function applyProgress(family: Family, childId: string, progress: Progress, points: number): Family {
-  return updateChild(family, childId, (c) => ({ ...c, sparks: progress.sparks, balance: points }));
+  return updateChild(family, childId, (c) => ({ ...c, sparks: progress.sparks, progress, balance: points }));
 }
 
 export function applyExtras(family: Family, childId: string, extras: Extras): Family {

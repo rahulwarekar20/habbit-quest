@@ -5,8 +5,8 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import {
-  ApiError, errorText, getKidExtras, getKidToday, listKidSurprises, startKidSession, submitCompletion,
-  type Surprise, type Today, type TodayHabit,
+  ApiError, errorText, getKidExtras, getKidJourney, getKidToday, listKidSurprises, startKidSession, submitCompletion,
+  type Journey, type Surprise, type Today, type TodayHabit,
 } from "./api";
 import { getKidSession, kidSessionLapsed, saveKidSession } from "./storage";
 import { useStore } from "./store";
@@ -17,6 +17,7 @@ const POLL_MS = 30_000;
 export function useKidDay(childId: string, poll = false) {
   const { update, askPin, enterKidMode } = useStore();
   const [today, setToday] = useState<Today | null>(null);
+  const [journey, setJourney] = useState<Journey | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lapsed, setLapsed] = useState(false);
   const [surprises, setSurprises] = useState<Surprise[]>([]);
@@ -41,8 +42,9 @@ export function useKidDay(childId: string, poll = false) {
     try {
       if (kidSessionLapsed()) return setLapsed(true);
       if (getKidSession()?.childId !== childId) await start();
-      const [day, extras, waiting] = await Promise.all([getKidToday(), getKidExtras(), listKidSurprises()]);
+      const [day, extras, waiting, map] = await Promise.all([getKidToday(), getKidExtras(), listKidSurprises(), getKidJourney()]);
       accept(day);
+      setJourney(map);
       update((f) => applyExtras(f, childId, extras));
       setSurprises(waiting);
     } catch (e) {
@@ -86,5 +88,5 @@ export function useKidDay(childId: string, poll = false) {
 
   const dropSurprise = useCallback((id: string) => setSurprises((s) => s.filter((x) => x.id !== id)), []);
 
-  return { today, error, lapsed, surprises, dropSurprise, reload: load, submit, resume };
+  return { today, journey, error, lapsed, surprises, dropSurprise, reload: load, submit, resume };
 }

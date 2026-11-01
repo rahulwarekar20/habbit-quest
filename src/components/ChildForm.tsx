@@ -1,6 +1,6 @@
 /** Child details shared by first-time setup and the dashboard, plus the routine-time fields. */
 import { useState, type FormEvent } from "react";
-import { ROUTINE_PARTS, errorText, type ApiChild, type Buddy as BuddyName, type ChildInput, type RoutinePart, type RoutineTimes, type ThemeWorld } from "../lib/api";
+import { ROUTINE_PARTS, errorText, type ApiChild, type Buddy as BuddyName, type ChildInput, type RoutinePart, type RoutineTimes } from "../lib/api";
 import { MAX_AGE, MIN_AGE } from "../lib/habits";
 import { formatTime } from "../lib/time";
 import Buddy, { BUDDIES } from "./Buddy";
@@ -10,8 +10,9 @@ export const ROUTINE_LABEL: Record<RoutinePart, string> = {
 };
 export const DEFAULT_ROUTINE: RoutineTimes = { morning: "07:00", midday: "12:30", after_school: "16:00", evening: "18:00", bedtime: "20:00" };
 
-const THEMES: { id: ThemeWorld; label: string }[] = [
-  { id: "camp", label: "Camp" }, { id: "mosswood", label: "Mosswood" }, { id: "sky", label: "Sky" },
+const TIER_CHOICES = [
+  { value: 0, label: "Follow their world (recommended)" }, { value: 1, label: "Easy quests only" },
+  { value: 2, label: "Up to medium quests" }, { value: 3, label: "All quests" },
 ];
 
 export function RoutineFields({ times, onChange }: { times: RoutineTimes; onChange: (times: RoutineTimes) => void }) {
@@ -45,7 +46,7 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
   const [name, setName] = useState(initial?.name ?? "");
   const [age, setAge] = useState(initial?.age ?? 7);
   const [buddy, setBuddy] = useState<BuddyName>(initial?.buddy ?? "fox");
-  const [world, setWorld] = useState<ThemeWorld>(initial?.world ?? "camp");
+  const [tier, setTier] = useState(initial?.tier_override ?? 0);
   const [times, setTimes] = useState<RoutineTimes>(initial?.routine_times ?? DEFAULT_ROUTINE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
     setBusy(true);
     setError(null);
     try {
-      await onSubmit({ name: name.trim(), age, buddy, world, routine_times: times });
+      await onSubmit({ name: name.trim(), age, buddy, routine_times: times, ...(initial ? { tier_override: tier } : {}) });
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -77,12 +78,6 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
             {Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => i + MIN_AGE).map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
         </label>
-        <label className="field field--narrow">
-          <span>Theme</span>
-          <select value={world} onChange={(e) => setWorld(e.target.value as ThemeWorld)}>
-            {THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-        </label>
       </div>
       <span className="field__label">Pick a buddy</span>
       <div className="buddy-picker buddy-picker--sm" role="radiogroup" aria-label="Buddy">
@@ -94,6 +89,14 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
           </button>
         ))}
       </div>
+      {initial && (
+        <label className="field">
+          <span>Hardest quests allowed</span>
+          <select value={tier} onChange={(e) => setTier(Number(e.target.value))}>
+            {TIER_CHOICES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </label>
+      )}
       <span className="field__label">Daily routine</span>
       <RoutineFields times={times} onChange={setTimes} />
       <p className="hint">Quests start at these times. You can change them later.</p>

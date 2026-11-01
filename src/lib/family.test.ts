@@ -28,10 +28,11 @@ describe("celebrations and discoveries", () => {
 });
 
 describe("worlds and formats", () => {
-  it("unlocks Mosswood at 5 Sparks and Sky Islands at 20", () => {
-    expect(nextWorld(4)?.id).toBe("mosswood");
-    expect(nextWorld(5)?.id).toBe("sky");
-    expect(nextWorld(20)).toBeNull();
+  it("unlocks Mosswood at 30 Sparks and Star Harbour at 450", () => {
+    expect(nextWorld(29)?.id).toBe("mosswood");
+    expect(nextWorld(30)?.id).toBe("sky");
+    expect(nextWorld(449)?.id).toBe("star");
+    expect(nextWorld(450)).toBeNull();
     expect(WORLDS[0].sparks).toBe(0);
   });
 

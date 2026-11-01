@@ -67,7 +67,7 @@ export default function KidShop({ childId }: { childId: string }) {
   }
 
   return (
-    <div className="page page--kid">
+    <div className="page page--kid" data-buddy={child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>

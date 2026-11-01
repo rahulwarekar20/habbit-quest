@@ -13,6 +13,7 @@
  *   #/kid/:child           Today's picture quests  (kid mode)
  *   #/world/:child/:world  Explore a world         (kid mode)
  *   #/shop/:child          Reward shop and buddy wardrobe (kid mode)
+ *   #/journal/:child       Field journal: buddy, stickers and quest stars (kid mode)
  *
  * Parent pages need a signed-in family with a child; while kid mode is on they also need the PIN.
  */
@@ -21,6 +22,7 @@ import Logo from "./components/Logo";
 import { Login, Welcome } from "./pages/Auth";
 import HabitSetup from "./pages/HabitSetup";
 import Home from "./pages/Home";
+import Journal from "./pages/Journal";
 import Privacy from "./pages/Privacy";
 import { KidPicker, KidQuests, WorldExplore } from "./pages/Kid";
 import KidShop from "./pages/KidShop";
@@ -55,6 +57,7 @@ export default function App() {
   if (page === "kid") return a ? <KidQuests key={a} childId={a} /> : <KidPicker />;
   if (page === "world" && a && b) return <WorldExplore childId={a} worldId={b} />;
   if (page === "shop" && a) return <KidShop childId={a} />;
+  if (page === "journal" && a) return <Journal childId={a} />;
 
   if (["setup", "parent", "quests", "rewards"].includes(page)) {
     if (getKidMode()) return <ParentLock />;

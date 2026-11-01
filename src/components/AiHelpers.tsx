@@ -20,7 +20,7 @@ import Buddy from "./Buddy";
 import HabitArt from "./HabitArt";
 
 const SOURCE_LABEL: Record<Suggestion["source"], string> = {
-  planner: "Quest planner", reviewer: "Weekly review", coach: "Habit coach",
+  planner: "Quest planner", reviewer: "Weekly review", coach: "Habit coach", mastery: "Quest mastered",
 };
 /** Citation markers the coach writes inline, e.g. "[G12]" or "[G3, G7]". */
 const CITE = /\s?\[(G\d+(?:\s*,\s*G\d+)*)\]/g;

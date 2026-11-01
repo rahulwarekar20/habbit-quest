@@ -6,7 +6,7 @@
  *
  * Bonus quests (LIBRARY) are extra habits added per child, by the parent or on the habit
  * coach's recommendation. Each one has a tier: tier 1 quests are open from the start, and
- * harder tier 2 and tier 3 quests unlock as the child levels up (see LEVELS in family.ts).
+ * harder tier 2 and tier 3 quests unlock as the child levels up (see the worlds in family.ts).
  * Higher tiers are worth more points. Each quest also has an age range (3 to 13).
  */
 

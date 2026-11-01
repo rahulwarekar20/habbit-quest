@@ -11,7 +11,7 @@ import {
   ApiError, errorText, extendAppTime, getTodayCheckin, openChest, openSurprise, reportAppTime, sendCheckin, updateKidExtras,
   type ChestPrize, type Mood, type Surprise, type Today,
 } from "../lib/api";
-import { levelOf, nextLevel, updateChild, type Child, type Family } from "../lib/family";
+import { WORLDS, updateChild, type Child, type Family } from "../lib/family";
 import { MOODS, STICKERS } from "../lib/feedback";
 import { appSecondsLeft, WARN_SECONDS } from "../lib/playtime";
 import { ACCESSORIES } from "../lib/rewards";
@@ -320,14 +320,16 @@ function QuestPicker({ quests, value, onChange }: { quests: { id: string; kidTit
 // ── Progress badges ───────────────────────────────────────────────────────────
 
 export function LevelBadge({ child }: { child: Child }) {
-  const level = levelOf(child.sparks);
-  const next = nextLevel(child.sparks);
-  const pct = next ? ((child.sparks - level.sparks) / (next.sparks - level.sparks)) * 100 : 100;
+  const progress = child.progress;
+  if (!progress) return null;
+  const start = WORLDS[progress.level - 1].sparks;
+  const next = WORLDS[progress.level];
+  const pct = next ? ((child.sparks - start) / (next.sparks - start)) * 100 : 100;
   return (
-    <div className="level-badge" aria-label={`Level ${level.level}, ${level.name}`}>
-      <span className="level-badge__num">{level.level}</span>
+    <div className="level-badge" aria-label={`Level ${progress.level}, ${progress.level_name}`}>
+      <span className="level-badge__num">{progress.level}</span>
       <div>
-        <b>{level.name}</b>
+        <b>{progress.level_name}</b>
         <div className="level-badge__bar"><span style={{ width: `${pct}%` }} /></div>
         <small>{next ? `${next.sparks - child.sparks} Sparks to ${next.name}` : "Top level!"}</small>
       </div>
