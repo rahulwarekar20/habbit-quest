@@ -15,7 +15,7 @@ import { isValidPin } from "../lib/auth";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
-function AuthLayout({ children, side }: { children: ReactNode; side: ReactNode }) {
+export function AuthLayout({ children, side }: { children: ReactNode; side: ReactNode }) {
   return (
     <div className="auth">
       <div className="auth__form">
@@ -32,7 +32,34 @@ function AuthLayout({ children, side }: { children: ReactNode; side: ReactNode }
 // ── Login ─────────────────────────────────────────────────────────────────────
 
 export function Login() {
-  const { signInGoogle, signInDev, notice } = useStore();
+  const { notice } = useStore();
+  return (
+    <AuthLayout side={<SidePanel title="Welcome back, quest master" art="homework" />}>
+      <div className="auth__head">
+        <p className="eyebrow">Sign in</p>
+        <h1>Good to see you</h1>
+        <p className="muted">Kids, use your family code. Grown-ups, sign in to set up your family or pick up where you left off.</p>
+      </div>
+      {notice && <p className="form-error">{notice}</p>}
+      <a className="kid-entry" href="#/join">
+        <span className="kid-entry__buddies" aria-hidden="true">
+          <Buddy buddy="fox" size={36} /><Buddy buddy="bunny" size={36} />
+        </span>
+        <span>
+          <b>I'm a kid</b>
+          <span className="muted">Sign in with your family code and your PIN</span>
+        </span>
+        <span className="kid-entry__go" aria-hidden="true">&rarr;</span>
+      </a>
+      <p className="eyebrow auth__or">Grown-ups</p>
+      <GrownUpSignIn />
+    </AuthLayout>
+  );
+}
+
+/** Google sign-in, plus the development login when VITE_DEV_LOGIN=true. */
+export function GrownUpSignIn() {
+  const { signInGoogle, signInDev } = useStore();
   const [username, setUsername] = useState("parent");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -54,13 +81,7 @@ export function Login() {
   }
 
   return (
-    <AuthLayout side={<SidePanel title="Welcome back, quest master" art="homework" />}>
-      <div className="auth__head">
-        <p className="eyebrow">Parent sign in</p>
-        <h1>Good to see you</h1>
-        <p className="muted">Sign in to set up your family or pick up where you left off.</p>
-      </div>
-      {notice && <p className="form-error">{notice}</p>}
+    <>
       <GoogleButton onCredential={(credential) => void run(() => signInGoogle(credential))} />
       {busy && <p className="muted" role="status">Signing you in…</p>}
       {error && <p className="form-error">{error}</p>}
@@ -80,7 +101,7 @@ export function Login() {
           <button className="btn btn--soft btn--block" disabled={busy}>Sign in for testing</button>
         </form>
       )}
-    </AuthLayout>
+    </>
   );
 }
 
@@ -196,7 +217,7 @@ function CreateFamily() {
   );
 }
 
-function JoinFamily() {
+export function JoinFamily() {
   const { reload } = useStore();
   const [code, setCode] = useState("");
   const [you, setYou] = useState("");
@@ -221,9 +242,10 @@ function JoinFamily() {
   return (
     <form className="form" onSubmit={submit}>
       <label className="field">
-        <span>Invite code</span>
+        <span>Grown-up invite code</span>
         <input required autoFocus maxLength={20} value={code} onChange={(e) => setCode(e.target.value)} />
       </label>
+      <p className="hint">Ask the grown-up who invited you. It's on their dashboard, and only grown-ups should have it.</p>
       <YouFields name={you} role={role} onName={setYou} onRole={setRole} />
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn--primary btn--lg btn--block" disabled={busy}>{busy ? "Joining…" : "Join family"}</button>
@@ -231,7 +253,7 @@ function JoinFamily() {
   );
 }
 
-function SidePanel({ title, art }: { title: string; art: "wake" | "homework" }) {
+export function SidePanel({ title, art }: { title: string; art: "wake" | "homework" }) {
   return (
     <div className="side-panel">
       <div className="side-panel__card">

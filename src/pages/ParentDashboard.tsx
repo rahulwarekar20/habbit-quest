@@ -11,6 +11,7 @@ import Celebration from "../components/Celebration";
 import { ChildForm } from "../components/ChildForm";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
+import ShareFamily from "../components/ShareFamily";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
   addChild, approveCompletion, deleteFamily, errorText, exportFamily, getChildExtras, getChildToday, listApprovals, newInviteCode, rejectCompletion,
@@ -93,7 +94,8 @@ export default function ParentDashboard() {
 
   function openKidMode(childId?: string) {
     enterKidMode();
-    go(childId ? `/kid/${childId}` : "/kid");
+    const locked = fam.children.find((c) => c.id === childId)?.hasPin; // the child enters their PIN on the picker
+    go(childId && !locked ? `/kid/${childId}` : "/kid");
   }
 
   async function add(input: ChildInput) {
@@ -281,6 +283,7 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
 
       <div className="kid-card__buttons">
         <a className="btn btn--ghost btn--sm" href={`#/quests/${child.id}`}>Quests</a>
+        <a className="btn btn--ghost btn--sm" href={`#/coach/${child.id}`}>Ask coach</a>
         <a className="btn btn--ghost btn--sm" href={`#/setup/${child.id}`}>Edit</a>
         <button className="btn btn--soft btn--sm" onClick={onOpen}>Open {child.name}'s quests</button>
       </div>
@@ -339,9 +342,10 @@ function FamilyPanel() {
         <h2 id="family-title">{fam.name}</h2>
         <span className="muted">{fam.timezone}</span>
       </div>
+      <ShareFamily family={fam} />
       <div className="invite">
         <div>
-          <span className="muted">Invite code for another grown-up</span>
+          <span className="muted">Grown-up invite code (share only with grown-ups)</span>
           <code className="invite__code">{fam.invite_code}</code>
         </div>
         <button className="btn btn--ghost btn--sm" disabled={busy} onClick={refreshCode}>New code</button>

@@ -25,7 +25,8 @@ import {
 import Logo from "../components/Logo";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
-import { getTodayCheckin, updateKidExtras, type Landmark, type TodayHabit } from "../lib/api";
+import PinDialog from "../components/PinDialog";
+import { ApiError, errorText, getTodayCheckin, startKidSession, updateKidExtras, type Landmark, type TodayHabit } from "../lib/api";
 import { useBuddyLine, type BuddyEvent } from "../lib/buddy";
 import { BUDDY_THEME, buddyNudge } from "../lib/buddyTheme";
 import {
@@ -35,17 +36,28 @@ import {
 import { QUEST_BY_ID } from "../lib/habits";
 import { landmarkKey, readyLandmarks } from "../lib/journeyPath";
 import { go } from "../lib/router";
-import { setKidMode } from "../lib/storage";
+import { getKidLogin, getKidSession, saveKidSession, setKidMode } from "../lib/storage";
 import { useStore } from "../lib/store";
 import { weekdayName } from "../lib/schedule";
 import { localStatus } from "../lib/sync";
 import { formatTime, greeting } from "../lib/time";
 import { useKidDay } from "../lib/useKidDay";
 
-/** Top bar shared by the kid screens, with the PIN-protected way back to the parent area. */
+/**
+ * Top bar shared by the kid screens, with the PIN-protected way back to the parent area. A child who
+ * signed in on their own signs out instead: there is no grown-up session on this device.
+ */
 export function KidBar({ child }: { child?: Child }) {
-  const { askPin } = useStore();
+  const { askPin, logout } = useStore();
+  const own = getKidLogin();
   async function grownUps() {
+    if (own) {
+      // Back to the family's code page for the next child; reloading keeps the sign-in redirect out of the way.
+      logout();
+      window.location.hash = `#/join/${own.code}`;
+      window.location.reload();
+      return;
+    }
     if (await askPin("Leave kid mode and open the parent dashboard.")) {
       setKidMode(false);
       go("/parent");
@@ -58,8 +70,8 @@ export function KidBar({ child }: { child?: Child }) {
         <div className="kidbar__right">
           {child && <a href={`#/shop/${child.id}`} className="kidbar__points" aria-label="Reward shop"><PointsPill points={child.balance} /></a>}
           {child && <SparkCount count={child.sparks} />}
-          <button className="btn btn--ghost btn--sm kidbar__lock" onClick={grownUps} aria-label="Grown-ups">
-            <LockIcon /> <span className="lock-label">Grown-ups</span>
+          <button className="btn btn--ghost btn--sm kidbar__lock" onClick={grownUps} aria-label={own ? "Sign out" : "Grown-ups"}>
+            <LockIcon /> <span className="lock-label">{own ? "Sign out" : "Grown-ups"}</span>
           </button>
         </div>
       </div>
@@ -72,9 +84,36 @@ export function KidBar({ child }: { child?: Child }) {
 export function KidPicker() {
   const { family } = useStore();
   const fam = family!;
+  const [asking, setAsking] = useState<Child | null>(null);
   useEffect(() => {
-    if (fam.children.length === 1) go(`/kid/${fam.children[0].id}`);
+    // One child without a PIN goes straight in; a child who signed in on their own has only themselves.
+    const only = fam.children.length === 1 && !fam.children[0].hasPin ? fam.children[0] : null;
+    const own = getKidLogin()?.childId;
+    if (own || only) go(`/kid/${own ?? only!.id}`);
   }, [fam.children]);
+
+  function pick(child: Child) {
+    if (child.hasPin && getKidSession()?.childId !== child.id) setAsking(child);
+    else go(`/kid/${child.id}`);
+  }
+
+  // The kid PIN goes to the server with the session request: a wrong one starts nothing.
+  async function checkPin(pin: string | null): Promise<boolean | string> {
+    const child = asking!;
+    if (pin === null) {
+      setAsking(null);
+      return true;
+    }
+    try {
+      const session = await startKidSession(child.id, pin);
+      saveKidSession(session.access_token, session.expires_in, child.id, session.child.name);
+    } catch (e) {
+      return e instanceof ApiError && e.status === 403 ? false : errorText(e);
+    }
+    setAsking(null);
+    go(`/kid/${child.id}`);
+    return true;
+  }
 
   return (
     <div className="page page--kid">
@@ -83,14 +122,18 @@ export function KidPicker() {
         <h1>Who's on a quest today?</h1>
         <div className="kid-picker__grid">
           {fam.children.map((c) => (
-            <a key={c.id} className="kid-picker__card" href={`#/kid/${c.id}`}>
+            <button key={c.id} className="kid-picker__card" onClick={() => pick(c)}>
               <Buddy buddy={c.buddy} accessory={c.wearing} size={110} />
               <b>{c.name}</b>
               <SparkCount count={c.sparks} />
-            </a>
+              {c.hasPin && <span className="kid-picker__lock" aria-label="Needs your PIN"><LockIcon /></span>}
+            </button>
           ))}
         </div>
       </main>
+      {asking && (
+        <PinDialog eyebrow={`Hi, ${asking.name}!`} title="Enter your PIN" reason="Your own 4-digit PIN keeps your quests yours." onSubmit={checkPin} />
+      )}
     </div>
   );
 }
@@ -416,12 +459,13 @@ export function WorldExplore({ childId, worldId }: { childId: string; worldId: s
 
 /** The kid session ran out: a grown-up starts it again with the PIN. */
 export function KidLapsed({ onResume }: { onResume: () => void }) {
+  const own = !!getKidLogin(); // a child who signed in on their own just signs in again
   return (
     <div className="page page--kid">
       <main className="wrap kid-main">
         <h1>Quest time paused</h1>
-        <p className="lead">Ask a grown-up to start your quests again.</p>
-        <button className="btn btn--gold btn--lg" onClick={onResume}>Grown-ups: enter PIN</button>
+        <p className="lead">{own ? "Enter your PIN to keep going." : "Ask a grown-up to start your quests again."}</p>
+        <button className="btn btn--gold btn--lg" onClick={onResume}>{own ? "Enter my PIN" : "Grown-ups: enter PIN"}</button>
       </main>
     </div>
   );

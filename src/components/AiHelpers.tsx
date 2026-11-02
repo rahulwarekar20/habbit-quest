@@ -1,9 +1,9 @@
 /**
- * The parent's AI helpers on the dashboard, all served by the backend:
- *   - Suggested changes: plan changes from any helper, accepted with the parent PIN.
+ * The parent's AI helpers, all served by the backend:
+ *   - Suggested changes: plan changes from any helper, accepted with the parent PIN (dashboard).
  *   - Habit coach: the parent describes a child's problem in their own words; the coach cites
- *     guidance and suggests quests the parent can pick, refine and add with the PIN.
- *   - Weekly review and Quest planner.
+ *     guidance and suggests quests the parent can pick, refine and add with the PIN (its own tab).
+ *   - Weekly review and Quest planner (dashboard).
  *
  * Helpers only propose. Nothing changes until the parent accepts a card with the PIN.
  */
@@ -14,6 +14,7 @@ import {
   type CoachMessage, type PlanReport, type Report, type ReviewReport, type Suggestion,
 } from "../lib/api";
 import type { Family } from "../lib/family";
+import { coachFreshThisSignIn, markCoachFresh } from "../lib/storage";
 import { useStore } from "../lib/store";
 import { formatTime } from "../lib/time";
 import Buddy from "./Buddy";
@@ -77,7 +78,14 @@ export default function AiHelpers({ family, onPlanSaved }: { family: Family; onP
           </div>
           <BuddyTalkToggle familyId={familyId} />
         </div>
-        <Coach family={family} onChange={changed} />
+        <a className="ai-card coach-link" href="#/coach">
+          <span className="ai-card__icon ai-card__icon--chat" aria-hidden="true">✉</span>
+          <span>
+            <b>Something tricky? Ask the habit coach</b>
+            <span className="muted">Describe a problem in your own words and get quests from expert guidance.</span>
+          </span>
+          <span className="coach-link__go" aria-hidden="true">&rarr;</span>
+        </a>
         <Reports familyId={familyId} family={family} onChange={refresh} />
       </section>
     </>
@@ -260,10 +268,10 @@ function PlanCard({ plan, write }: { plan: Report<PlanReport> | null; write: () 
 /** The chat shows plain text, so citation marks and any markdown the model adds are stripped. */
 const plainText = (text: string) => text.replace(CITE, "").replace(/\*\*|__/g, "").replace(/^#{1,6}\s+/gm, "").trim();
 
-function Coach({ family, onChange }: { family: Family; onChange: () => Promise<void> }) {
+export function Coach({ family, childId: start, onChange }: { family: Family; childId?: string; onChange: () => Promise<void> }) {
   const { askPinValue } = useStore();
   const { busy, error, run } = useHelperCall();
-  const [about, setAbout] = useState(family.children[0]?.id ?? "");
+  const [about, setAbout] = useState(start ?? family.children[0]?.id ?? "");
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [cards, setCards] = useState<Suggestion[]>([]);
   const [draft, setDraft] = useState("");
@@ -272,6 +280,7 @@ function Coach({ family, onChange }: { family: Family; onChange: () => Promise<v
   const [safety, setSafety] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
+  const clearing = useRef<Promise<void>>(Promise.resolve()); // a first message waits for the fresh start
   const child = family.children.find((c) => c.id === about) ?? family.children[0];
   const childId = child?.id;
   const addCards = cards.filter((c) => c.kind === "add" && c.source === "coach");
@@ -282,11 +291,18 @@ function Coach({ family, onChange }: { family: Family; onChange: () => Promise<v
     setPicked(thread.suggestions.map((s) => s.id));
   }
 
+  // Each sign-in starts the coach fresh: the first time a child's chat opens, the old one is cleared.
   useEffect(() => {
     if (!childId) return;
     setSafety(null);
     setFallback(false);
-    getCoachThread(childId).then(adopt).catch(() => adopt({ messages: [], suggestions: [] }));
+    const empty = { messages: [], suggestions: [] };
+    if (coachFreshThisSignIn(childId)) {
+      getCoachThread(childId).then(adopt).catch(() => adopt(empty));
+      return;
+    }
+    adopt(empty);
+    clearing.current = resetCoachThread(childId).then(() => markCoachFresh(childId)).catch(() => {});
   }, [childId]);
 
   useEffect(() => {
@@ -310,6 +326,7 @@ function Coach({ family, onChange }: { family: Family; onChange: () => Promise<v
     setSafety(null);
     void run(async () => {
       try {
+        await clearing.current;
         const reply = await sendCoachMessage(child!.id, message);
         adopt(reply);
         setSafety(reply.safety?.guidance ?? null);

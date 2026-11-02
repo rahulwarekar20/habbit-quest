@@ -1,5 +1,6 @@
 /**
- * Parent PIN prompt. Protects approvals and grown-up pages from little fingers.
+ * PIN prompt. The parent PIN protects approvals and grown-up pages from little fingers; a kid PIN
+ * keeps siblings out of each other's quests.
  * `onSubmit(pin)` resolves true when the PIN is right, false when it is wrong, or a message when
  * it couldn't be checked; `onSubmit(null)` cancels. The backend checks the PIN.
  */
@@ -8,9 +9,11 @@ import { useState, type FormEvent } from "react";
 interface Props {
   reason: string;
   onSubmit: (pin: string | null) => Promise<boolean | string>;
+  eyebrow?: string; // the kid PIN prompt uses its own words
+  title?: string;
 }
 
-export default function PinDialog({ reason, onSubmit }: Props) {
+export default function PinDialog({ reason, onSubmit, eyebrow = "Grown-ups only", title = "Enter your parent PIN" }: Props) {
   const [pin, setPin] = useState("");
   const [wrong, setWrong] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,8 +32,8 @@ export default function PinDialog({ reason, onSubmit }: Props) {
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="pin-title">
       <form className="modal__card" onSubmit={submit}>
-        <p className="eyebrow">Grown-ups only</p>
-        <h2 id="pin-title">Enter your parent PIN</h2>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2 id="pin-title">{title}</h2>
         <p className="muted">{reason}</p>
         <input
           className={`pin-input ${wrong ? "pin-input--wrong" : ""}`}

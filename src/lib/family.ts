@@ -27,6 +27,7 @@ export interface Child {
   name: string;
   age: number;
   buddy: BuddyId;
+  hasPin?: boolean; // the child has their own kid PIN (from the backend)
   sparks: number; // mirrored from the backend
   progress: Progress | null; // the journey as the backend last sent it
   balance: number; // spendable points on the backend (mirrored); only a parent can spend them

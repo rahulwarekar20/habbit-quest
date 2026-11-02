@@ -2,7 +2,9 @@
  * Browser persistence. Reads and writes never throw, so blocked storage just means a fresh start.
  *
  *   localStorage    the caregiver token, a snapshot of the account (so kid mode survives a reload
- *                   after the caregiver token runs out) and the browser-only extras per family
+ *                   after the caregiver token runs out), the browser-only extras per family, and
+ *                   which coach chats were already started fresh in this sign-in
+ *                   and a child's own sign-in (family code and kid PIN), which lasts its 8 hours
  *   sessionStorage  kid mode and the kid token: per tab, like a device handed to a child
  *
  * Families, children, habits, approvals and points live on the backend. The old local accounts
@@ -15,6 +17,8 @@ const KEY = "habbit-quest.v2";
 const CAREGIVER_TOKEN = "habbit-quest.token";
 const KID_MODE = "habbit-quest.kidMode";
 const KID_SESSION = "habbit-quest.kidSession";
+const COACH_FRESH = "habbit-quest.coachFresh";
+const KID_LOGIN = "habbit-quest.kidLogin";
 
 export interface Snapshot {
   me: Me;
@@ -89,8 +93,27 @@ export function saveCaregiverToken(token: string, expiresInSeconds: number): voi
 
 export const clearCaregiverToken = () => write(local, CAREGIVER_TOKEN, null);
 
-/** This tab's kid token, or null when there is none or it has expired. */
-export const getKidSession = () => read<KidSession>(session, KID_SESSION);
+/** This tab's kid token, or a child's own sign-in; null when there is none or it has expired. */
+export const getKidSession = (): KidSession | null => read<KidSession>(session, KID_SESSION) ?? read<KidLogin>(local, KID_LOGIN);
+
+/** A child signed in on their own with the family code: no grown-up is signed in on this device. */
+export interface KidLogin extends KidSession {
+  code: string; // the family login code, to sign in again
+  snapshot: Snapshot; // just enough family for the kid screens
+}
+
+/** The child's own sign-in, even when it has run out (so the app can ask for the PIN again). */
+export function getKidLogin(): KidLogin | null {
+  try {
+    const raw = localStorage.getItem(KID_LOGIN);
+    return raw ? (JSON.parse(raw) as KidLogin) : null;
+  } catch {
+    return null;
+  }
+}
+
+export const saveKidLogin = (login: KidLogin) => write(local, KID_LOGIN, login);
+export const clearKidLogin = () => write(local, KID_LOGIN, null);
 
 export function saveKidSession(token: string, expiresInSeconds: number, childId: string, childName: string): void {
   write(session, KID_SESSION, { token, expiresAt: Date.now() + expiresInSeconds * 1000, childId, childName });
@@ -102,11 +125,13 @@ export const clearKidSession = () => write(session, KID_SESSION, null);
 export function expireKidSession(): void {
   const raw = readRaw();
   if (raw) write(session, KID_SESSION, { ...raw, expiresAt: 0 });
+  const login = getKidLogin();
+  if (login) saveKidLogin({ ...login, expiresAt: 0 });
 }
 
 /** True when this tab had a kid session and it ran out, as opposed to never having one. */
 export function kidSessionLapsed(): boolean {
-  const raw = readRaw();
+  const raw = readRaw() ?? getKidLogin();
   return !!raw && raw.expiresAt <= Date.now();
 }
 
@@ -121,8 +146,9 @@ function readRaw(): KidSession | null {
 
 // ── Kid mode ──────────────────────────────────────────────────────────────────
 
-/** Kid mode is per tab: while it is on, grown-up pages need the parent PIN. */
+/** Kid mode is per tab, or lasts while a child is signed in on their own: grown-up pages are locked. */
 export function getKidMode(): boolean {
+  if (getKidLogin()) return true;
   try {
     return sessionStorage.getItem(KID_MODE) === "1";
   } catch {
@@ -139,4 +165,37 @@ export function setKidMode(on: boolean): void {
     /* ignore */
   }
   if (!on) clearKidSession();
+}
+
+// ── Habit coach ───────────────────────────────────────────────────────────────
+
+interface CoachFresh {
+  signIn: number; // the caregiver token's expiry identifies the sign-in
+  children: string[];
+}
+
+/** True when this child's coach chat was already started fresh in the current sign-in. */
+export function coachFreshThisSignIn(childId: string): boolean {
+  const signIn = getCaregiverToken()?.expiresAt;
+  if (!signIn) return false;
+  try {
+    const raw = localStorage.getItem(COACH_FRESH);
+    const fresh = raw ? (JSON.parse(raw) as CoachFresh) : null;
+    return fresh?.signIn === signIn && fresh.children.includes(childId);
+  } catch {
+    return false;
+  }
+}
+
+export function markCoachFresh(childId: string): void {
+  const signIn = getCaregiverToken()?.expiresAt;
+  if (!signIn) return;
+  try {
+    const raw = localStorage.getItem(COACH_FRESH);
+    const fresh = raw ? (JSON.parse(raw) as CoachFresh) : null;
+    const children = fresh?.signIn === signIn ? fresh.children : [];
+    write(local, COACH_FRESH, { signIn, children: [...new Set([...children, childId])] });
+  } catch {
+    /* ignore */
+  }
 }

@@ -59,7 +59,7 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
             <h1>Quests for {child.name}</h1>
             <p className="lead">
               Up to {MAX_HABITS} quests, chosen from goals. Harder tiers unlock as {child.name} levels up.
-              Not sure where to start? Describe the problem on the dashboard.
+              Not sure where to start? <a href={`#/coach/${child.id}`}>Ask the habit coach</a>.
             </p>
           </div>
         </div>

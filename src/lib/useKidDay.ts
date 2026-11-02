@@ -1,14 +1,16 @@
 /**
  * The kid screens' link to the backend. Starts a kid session for the child with the caregiver
  * token when this tab has none, then reads today with the kid token and mirrors it locally.
- * When a kid session runs out, a grown-up restarts it with the parent PIN (`resume`).
+ * When a kid session runs out, a grown-up restarts it with the parent PIN (`resume`); a child who
+ * signed in on their own enters their PIN again instead.
  */
 import { useCallback, useEffect, useState } from "react";
 import {
   ApiError, errorText, getKidExtras, getKidJourney, getKidToday, listKidSurprises, startKidSession, submitCompletion,
   type Journey, type Surprise, type Today, type TodayHabit,
 } from "./api";
-import { getKidSession, kidSessionLapsed, saveKidSession } from "./storage";
+import { go } from "./router";
+import { getKidLogin, getKidSession, kidSessionLapsed, saveKidSession } from "./storage";
 import { useStore } from "./store";
 import { applyExtras, applyToday } from "./sync";
 
@@ -35,6 +37,7 @@ export function useKidDay(childId: string, poll = false) {
 
   const fail = useCallback((e: unknown) => {
     if (e instanceof ApiError && e.status === 401) setLapsed(true);
+    else if (e instanceof ApiError && e.status === 403) go("/kid"); // this child needs their PIN: pick again
     else setError(errorText(e));
   }, []);
 
@@ -75,6 +78,8 @@ export function useKidDay(childId: string, poll = false) {
   }, [accept, fail, load]);
 
   const resume = useCallback(async () => {
+    const own = getKidLogin();
+    if (own) return go(`/join/${own.code}`); // a child signed in on their own: PIN again
     if (!(await askPin("Kid mode timed out. Start it again."))) return;
     enterKidMode(); // the child has the device again, so this PIN shouldn't linger
     try {

@@ -42,7 +42,7 @@ function scrollTo(id: string) {
   };
 }
 
-export function ParentHeader({ active }: { active: "dashboard" | "habits" | "quests" | "rewards" }) {
+export function ParentHeader({ active }: { active: "dashboard" | "coach" | "habits" | "quests" | "rewards" }) {
   const { family, logout, enterKidMode } = useStore();
   return (
     <header className="topbar topbar--app">
@@ -50,6 +50,7 @@ export function ParentHeader({ active }: { active: "dashboard" | "habits" | "que
         <Logo href="#/parent" />
         <nav className="topbar__nav topbar__nav--app" aria-label="Parent">
           <a href="#/parent" className={active === "dashboard" ? "is-active" : ""}>Dashboard</a>
+          <a href="#/coach" className={active === "coach" ? "is-active" : ""}>Habit coach</a>
           <a href="#/setup" className={active === "habits" ? "is-active" : ""}>Child details</a>
           <a href="#/quests" className={active === "quests" ? "is-active" : ""}>Quest library</a>
           <a href="#/rewards" className={active === "rewards" ? "is-active" : ""}>Rewards &amp; limits</a>

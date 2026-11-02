@@ -1,12 +1,13 @@
 /**
  * A child's details and routine times: when each part of the day starts. New quests default to
  * these times. Quests already in the plan keep theirs; change those in the quest library.
+ * Also the child's own kid PIN, for signing in on their own device.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Buddy from "../components/Buddy";
 import { ChildForm } from "../components/ChildForm";
 import { Footer, ParentHeader } from "../components/Headers";
-import { errorText, getChild, updateChild, type ApiChild, type ChildInput } from "../lib/api";
+import { errorText, getChild, removeKidPin, setKidPin, updateChild, type ApiChild, type ChildInput } from "../lib/api";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
@@ -70,8 +71,79 @@ export default function HabitSetup({ childId }: { childId?: string }) {
             : !error && <p className="empty">Loading…</p>}
           {saved && <p className="form-ok" role="status">Saved.</p>}
         </section>
+        {loaded && <KidPin key={loaded.id} child={loaded} onChange={async () => { setLoaded(await getChild(loaded.id)); await reload(); }} />}
       </main>
       <Footer />
     </div>
+  );
+}
+
+/** The child's own PIN: for signing in on their own device, and for "Who's playing?" on a shared one. */
+function KidPin({ child, onChange }: { child: ApiChild; onChange: () => Promise<void> }) {
+  const { askPin, server } = useStore();
+  const loginCode = server?.login_code;
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function run(action: () => Promise<void>, message: string) {
+    if (!(await askPin(`Change ${child.name}'s kid PIN.`))) return;
+    setBusy(true);
+    setError(null);
+    setDone(null);
+    try {
+      await action();
+      await onChange();
+      setPin("");
+      setDone(message);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    void run(() => setKidPin(child.id, pin), `${child.name} can now sign in with this PIN.`);
+  }
+
+  return (
+    <section className="panel" aria-labelledby="kid-pin-title">
+      <div className="panel__head">
+        <h2 id="kid-pin-title">{child.name}'s PIN</h2>
+        <span className="muted">{child.has_pin ? "Set" : "Not set"}</span>
+      </div>
+      <p className="muted">
+        With their own 4-digit PIN, {child.name} can sign in on their own device, and "Who's playing?" asks for it
+        so siblings can't open each other's quests.
+      </p>
+      <ol className="kid-pin__steps">
+        <li>
+          {loginCode
+            ? <>Open HabitQuest, tap <b>I'm a kid</b> and enter the family code <b className="kid-pin__code">{loginCode.slice(0, 4)} {loginCode.slice(4)}</b>, or scan the family QR code.</>
+            : <>Make the family QR code on the <a href="#/parent">dashboard</a> (family panel). Its family code is what {child.name} enters first.</>}
+        </li>
+        <li>Pick their name.</li>
+        <li>Enter this PIN.</li>
+      </ol>
+      <form className="form kid-pin" onSubmit={submit}>
+        <label className="field field--narrow">
+          <span>{child.has_pin ? "New PIN" : "PIN"}</span>
+          <input inputMode="numeric" pattern="\d{4}" maxLength={4} value={pin} placeholder="••••" autoComplete="off"
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} aria-label={`${child.name}'s 4-digit PIN`} />
+        </label>
+        <div className="share__actions">
+          <button className="btn btn--primary btn--sm" disabled={busy || pin.length !== 4}>{child.has_pin ? "Change PIN" : "Set PIN"}</button>
+          {child.has_pin && (
+            <button type="button" className="btn btn--ghost btn--sm" disabled={busy}
+              onClick={() => run(() => removeKidPin(child.id), `${child.name}'s PIN is removed.`)}>Remove PIN</button>
+          )}
+        </div>
+      </form>
+      {error && <p className="form-error">{error}</p>}
+      {done && <p className="form-ok" role="status">{done}</p>}
+    </section>
   );
 }

@@ -38,6 +38,7 @@ export interface ApiFamily {
   name: string;
   timezone: string;
   invite_code: string;
+  login_code: string | null; // shared as a QR code; null until a caregiver makes one
   has_pin: boolean;
   created_at: string;
   caregivers: Caregiver[];
@@ -52,6 +53,7 @@ export interface ApiChild {
   world: ThemeWorld;
   tier_override: number; // highest quest tier to allow; 0 follows the child's world
   routine_times: RoutineTimes;
+  has_pin: boolean; // the child has their own kid PIN
   created_at: string;
 }
 export type ChildInput = Pick<ApiChild, "name" | "age" | "buddy" | "routine_times"> & { tier_override?: number };
@@ -468,8 +470,27 @@ export const listGoalHabits = (goalId: string, age?: number, maxTier?: number) =
 
 // ── Kid mode and the daily loop ───────────────────────────────────────────────
 
-export const startKidSession = (childId: string) =>
-  request<TokenResponse & { child: { id: string; name: string } }>("POST", `/v1/children/${childId}/kid-session`);
+export const startKidSession = (childId: string, pin?: string) =>
+  request<TokenResponse & { child: { id: string; name: string } }>("POST", `/v1/children/${childId}/kid-session`, pin ? { pin } : undefined);
+
+// ── Kid login: the family login code (QR) and each child's PIN ────────────────
+
+export interface LoginFamily {
+  family: { id: string; name: string };
+  children: { id: string; name: string; buddy: Buddy; has_pin: boolean }[];
+}
+export interface KidLoginResult extends TokenResponse {
+  child: { id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld };
+  family: { id: string; name: string };
+}
+
+export const newLoginCode = (familyId: string) => request<ApiFamily>("POST", `/v1/families/${familyId}/login-code`);
+export const setKidPin = (childId: string, pin: string) => request<void>("PUT", `/v1/children/${childId}/kid-pin`, { pin });
+export const removeKidPin = (childId: string) => request<void>("DELETE", `/v1/children/${childId}/kid-pin`);
+export const findLoginFamily = (code: string) =>
+  request<LoginFamily>("GET", `/v1/kid-login/${encodeURIComponent(code)}`, undefined, { noAuth: true });
+export const kidLogin = (code: string, childId: string, pin: string) =>
+  request<KidLoginResult>("POST", `/v1/kid-login/${encodeURIComponent(code)}`, { child_id: childId, pin }, { noAuth: true });
 export const getKidMe = () =>
   request<{ id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld }>("GET", "/v1/kid/me", undefined, { kid: true });
 export const getKidToday = () => request<Today>("GET", "/v1/kid/today", undefined, { kid: true });

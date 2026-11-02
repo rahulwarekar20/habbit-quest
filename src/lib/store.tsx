@@ -12,8 +12,8 @@ import { childDefaults, defaultHabits, type Family } from "./family";
 import { normalizeFamily } from "./migrate";
 import { go } from "./router";
 import {
-  clearCaregiverToken, getCaregiverToken, getKidMode, getKidSession, loadSaved, persist, saveCaregiverToken, setKidMode,
-  type Saved, type Snapshot,
+  clearCaregiverToken, clearKidLogin, getCaregiverToken, getKidLogin, getKidMode, getKidSession, loadSaved, persist,
+  saveCaregiverToken, saveKidLogin, setKidMode, type Saved, type Snapshot,
 } from "./storage";
 
 /** booting: first load | signedOut | noFamily: needs family setup | ready | failed: couldn't load */
@@ -31,6 +31,8 @@ interface Store {
   update: (fn: (f: Family) => Family) => void;
   signInGoogle: (credential: string) => Promise<string | null>; // error message or null
   signInDev: (username: string, password: string) => Promise<string | null>;
+  /** A child signs in on their own with the family login code and their PIN. */
+  signInKid: (code: string, childId: string, pin: string) => Promise<string | null>;
   logout: () => void;
   retry: () => void;
   /** Reloads the account, family and children from the backend. */
@@ -56,7 +58,7 @@ export function reconcile(saved: Family | undefined, { me, server, children }: S
     ...base,
     email: me.email ?? "",
     parentName: link?.display_name ?? server.caregivers.find((c) => c.user_id === me.id)?.display_name ?? me.name ?? "there",
-    children: children.map((c) => ({ ...childDefaults(), ...known.get(c.id), id: c.id, name: c.name, age: c.age, buddy: c.buddy })),
+    children: children.map((c) => ({ ...childDefaults(), ...known.get(c.id), id: c.id, name: c.name, age: c.age, buddy: c.buddy, hasPin: c.has_pin })),
   };
 }
 
@@ -110,9 +112,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const boot = useCallback(async () => {
     setLoadError(null);
     if (!getCaregiverToken()) {
-      // Kid mode keeps working on its own token after the caregiver token runs out.
-      const cached = saved.current.snapshot;
-      if (cached && getKidMode() && getKidSession()) adopt(cached);
+      // A child signed in on their own, or kid mode keeps working on its own token after the caregiver
+      // token runs out.
+      const cached = getKidLogin()?.snapshot ?? saved.current.snapshot;
+      if (cached && getKidMode() && (getKidSession() || getKidLogin())) adopt(cached);
       else setPhase("signedOut");
       return;
     }
@@ -128,6 +131,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const endSession = useCallback(() => {
     clearCaregiverToken();
+    clearKidLogin();
     setKidMode(false);
     pinOkUntil.current = 0;
     lastPin.current = null;
@@ -154,6 +158,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const afterToken = useCallback(
     async (token: api.TokenResponse) => {
       saveCaregiverToken(token.access_token, token.expires_in);
+      clearKidLogin(); // a grown-up signing in ends a child's own sign-in on this device
       setKidMode(false);
       setNotice(null);
       await load();
@@ -183,6 +188,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
     },
     [afterToken]
+  );
+
+  const signInKid = useCallback(
+    async (code: string, childId: string, pin: string) => {
+      try {
+        const { access_token, expires_in, child, family: fam } = await api.kidLogin(code, childId, pin);
+        // Just enough family for the kid screens: the child is all a kid token can see.
+        const snapshot: Snapshot = {
+          me: { id: "", name: null, email: null, families: [] },
+          server: { id: fam.id, name: fam.name, timezone: "", invite_code: "", login_code: code, has_pin: true, created_at: "", caregivers: [] },
+          children: [{
+            ...child, family_id: fam.id, tier_override: 0, routine_times: {}, has_pin: true, created_at: "",
+          }],
+        };
+        clearCaregiverToken();
+        saveKidLogin({
+          token: access_token, expiresAt: Date.now() + expires_in * 1000, childId: child.id, childName: child.name, code, snapshot,
+        });
+        adopt(snapshot);
+        return null;
+      } catch (e) {
+        if (e instanceof api.ApiError && e.status === 403) return "That PIN isn't right. Try again.";
+        return api.errorText(e);
+      }
+    },
+    [adopt]
   );
 
   const setServer = useCallback(
@@ -246,9 +277,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(
     () => ({
       phase, loadError, waking, notice, me: snapshot?.me ?? null, server: snapshot?.server ?? null, family, update,
-      signInGoogle, signInDev, logout: endSession, retry: boot, reload: load, setServer, askPin, askPinValue, enterKidMode,
+      signInGoogle, signInDev, signInKid, logout: endSession, retry: boot, reload: load, setServer, askPin, askPinValue, enterKidMode,
     }),
-    [phase, loadError, waking, notice, snapshot, family, update, signInGoogle, signInDev, endSession, boot, load, setServer, askPin, askPinValue, enterKidMode]
+    [phase, loadError, waking, notice, snapshot, family, update, signInGoogle, signInDev, signInKid, endSession, boot, load, setServer, askPin, askPinValue, enterKidMode]
   );
 
   return (
