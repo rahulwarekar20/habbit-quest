@@ -20,6 +20,7 @@ export default function Privacy() {
           <h2>What reaches the AI provider</h2>
           <p>The AI helpers use Nebius Token Factory. Children's names from your family are replaced with labels before anything is sent. The provider receives what you type to the coach, children's ages, quest titles and progress, and notes children write in check-ins for a safety check.</p>
           <p>Messages suggesting a child may be at risk are not sent to the coach. Please avoid typing surnames, addresses or other identifying details.</p>
+          <p>To find and fix problems, we may review coach conversations in LangSmith, a debugging service. Family names, email addresses, phone numbers, street addresses and links are removed first. Other details you type can remain, and these records are kept only for a short time.</p>
         </section>
         <section className="panel">
           <h2>Keeping and deleting</h2>
