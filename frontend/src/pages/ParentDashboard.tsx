@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import AiHelpers from "../components/AiHelpers";
-import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, useCheckins } from "../components/ParentPanels";
+import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, recentCheckins, useCheckins } from "../components/ParentPanels";
 import Buddy from "../components/Buddy";
 import Celebration from "../components/Celebration";
 import { ChildForm } from "../components/ChildForm";
@@ -179,10 +179,14 @@ export default function ParentDashboard() {
           <AddChildCard onAdd={add} />
         </div>
 
-        <div className="two-col">
-          <KidFeedback items={checkins.items} onRead={() => void checkins.markRead()} />
-          <SurprisePlanner family={fam} familyId={familyId} />
-        </div>
+        {recentCheckins(checkins.items).length > 0 ? (
+          <div className="two-col">
+            <KidFeedback items={checkins.items} onRead={() => void checkins.markRead()} />
+            <SurprisePlanner family={fam} familyId={familyId} />
+          </div>
+        ) : (
+          <SurprisePlanner family={fam} familyId={familyId} wide />
+        )}
 
         <AiHelpers family={fam} onPlanSaved={() => void load()} />
       </main>

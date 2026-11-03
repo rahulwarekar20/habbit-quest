@@ -1043,3 +1043,9 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .status-pill { display: inline-flex; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 0.85rem; background: var(--bg); color: var(--ink-soft); }
 .status-pill.is-on { background: var(--mint); color: var(--mint-deep); }
 @media (max-width: 900px) { .settings__grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Surprise planner alone on its row: description beside the form */
+.panel--surprise-wide { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 28px; align-items: start; }
+.panel--surprise-wide .surprise-form { margin-top: 0; }
+.panel--surprise-wide .surprise-intro p { margin: 0; }
+@media (max-width: 900px) { .panel--surprise-wide { grid-template-columns: minmax(0, 1fr); gap: 0; } .panel--surprise-wide .surprise-form { margin-top: 12px; } }
