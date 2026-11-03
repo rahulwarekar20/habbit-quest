@@ -1,0 +1,425 @@
+"""Google sign-in, families and caregivers, the family PIN, kid sessions and CORS."""
+
+import time
+from uuid import uuid4
+
+import jwt
+import psycopg
+import pytest
+from conftest import OTHER, PARENT, token
+from cryptography.hazmat.primitives.asymmetric import rsa
+from fastapi.testclient import TestClient
+
+from habitquest_backend import auth
+from habitquest_backend.auth import check_pin, hash_pin
+from habitquest_backend.config import Settings
+from habitquest_backend.db import transaction
+from habitquest_backend.main import create_app
+
+CLIENT_ID = "1234-test.apps.googleusercontent.com"
+GOOGLE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+FAMILY = {
+    "name": "Rivera",
+    "timezone": "Europe/London",
+    "pin": "1234",
+    "display_name": "Sam",
+    "role": "mother",
+}
+
+
+def google_token(**overrides):
+    now = int(time.time())
+    claims = {
+        "iss": "https://accounts.google.com",
+        "aud": CLIENT_ID,
+        "sub": "google-123",
+        "email": "sam@example.com",
+        "email_verified": True,
+        "name": "Sam Rivera",
+        "iat": now,
+        "exp": now + 300,
+        **overrides,
+    }
+    claims = {key: value for key, value in claims.items() if value is not None}
+    return jwt.encode(claims, GOOGLE_KEY, algorithm="RS256")
+
+
+@pytest.fixture
+def google(settings, db, monkeypatch):
+    monkeypatch.setattr(auth, "google_key", lambda credential: GOOGLE_KEY.public_key())
+    with TestClient(create_app(settings.model_copy(update={"google_client_id": CLIENT_ID}))) as c:
+        yield c
+
+
+def users(db, *ids):
+    for user in ids:
+        db.execute("INSERT INTO hq.users(id,name) VALUES(%s,'Test')", (user,))
+
+
+def as_user(client, settings, user):
+    return {"Authorization": "Bearer " + token(settings, user)}
+
+
+@pytest.fixture
+def family(client, db):
+    users(db, PARENT, OTHER)
+    response = client.post("/v1/families", json=FAMILY)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def child(db, family_id, name="Alex"):
+    return db.execute(
+        "INSERT INTO hq.children(family_id,name,age) VALUES(%s,%s,7) RETURNING id", (family_id, name)
+    ).fetchone()[0]
+
+
+# ── Google sign-in ────────────────────────────────────────────────────────────
+
+
+def test_google_sign_in_creates_then_reuses_the_user(google, db):
+    first = google.post("/v1/auth/google", json={"credential": google_token()})
+    assert first.status_code == 200, first.text
+    assert first.json()["expires_in"] == 8 * 3600
+    again = google.post(
+        "/v1/auth/google", json={"credential": google_token(email="sam@new.example", name=None)}
+    )
+    assert db.execute("SELECT google_sub,email,name FROM hq.users").fetchall() == [
+        ("google-123", "sam@new.example", "sam")  # no name in the token: the email's local part
+    ]
+    me = google.get("/v1/me", headers={"Authorization": "Bearer " + again.json()["access_token"]}).json()
+    assert (me["name"], me["email"], me["families"]) == ("sam", "sam@new.example", [])
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"aud": "someone-else.apps.googleusercontent.com"},
+        {"iss": "https://evil.example"},
+        {"email_verified": False},
+        {"email_verified": None},
+        {"exp": int(time.time()) - 60},
+    ],
+)
+def test_google_tokens_that_fail_a_check_are_refused(google, overrides):
+    response = google.post("/v1/auth/google", json={"credential": google_token(**overrides)})
+    assert response.status_code == 401
+
+
+def test_a_token_signed_by_another_key_is_refused(google):
+    forged = jwt.encode(
+        jwt.decode(google_token(), options={"verify_signature": False}),
+        rsa.generate_private_key(public_exponent=65537, key_size=2048),
+        algorithm="RS256",
+    )
+    assert google.post("/v1/auth/google", json={"credential": forged}).status_code == 401
+
+
+def test_google_sign_in_unconfigured_or_unreachable_is_503(client, google, monkeypatch):
+    assert client.post("/v1/auth/google", json={"credential": google_token()}).status_code == 503
+
+    def unreachable(credential):
+        raise jwt.PyJWKClientConnectionError("network down")
+
+    monkeypatch.setattr(auth, "google_key", unreachable)
+    assert google.post("/v1/auth/google", json={"credential": google_token()}).status_code == 503
+
+
+def test_google_keys_are_fetched_from_google_once_and_cached(monkeypatch):
+    created = []
+
+    class Keys:
+        def __init__(self, url, **options):
+            created.append((url, options))
+
+        def get_signing_key_from_jwt(self, credential):
+            return type("Key", (), {"key": "public-key"})()
+
+    monkeypatch.setattr(auth, "_google_keys", None)
+    monkeypatch.setattr(jwt, "PyJWKClient", Keys)
+    assert auth.google_key("a") == auth.google_key("b") == "public-key"
+    assert created == [(auth.GOOGLE_CERTS, {"cache_keys": True, "lifespan": 3600})]
+
+
+# ── Families and caregivers ───────────────────────────────────────────────────
+
+
+def test_creating_a_family_makes_the_caller_its_first_caregiver(client, family):
+    assert (family["name"], family["timezone"], family["has_pin"]) == ("Rivera", "Europe/London", True)
+    assert len(family["invite_code"]) == 8 and "pin_hash" not in family
+    assert family["caregivers"] == [{"user_id": str(PARENT), "display_name": "Sam", "role": "mother"}]
+    me = client.get("/v1/me").json()
+    assert me["families"] == [{"id": family["id"], "name": "Rivera", "display_name": "Sam", "role": "mother"}]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"timezone": "Mars/Base"},
+        {"pin": "12345"},
+        {"pin": "abcd"},
+        {"role": "uncle"},
+        {"name": ""},
+        {"extra": 1},
+    ],
+)
+def test_family_input_is_validated(client, db, change):
+    users(db, PARENT)
+    assert client.post("/v1/families", json={**FAMILY, **change}).status_code == 422
+
+
+def test_a_second_caregiver_joins_with_the_invite_code(client, settings, db, family):
+    jo = as_user(client, settings, OTHER)
+    code = family["invite_code"]
+    loose = f" {code[:4].lower()}-{code[4:]} "
+    joined = client.post(
+        "/v1/families/join", json={"invite_code": loose, "display_name": "Jo", "role": "father"}, headers=jo
+    )
+    assert joined.status_code == 200, joined.text
+    assert [c["role"] for c in joined.json()["caregivers"]] == ["mother", "father"]
+    again = client.post(
+        "/v1/families/join", json={"invite_code": code, "display_name": "Jo", "role": "father"}, headers=jo
+    )
+    assert again.status_code == 409
+    unknown = client.post(
+        "/v1/families/join",
+        json={"invite_code": "ZZZZZZZZ", "display_name": "Jo", "role": "other"},
+        headers=jo,
+    )
+    assert unknown.status_code == 404
+
+
+def test_non_members_cannot_see_or_change_a_family(client, settings, family):
+    outsider = as_user(client, settings, OTHER)
+    base = f"/v1/families/{family['id']}"
+    assert client.get(base, headers=outsider).status_code == 404
+    assert client.patch(base, json={"name": "Taken"}, headers=outsider).status_code == 404
+    assert client.patch(base + "/caregivers/me", json={"role": "other"}, headers=outsider).status_code == 404
+    assert client.post(base + "/invite-code", headers=outsider).status_code == 404
+    assert client.put(base + "/pin", json={"pin": "0000"}, headers=outsider).status_code == 404
+    assert client.post(base + "/pin/verify", json={"pin": "1234"}, headers=outsider).status_code == 404
+    assert client.get(base).json()["name"] == "Rivera"
+
+
+def test_editing_a_family_and_my_caregiver_details(client, family):
+    base = f"/v1/families/{family['id']}"
+    renamed = client.patch(base, json={"name": "Rivera-Okafor"}).json()
+    assert (renamed["name"], renamed["timezone"]) == ("Rivera-Okafor", "Europe/London")
+    assert client.patch(base, json={"timezone": "Asia/Kolkata"}).json()["timezone"] == "Asia/Kolkata"
+    assert client.patch(base, json={"timezone": "Nowhere"}).status_code == 422
+    assert client.patch(base, json={"timezone": None}).json()["timezone"] == "Asia/Kolkata"  # null: unchanged
+    me = client.patch(base + "/caregivers/me", json={"display_name": "Mum"}).json()["caregivers"][0]
+    assert (me["display_name"], me["role"]) == ("Mum", "mother")
+    assert (
+        client.patch(base + "/caregivers/me", json={"role": "guardian"}).json()["caregivers"][0]["role"]
+        == "guardian"
+    )
+
+
+def test_a_new_invite_code_replaces_the_old_one(client, settings, family):
+    fresh = client.post(f"/v1/families/{family['id']}/invite-code").json()["invite_code"]
+    assert fresh != family["invite_code"]
+    jo = as_user(client, settings, OTHER)
+    join = {"display_name": "Jo", "role": "father"}
+    assert (
+        client.post(
+            "/v1/families/join", json={**join, "invite_code": family["invite_code"]}, headers=jo
+        ).status_code
+        == 404
+    )
+    assert (
+        client.post("/v1/families/join", json={**join, "invite_code": fresh}, headers=jo).status_code == 200
+    )
+
+
+def test_the_pin_is_checked_and_can_be_changed(client, family):
+    base = f"/v1/families/{family['id']}/pin"
+    assert client.post(base + "/verify", json={"pin": "1234"}).json() == {"valid": True}
+    assert client.post(base + "/verify", json={"pin": "4321"}).json() == {"valid": False}
+    assert client.put(base, json={"pin": "4321"}).status_code == 204
+    assert client.post(base + "/verify", json={"pin": "1234"}).json() == {"valid": False}
+    assert client.post(base + "/verify", json={"pin": "4321"}).json() == {"valid": True}
+
+
+def test_a_family_can_go_without_a_pin(client, db):
+    users(db, PARENT)
+    family = client.post("/v1/families", json={k: v for k, v in FAMILY.items() if k != "pin"}).json()
+    base = f"/v1/families/{family['id']}"
+    assert family["has_pin"] is False
+    assert client.post(base + "/pin/verify", json={}).json() == {"valid": True}
+    assert client.put(base + "/pin", json={"pin": "4321"}).status_code == 204
+    assert client.get(base).json()["has_pin"] is True
+    assert client.post(base + "/pin/verify", json={}).json() == {"valid": False}
+
+
+def test_turning_the_pin_off_needs_the_pin(client, family):
+    base = f"/v1/families/{family['id']}"
+    assert client.post(base + "/pin/remove", json={}).status_code == 403
+    assert client.post(base + "/pin/remove", json={"pin": "9999"}).status_code == 403
+    assert client.post(base + "/pin/remove", json={"pin": "1234"}).status_code == 204
+    assert client.get(base).json()["has_pin"] is False
+    assert client.post(base + "/pin/remove", json={}).status_code == 204
+
+
+def test_pin_hashes_are_salted():
+    first, second = hash_pin("1234"), hash_pin("1234")
+    assert first != second and check_pin("1234", first) and check_pin("1234", second)
+    assert not check_pin("1234", None)
+
+
+def test_family_functions_need_a_signed_in_user(settings, db):
+    with transaction(settings) as conn, pytest.raises(psycopg.errors.InsufficientPrivilege):
+        conn.execute("SELECT hq.create_family('x','UTC',NULL,'CODE1234','Sam','mother')")
+    with transaction(settings) as conn, pytest.raises(psycopg.errors.InsufficientPrivilege):
+        conn.execute("SELECT hq.join_family('CODE1234','Sam','mother')")
+
+
+# ── Kid mode ──────────────────────────────────────────────────────────────────
+
+
+def test_kid_session_gives_a_token_only_for_kid_endpoints(client, settings, db, family):
+    alex = child(db, family["id"])
+    session = client.post(f"/v1/children/{alex}/kid-session")
+    assert session.status_code == 200, session.text
+    body = session.json()
+    assert body["child"] == {"id": str(alex), "name": "Alex"} and body["expires_in"] == 8 * 3600
+    kid = {"Authorization": "Bearer " + body["access_token"]}
+    me = client.get("/v1/kid/me", headers=kid).json()
+    assert (me["name"], me["age"], me["buddy"], me["world"]) == ("Alex", 7, "fox", "camp")
+    assert client.get("/v1/me", headers=kid).status_code == 401
+    assert client.get(f"/v1/families/{family['id']}", headers=kid).status_code == 401
+    assert client.get("/v1/kid/me").status_code == 401  # a caregiver token is not a kid token
+
+
+def test_kid_sessions_only_for_the_callers_children(client, settings, db, family):
+    stranger = db.execute("INSERT INTO hq.families(name) VALUES('Okafor') RETURNING id").fetchone()[0]
+    assert client.post(f"/v1/children/{child(db, stranger)}/kid-session").status_code == 404
+    assert client.post(f"/v1/children/{uuid4()}/kid-session").status_code == 404
+
+
+def test_a_kid_sees_only_their_own_child_row(client, settings, db, family):
+    alex, maya = child(db, family["id"]), child(db, family["id"], "Maya")
+    with transaction(settings, kid=alex) as conn:
+        assert conn.execute("SELECT id FROM hq.children").fetchall() == [{"id": alex}]
+    for table in ("families", "caregivers", "users", "pain_points", "child_goals"):
+        with transaction(settings, kid=alex) as conn, pytest.raises(psycopg.errors.InsufficientPrivilege):
+            conn.execute(f"SELECT 1 FROM hq.{table}")
+    db.execute("DELETE FROM hq.children WHERE id=%s", (maya,))
+    with TestClient(create_app(settings)) as kid_client:
+        kid = {"Authorization": "Bearer " + token(settings, maya, role="kid")}
+        assert kid_client.get("/v1/kid/me", headers=kid).status_code == 404
+
+
+# ── Kid login ─────────────────────────────────────────────────────────────────
+
+
+def login_code(client, family):
+    return client.post(f"/v1/families/{family['id']}/login-code").json()["login_code"]
+
+
+def test_a_kid_signs_in_with_the_family_code_and_their_pin(client, db, family):
+    alex, maya = child(db, family["id"]), child(db, family["id"], "Maya")
+    assert family["login_code"] is None
+    code = login_code(client, family)
+    assert client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "4321"}).status_code == 204
+    assert client.get(f"/v1/children/{alex}").json()["has_pin"] is True
+    client.headers.pop("Authorization")  # nobody is signed in on the kid's device
+
+    found = client.get(f"/v1/kid-login/{code.lower()[:4]}-{code[4:]}")
+    assert found.status_code == 200, found.text
+    assert found.json() == {
+        "family": {"id": family["id"], "name": "Rivera"},
+        "children": [
+            {"id": str(alex), "name": "Alex", "buddy": "fox", "has_pin": True},
+            {"id": str(maya), "name": "Maya", "buddy": "fox", "has_pin": False},
+        ],
+    }
+    signed_in = client.post(f"/v1/kid-login/{code}", json={"child_id": str(alex), "pin": "4321"})
+    assert signed_in.status_code == 200, signed_in.text
+    body = signed_in.json()
+    assert body["child"]["name"] == "Alex" and body["family"] == {"id": family["id"], "name": "Rivera"}
+    assert body["expires_in"] == 8 * 3600
+    kid = {"Authorization": "Bearer " + body["access_token"]}
+    assert client.get("/v1/kid/me", headers=kid).json()["id"] == str(alex)
+    assert client.get(f"/v1/families/{family['id']}", headers=kid).status_code == 401
+
+
+def test_kid_login_refuses_wrong_pins_codes_and_children(client, db, family):
+    alex, maya = child(db, family["id"]), child(db, family["id"], "Maya")
+    stranger = db.execute("INSERT INTO hq.families(name) VALUES('Okafor') RETURNING id").fetchone()[0]
+    code = login_code(client, family)
+    client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "4321"})
+
+    def login(kid, pin="4321", at=code):
+        return client.post(f"/v1/kid-login/{at}", json={"child_id": str(kid), "pin": pin})
+
+    assert login(alex, "0000").status_code == 403
+    assert login(maya).status_code == 409  # no PIN yet
+    assert login(child(db, stranger)).status_code == 404  # not this family's child
+    assert login(alex, at="NOTACODE").status_code == 404
+    assert client.get("/v1/kid-login/NOTACODE").status_code == 404
+
+    client.delete(f"/v1/children/{alex}/kid-pin")
+    assert login(alex).status_code == 409
+    fresh = login_code(client, family)
+    assert fresh != code and client.get(f"/v1/kid-login/{code}").status_code == 404
+
+
+def test_a_family_without_children_can_still_be_found(client, family):
+    found = client.get(f"/v1/kid-login/{login_code(client, family)}").json()
+    assert found["children"] == [] and found["family"]["name"] == "Rivera"
+
+
+def test_kid_pin_guesses_are_limited(client, settings, db, family):
+    alex = child(db, family["id"])
+    code = login_code(client, family)
+    client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "4321"})
+    codes = [
+        client.post(f"/v1/kid-login/{code}", json={"child_id": str(alex), "pin": "0000"}).status_code
+        for _ in range(settings.pin_limit + 1)
+    ]
+    assert codes[-1] == 429 and set(codes[:-1]) == {403}
+
+
+def test_only_the_familys_caregivers_manage_codes_and_kid_pins(client, settings, db, family):
+    alex = child(db, family["id"])
+    outsider = as_user(client, settings, OTHER)
+    assert client.post(f"/v1/families/{family['id']}/login-code", headers=outsider).status_code == 404
+    assert (
+        client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "1111"}, headers=outsider).status_code == 404
+    )
+    assert client.delete(f"/v1/children/{alex}/kid-pin", headers=outsider).status_code == 404
+    assert client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "12"}).status_code == 422
+
+
+def test_a_shared_device_asks_for_the_kids_pin_when_they_have_one(client, db, family):
+    alex = child(db, family["id"])
+    client.put(f"/v1/children/{alex}/kid-pin", json={"pin": "4321"})
+    assert client.post(f"/v1/children/{alex}/kid-session").status_code == 403
+    assert client.post(f"/v1/children/{alex}/kid-session", json={"pin": "0000"}).status_code == 403
+    session = client.post(f"/v1/children/{alex}/kid-session", json={"pin": "4321"})
+    assert session.status_code == 200 and session.json()["child"] == {"id": str(alex), "name": "Alex"}
+
+
+def test_kid_login_functions_reveal_nothing_without_the_code(settings, db, family):
+    with transaction(settings) as conn:
+        assert conn.execute("SELECT * FROM hq.login_family('')").fetchall() == []
+        assert conn.execute("SELECT * FROM hq.login_child_pin('',%s)", (uuid4(),)).fetchall() == []
+
+
+# ── Browser access ────────────────────────────────────────────────────────────
+
+
+def test_cors_allows_only_the_configured_origins(client):
+    preflight = {"Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "authorization"}
+    allowed = client.options("/v1/families", headers={"Origin": "http://localhost:5180", **preflight})
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5180"
+    refused = client.options("/v1/families", headers={"Origin": "https://evil.example", **preflight})
+    assert "access-control-allow-origin" not in refused.headers
+
+
+def test_origins_are_read_from_a_comma_separated_list():
+    assert Settings(cors_origins="https://app.example, http://localhost:5180,").allowed_origins == [
+        "https://app.example",
+        "http://localhost:5180",
+    ]

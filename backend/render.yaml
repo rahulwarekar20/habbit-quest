@@ -1,0 +1,52 @@
+# Render Blueprint: one free web service plus Render Postgres in virginia.
+services:
+  - type: web
+    name: habitquest-api
+    runtime: python
+    region: virginia
+    plan: free
+    branch: main
+    buildCommand: pip install uv==0.12.23 && uv export --frozen --no-dev --no-emit-project -o requirements.txt && pip install -r requirements.txt && pip install --no-deps .
+    startCommand: sh scripts/render_start.sh
+    healthCheckPath: /health/ready
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        fromDatabase: {name: habitquest-db, property: connectionString}
+      - fromGroup: habitquest-settings
+
+databases:
+  - name: habitquest-db
+    region: virginia
+    plan: free
+
+envVarGroups:
+  - name: habitquest-settings
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true    # signs our own access tokens
+      - key: JWT_ISSUER
+        value: https://habitquest-api.onrender.com
+      - key: GOOGLE_CLIENT_ID  # the frontend's Google sign-in client id (not a secret)
+        sync: false
+      - key: CORS_ORIGINS      # comma-separated frontend origins, e.g. https://app.example,http://localhost:5180
+        sync: false
+      - key: AI_MODE           # openai once the three values below are set; fake otherwise
+        value: fake
+      - key: OPENAI_BASE_URL   # any OpenAI-compatible endpoint, e.g. Nebius
+        sync: false
+      - key: OPENAI_MODEL      # must support JSON output
+        sync: false
+      - key: OPENAI_SMALL_MODEL # optional: faster model for buddy lines and safety checks
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TRACE_COACH       # true sends redacted coach traces to LangSmith; update the privacy notice first
+        value: false
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: DEV_LOGIN         # /docs username/password login for testers
+        value: "true"
+      - key: DEV_LOGIN_PASSWORD  # shared tester password, 12+ characters
+        sync: false
