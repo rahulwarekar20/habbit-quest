@@ -4,23 +4,36 @@
  * add the first child. Each is one centred card; the development login sits in the corner.
  */
 import { useState, type FormEvent, type ReactNode } from "react";
-import Buddy from "../components/Buddy";
+import Buddy, { BUDDIES } from "../components/Buddy";
 import { ChildForm } from "../components/ChildForm";
 import GoogleButton from "../components/GoogleButton";
+import Clock from "../components/Clock";
+import HabitArt from "../components/HabitArt";
 import Logo from "../components/Logo";
+import { SparkIcon } from "../components/Spark";
+import WorldArt from "../components/WorldArt";
 import { addChild, createFamily, errorText, joinFamily, type ChildInput, type Role } from "../lib/api";
 import { isValidPin } from "../lib/auth";
+import { WORLDS } from "../lib/family";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
-export function AuthLayout({ children, corner, wide = false }: { children: ReactNode; corner?: ReactNode; wide?: boolean }) {
+export function AuthLayout({ children, corner, wide = false, scene, below }: {
+  children: ReactNode;
+  corner?: ReactNode;
+  wide?: boolean;
+  scene?: ReactNode; // decoration behind the card
+  below?: ReactNode; // a strip under the card
+}) {
   return (
     <div className="auth">
+      {scene}
       <header className="auth__bar">
         <Logo />
         {corner}
       </header>
       <main className={`auth__card ${wide ? "auth__card--wide" : ""}`}>{children}</main>
+      {below}
     </div>
   );
 }
@@ -30,7 +43,15 @@ export function AuthLayout({ children, corner, wide = false }: { children: React
 export function Login() {
   const { notice } = useStore();
   return (
-    <AuthLayout corner={<DevLogin />}>
+    <AuthLayout corner={<DevLogin />} scene={<LoginScene />} below={<WorldStrip />}>
+      <div className="auth__banner" aria-hidden="true">
+        <WorldArt world="camp" />
+        <div className="auth__banner-buddies">
+          {BUDDIES.map((b, i) => <span key={b.id} style={{ animationDelay: `${i * 0.35}s` }}><Buddy buddy={b.id} size={i === 1 || i === 2 ? 58 : 48} /></span>)}
+        </div>
+        <SparkIcon size={22} className="auth__banner-spark auth__banner-spark--a" />
+        <SparkIcon size={14} className="auth__banner-spark auth__banner-spark--b" />
+      </div>
       <div className="auth__head">
         <h1>Welcome to HabbitQuest</h1>
         <p className="muted">Sign in to set up your family or pick up where you left off.</p>
@@ -45,6 +66,57 @@ export function Login() {
         </a>
       </div>
     </AuthLayout>
+  );
+}
+
+/** The six worlds children unlock with Sparks, as a row of small round scenes. */
+function WorldStrip() {
+  return (
+    <section className="world-strip" aria-label="Worlds to unlock">
+      <p className="world-strip__title">Six worlds to unlock with Sparks</p>
+      <ul>
+        {WORLDS.map((w) => (
+          <li key={w.id}>
+            <WorldArt world={w.id} />
+            <span>{w.name}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Floating pieces of the app around the sign-in card, on screens wide enough for them. */
+function LoginScene() {
+  const sparks = [[8, 22, 16], [18, 74, 12], [30, 12, 10], [70, 86, 14], [82, 18, 12], [92, 62, 18]];
+  return (
+    <div className="auth-scene" aria-hidden="true">
+      {sparks.map(([x, y, size], i) => (
+        <span key={i} className="auth-scene__spark" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.8}s` }}>
+          <SparkIcon size={size} />
+        </span>
+      ))}
+      <div className="auth-scene__card auth-scene__quest">
+        <HabitArt habit="bedtime" />
+        <div className="auth-scene__row">
+          <div><b>Sweet dreams!</b><span>by 8:00 PM</span></div>
+          <Clock time="20:00" size={38} />
+        </div>
+        <span className="auth-scene__done">I did it!</span>
+      </div>
+      <div className="auth-scene__card auth-scene__spark-badge">
+        <SparkIcon size={26} /> <b>+1 Spark!</b>
+      </div>
+      <div className="auth-scene__card auth-scene__world">
+        <WorldArt world="sky" />
+        <div><b>Sky Islands</b><span>Unlocked at 90 Sparks</span></div>
+      </div>
+      <div className="auth-scene__card auth-scene__approve">
+        <span className="auth-scene__eyebrow">Parent space</span>
+        <b>Homework hero</b>
+        <span className="auth-scene__btn">Approve +1 Spark</span>
+      </div>
+    </div>
   );
 }
 

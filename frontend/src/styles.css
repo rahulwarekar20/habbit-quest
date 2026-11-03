@@ -982,3 +982,43 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .check input { width: 18px; height: 18px; accent-color: var(--violet); }
 .btn--danger { background: #c2412d; color: #fff; border-color: #c2412d; }
 @media (max-width: 560px) { .catalog__form .field-row { flex-direction: column; } }
+
+/* ── Sign-in scene: banner on the card, app pieces floating around it ─────── */
+.auth { position: relative; overflow: hidden; }
+.auth__bar, .auth__card { position: relative; z-index: 2; }
+.auth__banner { position: relative; margin: -36px clamp(-40px, -5vw, -20px) 0; height: 150px; border-radius: 28px 28px 0 0; overflow: hidden; }
+.auth__banner .world-art { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+.auth__banner-buddies { position: absolute; left: 0; right: 0; bottom: -2px; display: flex; justify-content: center; align-items: flex-end; gap: 6px; }
+.auth__banner-buddies span { display: block; animation: bob 3.4s ease-in-out infinite; filter: drop-shadow(0 4px 6px rgba(36, 29, 79, 0.25)); }
+.auth__banner-spark { position: absolute; animation: float 6s ease-in-out infinite; }
+.auth__banner-spark--a { right: 18%; top: 18%; }
+.auth__banner-spark--b { left: 16%; top: 30%; animation-delay: 1.2s; }
+
+.auth-scene { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.auth-scene__spark { position: absolute; animation: float 7s ease-in-out infinite; opacity: 0.85; }
+.auth-scene__card { position: absolute; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-lg); border: 1px solid var(--line); }
+.auth-scene__quest { left: max(3vw, calc(50% - 600px)); top: 22%; width: 220px; padding: 12px; transform: rotate(-4deg); }
+.auth-scene__quest .habit-art { border-radius: 14px; aspect-ratio: 16 / 10; }
+.auth-scene__row { display: flex; align-items: center; justify-content: space-between; margin: 10px 4px 8px; }
+.auth-scene__row div { display: flex; flex-direction: column; line-height: 1.25; }
+.auth-scene__row b { font: 600 1.05rem var(--font-display); }
+.auth-scene__row span { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
+.auth-scene__done { display: block; text-align: center; padding: 8px; border-radius: 999px; font: 700 0.9rem var(--font-display); color: #4a2a00; background: linear-gradient(180deg, #ffe07a, var(--gold-deep)); }
+.auth-scene__spark-badge { left: max(calc(3vw + 150px), calc(50% - 450px)); top: 16%; display: flex; align-items: center; gap: 6px; padding: 8px 16px 8px 10px; border-radius: 999px; font: 700 1rem var(--font-display); color: #9a5b00; animation: bob 3.2s ease-in-out infinite; }
+.auth-scene__world { right: max(3vw, calc(50% - 600px)); top: 18%; width: 230px; padding: 10px; transform: rotate(3deg); }
+.auth-scene__world .world-art { border-radius: 14px; }
+.auth-scene__world div { display: flex; flex-direction: column; padding: 8px 4px 2px; }
+.auth-scene__world b { font: 600 1.02rem var(--font-display); }
+.auth-scene__world span { color: #9a5b00; font-size: 0.78rem; font-weight: 800; }
+.auth-scene__approve { right: max(calc(3vw + 40px), calc(50% - 540px)); top: 56%; width: 210px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; transform: rotate(-2.5deg); }
+.auth-scene__eyebrow { font: 800 0.66rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--violet); margin-bottom: 4px; }
+.auth-scene__approve b { font: 600 1.02rem var(--font-display); }
+.auth-scene__btn { align-self: flex-start; margin-top: 8px; padding: 6px 12px; border-radius: 999px; font: 700 0.78rem var(--font-body); color: #fff; background: linear-gradient(135deg, #8f6bff, var(--violet-deep)); }
+@media (max-width: 1080px) { .auth-scene__card { display: none; } }
+@media (prefers-reduced-motion: reduce) { .auth-scene__spark, .auth-scene__spark-badge, .auth__banner-buddies span, .auth__banner-spark { animation: none; } }
+.world-strip { position: relative; z-index: 2; margin-top: 36px; display: grid; justify-items: center; gap: 14px; }
+.world-strip__title { margin: 0; font: 800 0.72rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--violet); }
+.world-strip ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
+.world-strip li { display: grid; justify-items: center; gap: 6px; width: 76px; }
+.world-strip .world-art { width: 64px; height: 64px; aspect-ratio: 1; border-radius: 50%; border: 3px solid #fff; box-shadow: var(--shadow); }
+.world-strip span { font: 600 0.78rem/1.2 var(--font-display); color: var(--ink-soft); text-align: center; }
