@@ -75,7 +75,8 @@ def agents(monkeypatch):
         name = body["response_format"]["json_schema"]["name"]
         with lock:
             seen.setdefault(name, []).append(body)
-            queue = replies[name]
+            queue = replies.get(name, [{"risk": False, "reason": ""}] if name == "ParentRisk" else None)
+            assert queue is not None, f"no reply for {name}"
             reply = queue.pop(0) if len(queue) > 1 else queue[0]
         if isinstance(reply, httpx.Response):
             return reply
@@ -207,7 +208,7 @@ def test_the_fit_check_sees_titles_but_not_the_planners_reasons(crew_settings, a
 def test_a_clarifying_question_ends_the_turn_after_triage(crew_settings, agents):
     agents(Triage=TRIAGE | {"intent": "clarify", "queries": [], "question": "When does it happen?"})
     reply = run_turn(crew_settings, snapshot(), [], "Evenings are hard", ["Alex"])
-    assert reply.text == "When does it happen?" and list(agents.seen) == ["Triage"]
+    assert reply.text == "When does it happen?" and list(agents.seen) == ["ParentRisk", "Triage"]
     assert not reply.no_habit_match and reply.turn.recommendations == {}
 
 
@@ -326,10 +327,25 @@ def test_a_reply_unsafe_twice_is_replaced(crew_settings, agents):
     assert reply.text.startswith("Could you tell me") and "1 diagnosis" in json.dumps(agents.seen["Plan"][-1])
 
 
-def test_a_failed_safety_check_keeps_the_reply(crew_settings, agents):
+def test_a_failed_safety_check_holds_the_reply_back(crew_settings, agents):
     everything(agents, SafetyVerdict=FAIL)
-    assert run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"]).text.startswith("A routine helps")
+    reply = run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"])
+    assert reply.text == crew.SAFE_REPLY and reply.turn.recommendations and len(agents.seen["Plan"]) == 1
+    everything(agents, SafetyVerdict=FAIL, Plan=plan(cards=()))
+    reply = run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"])
+    assert reply.text == crew.UNCHECKED_REPLY and not reply.turn.recommendations
 
 
 def test_chunks_exist_for_the_tests():
     assert FOUND and REF in {c.ref for c in CHUNKS}
+
+
+def test_the_safety_model_reads_the_message_first_with_labels(crew_settings, agents):
+    everything(agents, ParentRisk={"risk": True, "reason": "possible abuse"})
+    reply = run_turn(
+        crew_settings, snapshot(), [{"role": "parent", "content": "Alex is scared"}], TEXT, ["Alex"]
+    )
+    assert reply.safety and list(agents.seen) == ["ParentRisk"]
+    sent = json.dumps(agents.seen["ParentRisk"][0])
+    assert "Child A is scared" in sent and "Alex" not in sent
+    assert agents.seen["ParentRisk"][0]["model"] == "vendor/safety"
