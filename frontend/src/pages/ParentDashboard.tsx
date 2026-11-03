@@ -152,7 +152,7 @@ export default function ParentDashboard() {
                 const dayOf = days[item.child_id]?.day ?? dayKey();
                 return (
                   <li key={item.completion_id} className="approval">
-                    <HabitArt habit={item.habit_id} className="approval__art" />
+                    <HabitArt habit={item.habit_id} icon={item.icon} className="approval__art" />
                     <div className="approval__text">
                       <span className="approval__who">{child && <Buddy buddy={child.buddy} size={24} />} {item.child_name}</span>
                       <b>{item.title}</b>
@@ -260,7 +260,7 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
           const status = localStatus(h.status);
           return (
             <li key={h.child_habit_id}>
-              <HabitArt habit={h.habit_id} className="mini-art" />
+              <HabitArt habit={h.habit_id} icon={h.icon} className="mini-art" />
               <span>{h.kid_title}<small className="tier-tag">Tier {h.tier}</small></span>
               <span className={`status status--${status}`}>{STATUS_LABEL[status]}</span>
             </li>

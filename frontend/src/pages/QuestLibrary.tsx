@@ -1,12 +1,14 @@
 /**
  * Quest library (parent): a child's plan. The quests in it can be retimed, paused or removed one
  * at a time; goals and their options choose what's in the plan, up to six quests. Harder tiers
- * appear as the child levels up, and options already suit the child's age.
+ * appear as the child levels up, and options already suit the child's age. Below, the whole catalog
+ * by age group, and the family's own custom habits.
  */
 import { useEffect, useState } from "react";
 import Buddy from "../components/Buddy";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
+import HabitCatalog from "../components/HabitCatalog";
 import PlanEditor from "../components/PlanEditor";
 import { errorText, getPlan, updateChildHabit, type DayName, type Plan, type PlanHabit } from "../lib/api";
 import { WORLDS } from "../lib/family";
@@ -16,7 +18,7 @@ import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
 export default function QuestLibrary({ childId }: { childId?: string }) {
-  const { family } = useStore();
+  const { family, server } = useStore();
   const fam = family!;
   const child = fam.children.find((c) => c.id === childId) ?? fam.children[0];
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -96,7 +98,7 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
                 <div className="lib-row">
                   {plan.habits.map((h) => (
                     <article key={h.id} className={`lib-card is-added ${h.status === "paused" ? "is-paused" : ""}`}>
-                      <HabitArt habit={h.habit_id} />
+                      <HabitArt habit={h.habit_id} icon={h.icon} />
                       <div className="lib-card__body">
                         <b>{h.title}</b>
                         <span className="muted">Tier {h.tier} · {h.points} pts{h.status === "paused" ? " · Paused" : ""}</span>
@@ -125,6 +127,13 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
               <PlanEditor child={child} plan={plan} showCatalog={plan.goals.length === 0}
                 onSaved={(p) => { setPlan(p); setSaved(true); }} />
             </section>
+
+            {server && (
+              <section className="panel" id="catalog">
+                <div className="panel__head"><h2>Browse all habits</h2></div>
+                <HabitCatalog child={child} familyId={server.id} plan={plan} onPlan={(p) => { setPlan(p); setSaved(false); }} />
+              </section>
+            )}
           </>
         )}
 

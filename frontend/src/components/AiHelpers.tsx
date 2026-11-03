@@ -131,7 +131,7 @@ function Proposals({ cards, onChange }: { cards: Suggestion[]; onChange: () => P
       <ul className="approvals">
         {cards.map((card) => (
           <li key={card.id} className="approval">
-            <HabitArt habit={card.habit_id} className="approval__art" />
+            <HabitArt habit={card.habit_id} icon={card.icon} className="approval__art" />
             <div className="approval__text">
               <span className="approval__who">{SOURCE_LABEL[card.source]} · {since(card.created_at)}</span>
               <b>{describe(card)}</b>
@@ -425,7 +425,7 @@ export function Coach({ family, childId: start, onChange }: { family: Family; ch
                   <label>
                     <input type="checkbox" checked={on}
                       onChange={() => setPicked((p) => (p.includes(card.id) ? p.filter((x) => x !== card.id) : [...p, card.id]))} />
-                    <HabitArt habit={card.habit_id} className="rec__art" />
+                    <HabitArt habit={card.habit_id} icon={card.icon} className="rec__art" />
                     <span className="rec__text">
                       <b>{card.title}</b>
                       <small className="tier-tag">Tier {card.tier}</small>

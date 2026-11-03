@@ -929,3 +929,30 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .day-picker__days button { min-height: 36px; padding: 0; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft); font-weight: 800; font-size: 0.82rem; }
 .day-picker__days button.is-on { background: var(--violet); border-color: var(--violet); color: #fff; }
 .kid-error { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+/* Habit catalog in the Quest library: age tabs, goal filter, custom habits */
+.catalog { display: grid; gap: 28px; }
+.catalog__block { display: grid; gap: 14px; }
+.catalog__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.catalog__head > div { display: grid; gap: 4px; min-width: 0; max-width: 64ch; }
+.catalog__head h3 { margin: 0; font: 600 1.15rem var(--font-display); }
+.catalog__head p { margin: 0; }
+.catalog__tab small { font-weight: 700; opacity: .7; margin-left: 2px; }
+.catalog__filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip--button.is-on { background: var(--violet-soft); color: var(--violet-deep); box-shadow: inset 0 0 0 1.5px var(--violet); }
+.catalog__goal { display: grid; gap: 10px; }
+.catalog__goal h4 { margin: 6px 0 0; font: 600 1rem var(--font-display); }
+.catalog__goal h4 .muted { font: 700 0.8rem var(--font-body); margin-left: 4px; }
+.catalog__status { justify-self: start; font-size: 0.8rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: var(--bg); color: var(--ink-soft); }
+.catalog__status--in { background: var(--violet-soft); color: var(--violet-deep); }
+.catalog__form { max-width: none; padding: 18px; border-radius: 20px; background: var(--bg); }
+.catalog__form h4 { margin: 0; font: 600 1.05rem var(--font-display); }
+.catalog__form p { margin: 0; }
+.emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.emoji-picker button { width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-size: 1.3rem; cursor: pointer; }
+.emoji-picker button.is-on { border-color: var(--violet); box-shadow: 0 0 0 3px var(--violet-soft); }
+.emoji-picker input { width: 90px; height: 42px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; }
+.check { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.check input { width: 18px; height: 18px; accent-color: var(--violet); }
+.btn--danger { background: #c2412d; color: #fff; border-color: #c2412d; }
+@media (max-width: 560px) { .catalog__form .field-row { flex-direction: column; } }

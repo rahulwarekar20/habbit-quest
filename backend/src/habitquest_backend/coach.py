@@ -42,6 +42,8 @@ from habitquest_backend.tracing import keeps_text, send_trace, start_trace
 log = logging.getLogger(__name__)
 HISTORY_MESSAGES = 20
 RETENTION_DAYS = 90
+# What the AI is told a habit is called: a family's custom habits are named only by their goal.
+AI_TITLE = "CASE WHEN h.family_id IS NULL THEN h.title ELSE 'A family habit for '||(SELECT title FROM hq.goals WHERE id=h.goal_id) END"
 REPLY_LENGTH = 4000
 MODEL_CALLS = 6
 STEP_LIMIT = 30
@@ -317,7 +319,7 @@ def take_snapshot(conn, child: dict) -> Snapshot:
     plan = {
         row["habit_id"]: {"title": row["title"], "cue_time": row["cue_time"], "status": row["status"]}
         for row in conn.execute(
-            "SELECT ch.habit_id,h.title,to_char(ch.cue_time,'HH24:MI') AS cue_time,ch.status FROM hq.child_habits ch"
+            f"SELECT ch.habit_id,{AI_TITLE} AS title,to_char(ch.cue_time,'HH24:MI') AS cue_time,ch.status FROM hq.child_habits ch"
             " JOIN hq.habits h ON h.id=ch.habit_id WHERE ch.child_id=%s AND ch.status<>'removed'",
             (child["id"],),
         ).fetchall()

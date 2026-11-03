@@ -31,6 +31,15 @@ export function planInput(plan: Plan, goals: PlanGoal[], picks: string[]): PlanI
   };
 }
 
+/** Adds one habit to the plan, keeping every current habit with its time and days. */
+export function withHabit(plan: Plan, habit: { id: string; goal_id: string }): PlanInput {
+  const habits = plan.habits.map((h) => ({ habit_id: h.habit_id, cue_time: h.cue_time, days: h.days }));
+  return {
+    goals: [...new Set([...plan.habits.map((h) => h.goal_id), habit.goal_id])],
+    habits: [...habits, { habit_id: habit.id }],
+  };
+}
+
 /** Saves the plan. PUT re-activates every listed habit, so paused ones are paused again after it. */
 export async function savePlan(childId: string, plan: Plan, input: PlanInput): Promise<Plan> {
   let saved = await putPlan(childId, input);

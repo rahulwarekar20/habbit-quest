@@ -86,7 +86,7 @@ export default function PlanEditor({ child, plan, onSaved, confirm, showCatalog 
                   <li key={o.id} className={`rec ${on ? "is-on" : ""}`}>
                     <label>
                       <input type="checkbox" checked={on} disabled={!on && full} onChange={() => toggle(o.id)} />
-                      <HabitArt habit={o.id} className="rec__art" />
+                      <HabitArt habit={o.id} icon={o.icon} className="rec__art" />
                       <span className="rec__text">
                         <b>{o.title}</b>
                         <small className="tier-tag">Tier {o.tier} · {o.points} pts</small>
