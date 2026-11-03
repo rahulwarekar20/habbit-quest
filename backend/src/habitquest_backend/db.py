@@ -1,3 +1,10 @@
+"""Database access: one transaction per request, with row-level security doing the access control.
+
+`transaction` connects, switches to the `hq_api` role (a caregiver) or `hq_kid` (a kid token), and sets
+`app.user_id` / `app.child_id`, which the RLS policies in `db/migrations` read. A query can therefore only ever see
+the caller's own family's rows, even if the Python code forgets a WHERE clause.
+"""
+
 from contextlib import contextmanager
 from typing import Any
 from uuid import UUID

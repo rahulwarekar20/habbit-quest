@@ -1,3 +1,10 @@
+"""Every setting the API reads, from environment variables or `backend/.env` (see `.env.example`).
+
+`Settings` validates combinations at startup, so a half-configured feature fails fast instead of at the first
+request: AI_MODE=openai needs a base URL, model and key; TRACE_COACH needs a LangSmith key; DEV_LOGIN needs a JWT
+secret and a 12+ character password; CREW_ROLES entries must read role:size:effort.
+"""
+
 import re
 from functools import cached_property
 from typing import Literal
