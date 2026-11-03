@@ -1183,3 +1183,7 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .cat-habit__action .catalog__status { background: none; padding: 0; font-weight: 700; color: var(--muted); }
 .cat-habit__action .catalog__status--in { color: var(--mint-deep); }
 .cat-habit__action .catalog__status--in::before { content: "✓ "; }
+/* More air between goal groups in Add quests */
+.catalog__goal { margin-top: 36px; }
+.catalog__goal:first-of-type { margin-top: 20px; }
+.catalog__goal h4 { margin-bottom: 8px; }
