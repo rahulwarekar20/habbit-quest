@@ -319,7 +319,8 @@ input, select { font: inherit; color: inherit; }
 .app-main { padding-top: 40px; padding-bottom: 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
 .page-head h1 { margin-bottom: 8px; }
-.page-head .lead { margin: 0; }
+.page-head > div:first-child { flex: 1 1 32rem; min-width: 0; }
+.page-head .lead { margin: 0; max-width: none; }
 .page-head__actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .panel { background: var(--surface); border-radius: var(--radius); padding: 24px 26px; box-shadow: var(--shadow); }
@@ -961,7 +962,7 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .catalog { display: grid; gap: 28px; }
 .catalog__block { display: grid; gap: 14px; }
 .catalog__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.catalog__head > div { display: grid; gap: 4px; min-width: 0; max-width: 64ch; }
+.catalog__head > div { display: grid; gap: 4px; min-width: 0; flex: 1 1 24rem; }
 .catalog__head h3 { margin: 0; font: 600 1.15rem var(--font-display); }
 .catalog__head p { margin: 0; }
 .catalog__tab small { font-weight: 700; opacity: .7; margin-left: 2px; }
