@@ -1187,3 +1187,31 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .catalog__goal { margin-top: 36px; }
 .catalog__goal:first-of-type { margin-top: 20px; }
 .catalog__goal h4 { margin-bottom: 8px; }
+
+/* ── Parent hero: every grown-up page opens with a deep violet band, like kid mode's ── */
+.page--app .page-head {
+  position: relative; overflow: hidden; isolation: isolate;
+  padding: clamp(24px, 4vw, 40px) clamp(20px, 4vw, 44px); border-radius: 28px; color: #fff;
+  background:
+    radial-gradient(420px 220px at 92% -10%, rgba(255, 194, 61, 0.38), transparent 70%),
+    radial-gradient(520px 300px at -6% 120%, rgba(255, 143, 171, 0.28), transparent 70%),
+    linear-gradient(135deg, #6d4bf0 0%, #4a2fb5 55%, #2f1f86 100%);
+  box-shadow: 0 18px 44px rgba(74, 47, 181, 0.28);
+}
+/* soft sparkles */
+.page--app .page-head::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.7;
+  background:
+    radial-gradient(circle at 78% 30%, #ffe9a8 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 66%, #fff 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 64% 18%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 78%, #ffe9a8 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 95% 44%, #fff 0 1px, transparent 2px);
+}
+.page--app .page-head h1 { color: #fff; }
+.page--app .page-head .lead { color: rgba(255, 255, 255, 0.86); }
+.page--app .page-head .lead a { color: #ffd66e; }
+.page--app .page-head .eyebrow { color: #ffd66e; }
+.page--app .page-head .btn--soft { background: rgba(255, 255, 255, 0.16); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); }
+.page--app .page-head .btn--soft:hover:not(:disabled) { background: rgba(255, 255, 255, 0.26); }
+.page--app .page-head .btn--ghost { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.45); }
