@@ -7,6 +7,9 @@ export type Buddy = "fox" | "owl" | "bear" | "bunny";
 export type ThemeWorld = "camp" | "mosswood" | "sky" | "coral" | "crystal" | "star";
 export type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
+/**
+ * The parts of a child's day a habit can belong to, in order; each has a start time in the child's details.
+ */
 export const ROUTINE_PARTS = ["morning", "midday", "after_school", "evening", "bedtime"] as const;
 export type RoutinePart = (typeof ROUTINE_PARTS)[number];
 export type RoutineTimes = Partial<Record<RoutinePart, string>>;

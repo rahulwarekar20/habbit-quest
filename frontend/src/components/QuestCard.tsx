@@ -10,6 +10,7 @@ import { type QuestStatus } from "../lib/family";
 import { QUEST_BY_ID } from "../lib/habits";
 import { formatTime } from "../lib/time";
 
+/** One quest card (see above). `onDone` is the "I did it!" tap. */
 export function QuestCard({ habit, status, points, boost, multiplier, golden, onDone }: {
   habit: TodayHabit; status: QuestStatus; points: number; boost: string[]; multiplier: number; golden: boolean; onDone: () => void;
 }) {

@@ -10,8 +10,10 @@ export type LandmarkState = "found" | "ready" | "hidden";
 /** Every path starts in the bottom-left corner of its scene. */
 const START: Point = { x: 9, y: 86 };
 
+/** A landmark's id across all worlds, as the backend stores found landmarks ("camp:tent"). */
 export const landmarkKey = (world: JourneyWorld, mark: Landmark) => `${world.id}:${mark.id}`;
 
+/** Whether a landmark is found, ready to open (enough Sparks, not opened yet) or still hidden. */
 export function landmarkState(world: JourneyWorld, mark: Landmark, sparks: number, found: string[]): LandmarkState {
   if (found.includes(landmarkKey(world, mark))) return "found";
   return sparks >= mark.sparks ? "ready" : "hidden";

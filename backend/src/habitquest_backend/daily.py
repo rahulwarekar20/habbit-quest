@@ -22,6 +22,8 @@ LOOK_BACK_DAYS = 60
 
 
 class Submission(StrictModel):
+    """The request body of `POST /v1/kid/completions`."""
+
     child_habit_id: UUID
 
 
@@ -50,6 +52,7 @@ def quest_days(conn, child_id: UUID) -> set[str]:
 
 
 def is_quest_day(day: date, week: set[str]) -> bool:
+    """True when a habit scheduled on `week` ("mon", "tue", ...) runs on `day`."""
     return DAYS[day.weekday()] in week
 
 
@@ -91,6 +94,7 @@ def boosts(conn, child_id: UUID, day: date) -> dict[str, list[str]]:
 
 
 def multiplier(reasons: list[str]) -> int:
+    """The points multiplier for a completion: 1 plus one per boost, capped at MAX_MULTIPLIER."""
     return min(1 + len(reasons), MAX_MULTIPLIER)
 
 

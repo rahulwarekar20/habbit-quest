@@ -66,6 +66,10 @@ export function reconcile(saved: Family | undefined, { me, server, children }: S
   };
 }
 
+/**
+ * Holds the app's state for every page: who is signed in, the family from the backend with its browser-only
+ * extras, kid mode, and the parent PIN prompt. Loads the account on start and keeps the saved snapshot in step.
+ */
 export function StoreProvider({ children }: { children: ReactNode }) {
   const saved = useRef<Saved>(loadSaved());
   const [phase, setPhase] = useState<Phase>("booting");
@@ -303,6 +307,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** The app's state and actions (see StoreProvider). Only works inside StoreProvider. */
 export function useStore(): Store {
   const store = useContext(StoreContext);
   if (!store) throw new Error("useStore must be used inside StoreProvider");

@@ -4,6 +4,7 @@
  */
 import type { WorldId } from "../lib/family";
 
+/** A world's scene in SVG (camp, forest, sky islands, coral cove, crystal caves, star harbour). */
 export default function WorldArt({ world, className = "" }: { world: WorldId; className?: string }) {
   return (
     <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" className={`world-art ${className}`} aria-hidden="true">

@@ -102,6 +102,8 @@ SYNONYM_STEMS = {stem(word): [stem(s) for s in synonyms] for word, synonyms in S
 
 @dataclass
 class Chunk:
+    """One section of a guidance document: its citation ref, title, text and the ages it applies to."""
+
     ref: str  # "G1": a short, stable citation reference
     title: str
     text: str
@@ -110,6 +112,7 @@ class Chunk:
 
 
 def load_chunks() -> list[Chunk]:
+    """Splits guidance.json into one chunk per "## " section and numbers them G1, G2, ... in file order."""
     documents = json.loads((Path(__file__).parent / "guidance.json").read_text(encoding="utf-8"))
     sections = [
         (document, section.strip())
@@ -133,6 +136,7 @@ FREQUENCY = Counter(term for document in DOCUMENTS for term in document)
 
 
 def score(terms: set[str], document: Counter) -> float:
+    """BM25 relevance of a passage (`document`, its term counts) to the query terms."""
     total = 0.0
     length = sum(document.values())
     for term in terms & document.keys():

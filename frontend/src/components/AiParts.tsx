@@ -23,6 +23,7 @@ export function useHelperCall() {
   return { busy, error, run };
 }
 
+/** The animated "…" line shown while a helper waits on the AI. */
 export function Thinking({ label }: { label: string }) {
   return <span className="thinking"><span className="thinking__dots" aria-hidden="true"><i /><i /><i /></span>{label}…</span>;
 }

@@ -10,6 +10,15 @@ The MVP is being built in steps (see [docs/mvp-plan.md](docs/mvp-plan.md); curre
 the seeded catalog and catalog endpoints (step 1); accounts (step 2): Google sign-in, families with one or
 more caregivers, invite codes, the family PIN and kid mode; children and AI onboarding (step 3); and the daily
 loop (step 4): kids submit, caregivers approve, children earn Sparks and points; and spending points (step 5).
+Since then: the AI helpers (habit coach crew, quest planner, weekly review, buddy lines), the reward shop with kid
+requests, boosts, check-ins, surprises, kid extras (worlds found, chest, wardrobe, time limit), family settings,
+export and deletion, rate limits, the whole catalog by age, and custom habits.
+
+```mermaid
+flowchart LR
+    S1["1 Schema +<br/>catalog"] --> S2["2 Accounts,<br/>PIN, kid mode"] --> S3["3 Children +<br/>onboarding"] --> S4["4 Daily loop"] --> S5["5 Points"]
+    S5 --> S6["AI helpers,<br/>rewards, extras"] --> S7["Coach crew,<br/>catalog, custom habits"]
+```
 
 ## Stack
 
@@ -22,13 +31,17 @@ Python 3.12, uv, FastAPI and Pydantic, PostgreSQL with row-level security, psyco
    `https://www.googleapis.com/oauth2/v3/certs` and cached), the audience, the issuer and that the email is
    verified, creates or refreshes the user, and returns our own bearer token, valid for 8 hours.
 2. **Family.** `GET /v1/me` lists the user's families. With none, the user creates one (`POST /v1/families`:
-   family name, time zone, four-digit PIN, and their own display name and role) or joins one with its invite
+   family name, time zone, an optional four-digit PIN, and their own display name and role) or joins one with its invite
    code (`POST /v1/families/join`). Roles: `father`, `mother`, `guardian`, `other`. Any caregiver can rename
-   the family, change its time zone or PIN, and replace the invite code.
+   the family, change its time zone or PIN (replacing a PIN needs the current one), and replace the invite code.
+   Without a PIN, the actions it guards (approvals, rewards, accepting AI suggestions, leaving kid mode) need none.
 3. **Kid mode.** On a shared device a caregiver calls `POST /v1/children/{id}/kid-session` and gets a kid token
    for that child (8 hours). Kid tokens work only on `/v1/kid/*` endpoints and run as the `hq_kid` database
    role, which sees only that child. Leaving kid mode is guarded by the frontend with
    `POST /v1/families/{id}/pin/verify`.
+4. **A child's own device.** The family has a family code (shown as a QR code in Family settings). Without any
+   token, `GET /v1/kid-login/{code}` lists the family's children and `POST /v1/kid-login/{code}` with the child's
+   kid PIN returns a kid token for that child.
 
 ## Children and onboarding
 
@@ -61,9 +74,12 @@ Forest 30, Sky Islands 90, Coral Cove 180, Crystal Caves 300, Star Harbour 450),
 
 ## AI helpers
 
-- **Habit coach** (`coach.py`, `coach_tools.py`): a LangChain `create_agent` inside a small LangGraph graph with a fit
-  check that sends poor picks back once. Tools work on an in-memory snapshot and cannot change anything. Children's
-  names become labels before any model call, risky text never reaches the model and is not stored, and any failure
+- **Habit coach**: by default (`COACH_ENGINE=crew`) a crew of small agents in a fixed LangGraph workflow (`crew.py`):
+  triage, research and progress side by side, then a planner, a fit check and a safety review that fails closed. See
+  [docs/coach-crew.md](docs/coach-crew.md) for its diagram. `COACH_ENGINE=agent` uses the older single agent
+  (`coach.py`, `coach_tools.py`). Either way, every parent message first passes word lists and a model risk check;
+  a message showing a child at risk gets crisis guidance and is neither stored nor sent on. Children's names become
+  labels before any model call, tools work on an in-memory snapshot and cannot change anything, and any failure
   falls back to keyword matching. Conversations are kept for 90 days.
 - **Quest planner and weekly review** (`insights.py`): one structured call each, on facts computed in code.
 - **Buddy lines**: one small call, then a safety check; a built-in line replaces anything unusable.
@@ -99,12 +115,29 @@ concurrent redemptions checked one after the other. Sparks are never spent.
 and `spent`, and the newest entries: each approved habit with its day, and each redemption with its note.
 Caregivers also see who made each entry.
 
+**Reward shop.** Each family has a shop (`/v1/families/{id}/rewards`; new families get a default set). With a kid
+token, `POST /v1/kid/reward-requests` spends points on a reward: they are held until a caregiver approves
+(`POST /v1/reward-requests/{id}/approve`, with the PIN if set) or declines and they come back. A mystery box picks a
+prize when asked; a jackpot pays straight away.
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: kid asks (points held)
+    pending --> approved: grown-up says yes
+    pending --> declined: "not this time" (points refunded)
+```
+
+**Boosts.** The day's golden quest, a streak from the third quest day in a row, a parent's double day and a welcome
+back day each add 1x to a quest's points, up to 3x (`daily.py`).
+
 Browsers may call the API from the origins in `CORS_ORIGINS` (comma-separated; the frontend's dev server
 `http://localhost:5180` by default).
 
 ## Data model
 
-Eleven tables in the `hq` schema ([db/migrations](db/migrations)). There are no version columns.
+Twenty-two tables in the `hq` schema ([db/migrations](db/migrations)), with no version columns. The core eleven
+are below; [docs/schema.md](docs/schema.md) has diagrams and a guide to all of them, including rewards, kid extras,
+check-ins, surprises, family settings and the AI tables.
 
 | Table | Purpose |
 |---|---|
@@ -113,7 +146,7 @@ Eleven tables in the `hq` schema ([db/migrations](db/migrations)). There are no 
 | `caregivers` | Who cares for the family's children, with their `role` (`father`, `mother`, `guardian`, `other`) |
 | `children` | Name, age (3-13), buddy, the world reached, a parent's quest tier override and routine times per anchor |
 | `goals` | Pre-approved goals ("Calmer bedtimes") with keywords for matching pain points |
-| `habits` | Pre-approved habits, one goal each: parent and kid wording, icon, routine anchor, ages, tier (1-3), points |
+| `habits` | Pre-approved habits, one goal each: parent and kid wording, icon, routine anchor, ages, tier (1-3), points. A family's custom habits live here too, with its `family_id` and an id starting `my-` |
 | `pain_points` | A parent's description of a problem, and how it was mapped to goals (`ai`, `keywords`, `manual`) |
 | `child_goals` | Goals suggested for or chosen for a child, with the reason and recommended habits |
 | `child_habits` | The child's plan: chosen habits with cue time and days; removed rows keep the history |
@@ -172,17 +205,20 @@ Use this to change the backend, or to test without touching hosted data.
 1. Start the API as in [Run it locally](#run-it-locally). Check `.env` has `DATABASE_URL` for the local cluster,
    `JWT_SECRET` and `GOOGLE_CLIENT_ID`, plus `DEV_LOGIN` and `DEV_LOGIN_PASSWORD` for the test login. The bootstrap keeps
    an older `.env` as it is, so these may need updating.
-2. For real AI, add these to `.env`; without them, AI features use the `fake` stand-in:
+2. For real AI, add these to `.env` (Groq shown; `.env.example` also lists Nebius); without them, AI features use
+   the `fake` stand-in:
 
    ```text
    AI_MODE=openai
-   OPENAI_BASE_URL=https://api.tokenfactory.nebius.com/v1/
+   OPENAI_BASE_URL=https://api.groq.com/openai/v1
    OPENAI_MODEL=openai/gpt-oss-120b
+   OPENAI_SMALL_MODEL=openai/gpt-oss-20b
+   OPENAI_SAFETY_MODEL=openai/gpt-oss-safeguard-20b
    OPENAI_API_KEY=<your key>
+   COACH_ENGINE=crew
    ```
 
-3. In the frontend repository, use a branch that has the AI screens (`feat/ai-coach-ui` until it is merged), and set
-   `.env.local`:
+3. In `../frontend`, set `.env.local`:
 
    ```text
    VITE_API_URL=http://127.0.0.1:8000
@@ -262,8 +298,12 @@ uv run ruff format --check src tests scripts
 uv run python -m mypy src
 ```
 
-Coverage of `src/habitquest_backend` must be 100% (statements and branches). CI runs the same checks against
-PostgreSQL 17.
+Coverage of `src/habitquest_backend` must be 100% (statements and branches). CI
+([../.github/workflows/test.yml](../.github/workflows/test.yml)) runs the same checks against PostgreSQL 17 whenever
+`backend/` changes. On Windows, set `PYTHONUTF8=1` before running the tests.
+
+`scripts/eval_coach.py` scores the coach against realistic parent messages with real models. It is not part of CI,
+because it calls a paid API.
 
 ## Deploying to Render
 

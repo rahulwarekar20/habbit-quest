@@ -31,6 +31,9 @@ export interface Saved {
   snapshot: Snapshot | null;
 }
 
+/**
+ * Reads the saved account snapshot and browser-only family extras; a fresh start when nothing (or nothing readable) is saved.
+ */
 export function loadSaved(): Saved {
   try {
     const raw = localStorage.getItem(KEY);
@@ -41,6 +44,7 @@ export function loadSaved(): Saved {
   return { families: {}, snapshot: null };
 }
 
+/** Saves the account snapshot and browser-only extras. Blocked or full storage is ignored. */
 export function persist(saved: Saved): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(saved));
@@ -87,10 +91,12 @@ const session = () => sessionStorage;
 /** The caregiver token, or null when there is none or it has expired. */
 export const getCaregiverToken = () => read<StoredToken>(local, CAREGIVER_TOKEN);
 
+/** Keeps the grown-up's token and when it expires. */
 export function saveCaregiverToken(token: string, expiresInSeconds: number): void {
   write(local, CAREGIVER_TOKEN, { token, expiresAt: Date.now() + expiresInSeconds * 1000 });
 }
 
+/** Forgets the grown-up's token (signing out). */
 export const clearCaregiverToken = () => write(local, CAREGIVER_TOKEN, null);
 
 /** This tab's kid token, or a child's own sign-in; null when there is none or it has expired. */
@@ -112,13 +118,17 @@ export function getKidLogin(): KidLogin | null {
   }
 }
 
+/** Keeps a child's own sign-in on their device (family code and kid token), which lasts its 8 hours. */
 export const saveKidLogin = (login: KidLogin) => write(local, KID_LOGIN, login);
+/** Forgets a child's own sign-in. */
 export const clearKidLogin = () => write(local, KID_LOGIN, null);
 
+/** Keeps this tab's kid token and which child it is for, when a grown-up starts kid mode. */
 export function saveKidSession(token: string, expiresInSeconds: number, childId: string, childName: string): void {
   write(session, KID_SESSION, { token, expiresAt: Date.now() + expiresInSeconds * 1000, childId, childName });
 }
 
+/** Forgets this tab's kid token. */
 export const clearKidSession = () => write(session, KID_SESSION, null);
 
 /** Marks this tab's kid session as run out (the server refused it). */
@@ -187,6 +197,9 @@ export function coachFreshThisSignIn(childId: string): boolean {
   }
 }
 
+/**
+ * Records that this child's coach chat was started fresh in the current sign-in (see coachFreshThisSignIn).
+ */
 export function markCoachFresh(childId: string): void {
   const signIn = getCaregiverToken()?.expiresAt;
   if (!signIn) return;

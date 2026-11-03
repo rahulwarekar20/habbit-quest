@@ -32,6 +32,9 @@ def transaction(settings: Settings, user: UUID | None = None, *, kid: UUID | Non
 
 
 def one(conn: Any, sql: str, params: tuple = ()) -> dict:
+    """The first row of a query, or 404. Under row-level security another family's row is simply not there,
+    so this also answers "not yours" with 404 rather than revealing that it exists.
+    """
     row = conn.execute(sql, params).fetchone()
     if row is None:
         raise HTTPException(404, "Record not found")

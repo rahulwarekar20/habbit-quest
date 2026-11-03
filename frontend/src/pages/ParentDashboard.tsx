@@ -31,6 +31,7 @@ const STATUS_LABEL: Record<QuestStatus, string> = {
 
 interface LevelUp { habit: { id: string; kidTitle: string }; name: string; buddy: Child["buddy"]; sparks: number; points: number; message: string }
 
+/** The parent dashboard (#/parent). */
 export default function ParentDashboard() {
   const { family, server, update, askPin, reload, enterKidMode } = useStore();
   const fam = family!;

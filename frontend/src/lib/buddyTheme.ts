@@ -13,6 +13,9 @@ interface BuddyTheme {
   waiting: string; // a landmark is ready to open
 }
 
+/**
+ * Each buddy's personality in kid mode: its confetti, footprints and what it says when the next find is near.
+ */
 export const BUDDY_THEME: Record<BuddyId, BuddyTheme> = {
   bunny: {
     confetti: "🥕", print: "🐇",
@@ -40,6 +43,7 @@ export const BUDDY_THEME: Record<BuddyId, BuddyTheme> = {
   },
 };
 
+/** The buddy's nudge with the number of Sparks still to go filled in. */
 export function buddyNudge(buddy: BuddyId, sparksToGo: number): string {
   return BUDDY_THEME[buddy].nudge.replace("{n}", String(sparksToGo));
 }

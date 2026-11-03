@@ -22,6 +22,10 @@ interface Props {
   onDone: () => void;
 }
 
+/**
+ * The full-screen celebration after an approval (see above). On a child's own screen (`forKid`) anything newly
+ * unlocked also says "Show a grown-up!". `onDone` closes it.
+ */
 export default function Celebration({ habits, name, buddy, sparks, points = 0, unlocks = [], forKid = false, buddyLine, onDone }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onDone();

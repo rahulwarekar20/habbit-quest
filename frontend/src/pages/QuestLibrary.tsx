@@ -15,6 +15,7 @@ import { MAX_HABITS } from "../lib/plan";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
+/** The Quest library page (#/quests[/:child]); the first child when none is given. */
 export default function QuestLibrary({ childId }: { childId?: string }) {
   const { family, server } = useStore();
   const fam = family!;

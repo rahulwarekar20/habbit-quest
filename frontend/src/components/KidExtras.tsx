@@ -82,6 +82,9 @@ export function BreakTime({ child, family }: { child: Child; family: Family }) {
   );
 }
 
+/**
+ * The "time is nearly up" banner, shown in the last minutes of the daily limit (`seconds` left, or null).
+ */
 export function TimeWarning({ seconds }: { seconds: number | null }) {
   if (seconds === null || seconds <= 0 || seconds > WARN_SECONDS) return null;
   return <div className="time-warning" role="status">⏳ {Math.ceil(seconds / 60)} minute{seconds > 60 ? "s" : ""} of quest time left today</div>;
@@ -89,6 +92,9 @@ export function TimeWarning({ seconds }: { seconds: number | null }) {
 
 // ── Surprises ─────────────────────────────────────────────────────────────────
 
+/**
+ * A parent's surprise for the child: a gift box to tap, then the note, bonus points or double day inside.
+ */
 export function SurpriseReveal({ surprise, child, parentName, onDone }: { surprise: Surprise; child: Child; parentName: string; onDone: () => void }) {
   const { update } = useStore();
   const [open, setOpen] = useState(false);
@@ -137,6 +143,7 @@ export function SurpriseReveal({ surprise, child, parentName, onDone }: { surpri
 
 // ── Treasure chest ────────────────────────────────────────────────────────────
 
+/** Today's treasure chest: locked until every quest is approved, then opened for a prize. */
 export function ChestCard({ child, today }: { child: Child; today: Today }) {
   const { update } = useStore();
   const [prize, setPrize] = useState<ChestPrize | null>(null);
@@ -193,6 +200,9 @@ export function ChestCard({ child, today }: { child: Child; today: Today }) {
 
 // ── Check-in ──────────────────────────────────────────────────────────────────
 
+/**
+ * "How was today?": the child picks a mood, the trickiest and favourite quests, stickers and an optional note.
+ */
 export function CheckIn({ child, quests, onClose }: { child: Child; quests: { id: string; kidTitle: string }[]; onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [mood, setMood] = useState<Mood | null>(null);
@@ -319,6 +329,7 @@ function QuestPicker({ quests, value, onChange }: { quests: { id: string; kidTit
 
 // ── Progress badges ───────────────────────────────────────────────────────────
 
+/** The child's level and how many Sparks are left to the next world ("Top level!" at the end). */
 export function LevelBadge({ child }: { child: Child }) {
   const progress = child.progress;
   if (!progress) return null;
@@ -337,6 +348,7 @@ export function LevelBadge({ child }: { child: Child }) {
   );
 }
 
+/** The child's points balance. */
 export function PointsPill({ points }: { points: number }) {
   return <span className="points-pill"><span aria-hidden="true">🪙</span><b>{points}</b> pts</span>;
 }

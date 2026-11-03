@@ -24,6 +24,10 @@ function loadScript(): Promise<void> {
   });
 }
 
+/**
+ * Google's own "Continue with Google" button; `onCredential` receives the ID token to send to the API.
+ * Explains itself when the client id is missing or Google's script is blocked.
+ */
 export default function GoogleButton({ onCredential }: { onCredential: (credential: string) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const callback = useRef(onCredential);

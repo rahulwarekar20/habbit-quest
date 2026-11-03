@@ -7,6 +7,7 @@ import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 import Logo from "./Logo";
 
+/** The public site's header: logo, section links and Get started (or Open dashboard when signed in). */
 export function SiteHeader() {
   const { family } = useStore();
   return (
@@ -39,6 +40,9 @@ function scrollTo(id: string) {
   };
 }
 
+/**
+ * The grown-up area's header: the page tabs, Kid mode, and the account menu. `active` underlines one tab.
+ */
 export function ParentHeader({ active }: { active: "dashboard" | "coach" | "habits" | "quests" | "rewards" | "family" }) {
   const { family, logout, enterKidMode } = useStore();
   return (
@@ -103,6 +107,7 @@ function AccountMenu({ name, active, onSignOut }: { name: string; active: boolea
   );
 }
 
+/** The footer on public and grown-up pages, with the privacy link. */
 export function Footer() {
   return (
     <footer className="footer">

@@ -66,6 +66,10 @@ function useWalkedSparks(childId: string, sparks: number): number {
   return shown;
 }
 
+/**
+ * One world's path with its landmarks and the child's buddy on it; `onReveal` opens a landmark the child
+ * has reached.
+ */
 export function WorldPath({ child, world, progress, onReveal }: {
   child: Child; world: JourneyWorld; progress: Progress; onReveal: (mark: Landmark) => void;
 }) {

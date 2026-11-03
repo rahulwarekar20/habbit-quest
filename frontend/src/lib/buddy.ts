@@ -29,6 +29,10 @@ function writeCache(key: string, line: string) {
   }
 }
 
+/**
+ * The buddy's AI line for this key and event, fetched once per day and cached; null until it arrives, or when
+ * buddy talk is off.
+ */
 export function useBuddyLine(key: string, event: BuddyEvent | null): string | null {
   const cacheKey = `${dayKey()}:${key}`;
   const [line, setLine] = useState<string | null>(() => (event ? readCache()[cacheKey] ?? null : null));

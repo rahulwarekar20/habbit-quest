@@ -18,6 +18,10 @@ const CITE = /\s?\[(G\d+(?:\s*,\s*G\d+)*)\]/g;
 /** The chat shows plain text, so citation marks and any markdown the model adds are stripped. */
 const plainText = (text: string) => text.replace(CITE, "").replace(/\*\*|__/g, "").replace(/^#{1,6}\s+/gm, "").trim();
 
+/**
+ * The coach chat for one child at a time (`childId`, or the first child), with the child picker, suggested
+ * quest cards and New chat. `onChange` runs after a card is accepted.
+ */
 export function Coach({ family, childId: start, onChange }: { family: Family; childId?: string; onChange: () => Promise<void> }) {
   const { askPinValue } = useStore();
   const { busy, error, run } = useHelperCall();

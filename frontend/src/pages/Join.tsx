@@ -15,6 +15,7 @@ import { AuthLayout, DevLogin, GrownUpSignIn, JoinFamily } from "./Auth";
 
 type Who = null | "kid" | "grown-up";
 
+/** The join page (#/join[/:code]); see above. */
 export default function Join({ code }: { code?: string }) {
   const [found, setFound] = useState<LoginFamily | null>(null);
   const [error, setError] = useState<string | null>(null);

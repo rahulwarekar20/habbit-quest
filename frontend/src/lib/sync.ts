@@ -7,8 +7,13 @@ import { updateChild, type Family, type QuestStatus } from "./family";
 
 const LOCAL_STATUS: Record<HabitStatus, QuestStatus> = { todo: "todo", submitted: "submitted", approved: "approved", rejected: "notyet" };
 
+/** The kid screens' name for a backend completion status ("rejected" is shown as "not yet"). */
 export const localStatus = (status: HabitStatus): QuestStatus => LOCAL_STATUS[status];
 
+/**
+ * Copies today's quests and their statuses from the backend into the family's local log, so the screens and
+ * celebrations can read them without another call.
+ */
 export function applyToday(family: Family, today: Today): Family {
   const childId = today.child.id;
   const statuses = Object.fromEntries(today.habits.map((h) => [h.habit_id, localStatus(h.status)]));
@@ -25,10 +30,14 @@ export function applyToday(family: Family, today: Today): Family {
   return { ...next, log: { ...next.log, [today.day]: { ...next.log[today.day], [childId]: statuses } } };
 }
 
+/** Copies a child's Sparks, level and points balance from the backend. */
 export function applyProgress(family: Family, childId: string, progress: Progress, points: number): Family {
   return updateChild(family, childId, (c) => ({ ...c, sparks: progress.sparks, progress, balance: points }));
 }
 
+/**
+ * Copies a child's kid-mode extras from the backend (stickers found, buddy, wardrobe, chest, savings goal).
+ */
 export function applyExtras(family: Family, childId: string, extras: Extras): Family {
   const next = updateChild(family, childId, (c) => ({
     ...c,

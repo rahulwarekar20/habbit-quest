@@ -11,6 +11,10 @@ import {
 
 // ── Errors ────────────────────────────────────────────────────────────────────
 
+/**
+ * Every failed call throws this: the HTTP `status` (0 when the server could not be reached) and a `detail`
+ * message written for people, safe to show as it is.
+ */
 export class ApiError extends Error {
   constructor(readonly status: number, readonly detail: string) {
     super(detail);
@@ -33,7 +37,11 @@ export function detailText(body: unknown, status: number): string {
 
 // ── Waking up, and who to tell ────────────────────────────────────────────────
 
+/**
+ * How long a call may take when the server is probably asleep: Render's free plan can take a minute to wake.
+ */
 export const WAKE_TIMEOUT_MS = 70_000;
+/** How long an ordinary call may take on a server that is already awake. */
 export const NORMAL_TIMEOUT_MS = 30_000;
 /** The AI helpers can take a while even on a warm server. */
 export const AI_TIMEOUT_MS = 75_000;
@@ -50,6 +58,9 @@ let slowCalls = 0;
 let onWaking: (waking: boolean) => void = () => {};
 let onCaregiverExpired: () => void = () => {};
 
+/**
+ * Registers who to tell when a call is slow because the server is waking up (true) and when it has answered (false).
+ */
 export function setWakingListener(fn: (waking: boolean) => void): void {
   onWaking = fn;
 }
@@ -86,6 +97,11 @@ function expired(kid: boolean): ApiError {
   return new ApiError(401, "Please sign in again.");
 }
 
+/**
+ * Sends one API call and returns its JSON. Adds the caregiver or kid token, gives a cold server time to wake and
+ * retries while it does (reads on any waking status, writes only when the app was never reached), and turns every
+ * failure into an ApiError with a readable `detail`. A 401 ends the session and tells the expiry listener.
+ */
 export async function request<T>(method: string, path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
   const { kid = false, form, noAuth = false } = options;
   const headers: Record<string, string> = {};

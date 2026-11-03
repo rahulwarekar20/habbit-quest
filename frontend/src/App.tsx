@@ -41,6 +41,7 @@ import { go, useRoute } from "./lib/router";
 import { getKidLogin, getKidMode, setKidMode } from "./lib/storage";
 import { useStore } from "./lib/store";
 
+/** The app shell: picks the page for the current route and applies the access rules described above. */
 export default function App() {
   const [page, a, b] = useRoute();
   const { family, phase, loadError, retry } = useStore();

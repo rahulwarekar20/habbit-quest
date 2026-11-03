@@ -18,6 +18,10 @@ import { WORLDS } from "../lib/family";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
+/**
+ * The frame of the account pages: logo bar with an optional `corner` control, one centred card, an optional
+ * `scene` behind it and an optional strip `below` it. `wide` is for longer forms.
+ */
 export function AuthLayout({ children, corner, wide = false, scene, below }: {
   children: ReactNode;
   corner?: ReactNode;
@@ -40,6 +44,9 @@ export function AuthLayout({ children, corner, wide = false, scene, below }: {
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
+/**
+ * The sign-in page (#/login): Continue with Google, or I'm a kid; the development login in the corner.
+ */
 export function Login() {
   const { notice } = useStore();
   return (
@@ -195,6 +202,7 @@ const ROLES: { id: Role; label: string }[] = [
 
 const browserTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+/** First-time setup (#/welcome): create or join a family, then add the first child. */
 export function Welcome() {
   const { server, reload } = useStore();
   const [mode, setMode] = useState<"create" | "join">("create");
@@ -302,6 +310,7 @@ function CreateFamily() {
   );
 }
 
+/** Joining an existing family with a grown-up invite code. */
 export function JoinFamily() {
   const { reload } = useStore();
   const [code, setCode] = useState("");

@@ -41,8 +41,8 @@ VITE_DEV_LOGIN=true
 - Errors: `{"detail": "message"}`, or for invalid input (422 from validation) `{"detail": [{"msg": ..., "loc": [...]}]}`.
   401 means the token is missing or expired: send the user to sign in again (or, in kid mode, to the parent PIN).
   404 also means "not yours". Show `detail` strings to the user; they are written for people.
-- Write one typed client, `src/lib/api.ts`, with a `request<T>(method, path, body?, {kid?: boolean})` helper and
-  one function per endpoint below. Put the response types next to it.
+- The frontend's typed client is `frontend/src/lib/api/`: `client.ts` holds the request helper (tokens, errors,
+  waking the server), `types.ts` the response shapes, and one file per area has one function per endpoint below.
 
 ## 3. Endpoints and shapes
 
@@ -166,26 +166,26 @@ VITE_DEV_LOGIN=true
   `/v1/children/{id}/app-time/extend`, `/v1/families/{id}/settings`.
 - Data: `GET /v1/families/{id}/export`, `POST /v1/families/{id}/delete` and `POST /v1/children/{id}/delete` (`{pin}`),
   `DELETE /v1/families/{id}/caregivers/me`.
-- `today` also returns `streak`, `week`, and each habit's `boosts` and `multiplier`. Worlds are `camp`, `mosswood`, `sky`.
+- `today` also returns `streak`, `week`, and each habit's `boosts` and `multiplier`. Worlds are `camp`, `mosswood`, `sky`, `coral`, `crystal`, `star`.
 ## 4. How the screens map
 
-| Screen | Change |
-|---|---|
-| Login / Register | Google button (plus dev login when enabled). After sign-in: `GET /v1/me`; no family → family setup (create with name, time zone, optional PIN, your name and role; or join with invite code). Remove local email/password registration. |
-| Add child (part of register today) | `POST /v1/families/{id}/children` with name, age, buddy and routine times. |
-| Habit setup (`#/setup`) | Becomes per child: routine times per part of the day (`PATCH /v1/children/{id}`). |
-| Habit coach (`AiHelpers`) | Replace with "Describe a problem" → pain points → show suggested goals with reasons and habit options (recommended pre-ticked), max 6 → `PUT plan`. Show `safety.guidance` when returned. |
-| Quest library (`#/quests/:child`) | Edit the plan: goals and their options from `GET plan`, saving with `PUT plan`; pause/remove/retime with `PATCH child-habits`. |
-| Parent dashboard | Approvals from `GET /approvals` with approve / not yet; each child's level, Sparks and points from `GET /children/{id}/today`; invite code and caregivers from the family. |
-| Rewards page (`#/rewards`) | "Record a reward": `POST redemptions` with points and note; history from `GET /points`. |
-| Kid picker / kid quests (`#/kid`, `#/kid/:child`) | Choosing a child calls `kid-session` (caregiver token), then the kid screens use the kid token: `GET /v1/kid/today`, `POST /v1/kid/completions`. Leaving kid mode: PIN via `pin/verify`. |
-| Kid shop (`#/shop/:child`) | Balance and history from `GET /v1/kid/points`. Spending is recorded by a parent, so turn "buy" into "ask a grown-up" (local only) or hide it. |
+What each screen calls today. Every endpoint has a function of the same purpose in `frontend/src/lib/api/`.
 
-Keep in the browser for now (no backend yet): explorable worlds and discoveries, the treasure chest, buddy
-accessories and wardrobe, check-ins, surprises, mystery box, point multipliers (golden quest, streaks, double
-days: the backend pays base points only), and the kid-mode time limit. The Groq agent server is no longer
-needed for the coach or planner; buddy lines and check-in moderation may keep using it if `GROQ_API_KEY` is set,
-otherwise their built-in fallbacks apply.
+| Screen | Endpoints |
+|---|---|
+| Sign-in (`#/login`) | Google button → `POST /v1/auth/google` (or the dev login, `POST /v1/auth/token`), then `GET /v1/me`. "I'm a kid" → `GET` and `POST /v1/kid-login/{code}` |
+| First-time setup (`#/welcome`) | `POST /v1/families` (optional PIN) or `POST /v1/families/join`; then `POST /v1/families/{id}/children` |
+| Join (`#/join/:code`) | The family code from a QR code: kid sign-in as above, or a grown-up joins |
+| Child details (`#/setup/:child`) | `PATCH /v1/children/{id}` (name, age, buddy, routine times) |
+| Dashboard (`#/parent`) | `GET /approvals`, `approve` / `reject`; reward requests; each child's `today`; check-ins and safety alerts; surprises; suggestions, reviews and the quest planner |
+| Habit coach (`#/coach/:child`) | `GET` and `POST /v1/children/{id}/coach/messages`; cards from `GET /suggestions`, `accept` (PIN if set) or `dismiss` |
+| Quest library (`#/quests/:child`) | `GET` and `PUT plan`; `PATCH child-habits`; `GET /v1/catalog` for Add quests; custom habits under `/v1/families/{id}/habits` |
+| Rewards & limits (`#/rewards`) | The shop under `/v1/families/{id}/rewards`; `POST redemptions`; `GET /points`; family `settings` for the time limit |
+| Family settings (`#/family`) | Login code, invite code, PIN (`PUT`, `remove`), kid PINs, `export`, `delete`, leaving the family |
+| Kid mode (`#/kid`, `#/kid/:child`) | `kid-session`, then with the kid token: `today`, `completions`, `journey`, `extras`, `chest`, `app-time`, `checkins`, `buddy-line`. Leaving kid mode: `pin/verify` |
+| Kid shop and journal (`#/shop/:child`, `#/journal/:child`) | `GET /v1/kid/rewards`, `POST /v1/kid/reward-requests` (points held until a grown-up decides), `GET /v1/kid/points`, `PATCH /v1/kid/extras` for the wardrobe |
+
+Nothing is kept only in the browser any more except its sign-in and which celebrations it has shown.
 
 Habit ids from the frontend's library are the same in the backend catalog (`wake`, `bedtime`, `brush-teeth`,
 `story-time`, `make-bed`, …), with two additions: `tidy-space` and `day-chat`. Ages, buddies and the level

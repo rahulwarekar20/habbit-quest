@@ -16,6 +16,7 @@ import { updateChild } from "../lib/family";
 
 const EMOJIS = ["🎁", "📺", "🎮", "🍕", "🍦", "🌙", "🍿", "🛝", "🧸", "📚", "🎨", "⚽", "🏊", "🎢", "🧁", "⭐"];
 
+/** The Rewards & limits page (#/rewards). */
 export default function RewardsPage() {
   const { server } = useStore();
   const familyId = server!.id;

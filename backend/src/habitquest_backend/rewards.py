@@ -37,6 +37,8 @@ ENTRY_JOINS = (
 
 
 class RewardInput(StrictModel):
+    """The request body of `POST /v1/families/{family_id}/rewards`."""
+
     title: str = Field(min_length=1, max_length=80)
     emoji: str = Field(min_length=1, max_length=8)
     cost: int = Field(gt=0, le=100_000)
@@ -45,22 +47,30 @@ class RewardInput(StrictModel):
 
 
 class RewardUpdate(StrictModel):
+    """The request body of `PATCH /v1/rewards/{reward_id}`."""
+
     title: str | None = Field(default=None, min_length=1, max_length=80)
     emoji: str | None = Field(default=None, min_length=1, max_length=8)
     cost: int | None = Field(default=None, gt=0, le=100_000)
 
 
 class RewardRequest(StrictModel):
+    """The request body of `POST /v1/kid/reward-requests`."""
+
     reward_id: UUID
 
 
 class PinConfirm(StrictModel):
+    """The request body of `POST /v1/reward-requests/{request_id}/approve`."""
+
     pin: str | None = Field(
         default=None, pattern=r"^\d{4}$", description="Left out when the family has no PIN"
     )
 
 
 class Redemption(StrictModel):
+    """The request body of `POST /v1/children/{child_id}/redemptions`."""
+
     points: int = Field(gt=0, le=100_000, description="How many points to spend")
     note: str = Field(
         min_length=1, max_length=200, description='What they were used for, e.g. "30 min tablet"'

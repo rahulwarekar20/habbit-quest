@@ -103,12 +103,14 @@ def verify_google(credential: str, settings: Settings) -> dict:
 
 
 def hash_pin(pin: str) -> str:
+    """A salted scrypt hash of a PIN, stored as "scrypt$<salt>$<digest>"; the PIN itself is never stored."""
     salt = secrets.token_bytes(16)
     digest = hashlib.scrypt(pin.encode(), salt=salt, n=2**14, r=8, p=1)
     return f"scrypt${salt.hex()}${digest.hex()}"
 
 
 def check_pin(pin: str, stored: str | None) -> bool:
+    """True when `pin` matches the stored hash. Compares in constant time, so timing reveals nothing."""
     if not stored:
         return False
     _, salt, digest = stored.split("$")

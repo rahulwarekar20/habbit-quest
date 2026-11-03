@@ -1,6 +1,7 @@
 /** The choices in a kid check-in. Check-ins are saved and screened on the backend. */
 import type { Mood } from "./api";
 
+/** The moods a child can pick in "How was today?", with their emoji. */
 export const MOODS: { id: Mood; emoji: string; label: string }[] = [
   { id: "great", emoji: "🤩", label: "Super!" },
   { id: "good", emoji: "🙂", label: "Good" },

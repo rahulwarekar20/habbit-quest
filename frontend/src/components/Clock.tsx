@@ -1,5 +1,6 @@
 /** Analog clock face for a quest time ("07:30"), so children can match it to a real clock. */
 
+/** An analogue clock face showing a "HH:MM" time, so children who can't read times yet can match it. */
 export default function Clock({ time, size = 52 }: { time: string; size?: number }) {
   const [h, m] = time.split(":").map(Number);
   const minuteAngle = m * 6;
