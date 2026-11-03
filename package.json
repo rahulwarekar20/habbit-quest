@@ -6,6 +6,7 @@
     "dev": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
     "test": "npm test --prefix frontend",
+    "e2e": "npm run e2e --prefix frontend",
     "install:frontend": "npm install --prefix frontend"
   }
 }

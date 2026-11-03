@@ -117,9 +117,10 @@ any text reaches a model, and a family's custom habits are never sent at all.
 ```mermaid
 flowchart LR
     PR["push or pull request"] --> B["backend-checks<br/>ruff, format, mypy,<br/>pytest at 100% coverage<br/>on PostgreSQL 17"]
-    PR --> F["frontend-checks<br/>vitest, tsc,<br/>production build"]
+    PR --> F["frontend-checks<br/>logic + screen tests (vitest),<br/>tsc, production build"]
+    PR --> E["e2e<br/>browser tests (Playwright)<br/>real API + PostgreSQL 17"]
 ```
 
 Run them locally: `backend/` → `uv run python -m pytest` (needs PostgreSQL; on Windows set `PYTHONUTF8=1`), and
-`frontend/` → `npm test` and `npm run build`. `backend/scripts/eval_coach.py` scores the coach against realistic
+`frontend/` → `npm test`, `npm run e2e` and `npm run build` (see the Tests section of `frontend/README.md`). `backend/scripts/eval_coach.py` scores the coach against realistic
 parent messages with real models; it is not part of CI because it calls a paid API.

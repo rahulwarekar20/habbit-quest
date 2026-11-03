@@ -74,6 +74,7 @@ export default function ParentDashboard() {
     setDeciding(item.completion_id);
     setError(null);
     const before = days[item.child_id]?.progress;
+    let failed: string | null = null;
     try {
       const result = await (approve ? approveCompletion : rejectCompletion)(item.completion_id);
       update((f) => applyProgress(f, result.child_id, result.progress, result.points));
@@ -86,10 +87,11 @@ export default function ParentDashboard() {
         });
       }
     } catch (e) {
-      setError(errorText(e)); // e.g. another caregiver decided first
+      failed = errorText(e); // e.g. another caregiver decided first
     }
     setDeciding(null);
     await load();
+    if (failed) setError(failed); // after the reload, which clears old errors when it succeeds
   }
 
   function openKidMode(childId?: string) {

@@ -2,3 +2,6 @@
 # Personal Claude Code settings
 .claude/settings.local.json
 .shots/
+# Playwright output
+test-results/
+playwright-report/

@@ -1,0 +1,57 @@
+name: e2e
+# Browser tests (Playwright): the real app in Chromium against the real API and PostgreSQL, with the backend's
+# fake AI. Runs when either half changes, because a journey crosses both.
+on:
+  push:
+    paths: ["frontend/**", "backend/**", ".github/workflows/e2e.yml"]
+  pull_request:
+    paths: ["frontend/**", "backend/**", ".github/workflows/e2e.yml"]
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: hq_dev
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: hq_e2e
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U hq_dev -d hq_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # A throwaway database and test-only values: nothing here is used outside this job.
+      DATABASE_URL: postgresql://hq_dev:local-ci-only@127.0.0.1:55432/hq_e2e
+      JWT_SECRET: e2e-ci-only-signing-secret-not-for-production
+      DEV_LOGIN: "true"
+      DEV_LOGIN_PASSWORD: e2e-ci-only-password
+      E2E_DEV_PASSWORD: e2e-ci-only-password
+      AI_MODE: fake
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+      - run: uv sync --locked
+        working-directory: backend
+      - run: uv run python scripts/setup_db.py
+        working-directory: backend
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/

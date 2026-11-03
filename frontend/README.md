@@ -133,8 +133,19 @@ shows how the frontend and backend fit together.
 
 ## Tests
 
-`npm test` runs these with vitest; CI ([../.github/workflows/frontend.yml](../.github/workflows/frontend.yml)) runs
-them, then the type-check and build, on every push and pull request that touches `frontend/`.
+Three layers, from fastest to most real:
+
+```mermaid
+flowchart LR
+    U["Logic tests<br/>lib/*.test.ts<br/>(vitest, Node)"] --> S["Screen tests<br/>*.screen.test.tsx<br/>(vitest, jsdom,<br/>fake API)"] --> E["Browser tests<br/>e2e/*.spec.ts<br/>(Playwright, Chromium,<br/>real API + database)"]
+```
+
+```bash
+npm test         # logic and screen tests (seconds)
+npm run e2e      # browser tests; needs the backend's PostgreSQL (see below)
+```
+
+**Logic tests** check the helpers on their own:
 
 | File | What it checks |
 |---|---|
@@ -145,3 +156,28 @@ them, then the type-check and build, on every push and pull request that touches
 | `lib/catalog.test.ts` | Which catalog habits suit a child, and their standing in the plan |
 | `lib/schedule.test.ts` | Day presets and toggling quest days |
 | `lib/storage.test.ts` | What the browser remembers between visits |
+
+**Screen tests** render the whole app (state, router, pages) and use it as a person would: they find buttons by
+their names, type, click and read what appears. The app's real API client talks to a fake API
+([src/test/fakeServer.ts](src/test/fakeServer.ts)) that keeps a small family in memory, so a kid's "I did it!"
+really shows up in the parent's approvals. A test fails if a screen calls an endpoint the fake doesn't know.
+
+| File | What it checks |
+|---|---|
+| `pages/SignIn.screen.test.tsx` | Signed-out visitors go to sign-in; the development login (and a wrong password); creating a family, with or without a PIN |
+| `pages/Approvals.screen.test.tsx` | Approving and sending back quests with the parent PIN; a wrong PIN; families without a PIN; another grown-up deciding first |
+| `pages/QuestLibrary.screen.test.tsx` | Listing a child's quests; adding one from Add quests; pausing, resuming and removing; a refused change |
+| `pages/KidMode.screen.test.tsx` | Kid mode with the kid token; "I did it!"; the PIN before grown-up pages; a child's own kid PIN |
+
+**Browser tests** ([e2e/](e2e/)) run the real app in Chromium against the real backend and database (with the
+backend's fake AI). Each test signs in as a new development-login parent, so tests never share a family:
+
+- A new family's first day: set up, add a quest, the child does it, a grown-up approves, the child sees the Spark.
+- The parent PIN keeps a child in kid mode out of the grown-ups' pages until the right PIN.
+
+`npm run e2e` starts the API (`../backend`, port 8000) and the dev server (port 5180) unless they are already
+running. The backend needs its `.env` with `DEV_LOGIN=true`; the tests read `DEV_LOGIN_PASSWORD` from there (or
+`E2E_DEV_PASSWORD`). The first time, install the browser with `npx playwright install chromium`.
+
+In CI, [frontend.yml](../.github/workflows/frontend.yml) runs `npm test`, the type-check and the build whenever
+`frontend/` changes, and [e2e.yml](../.github/workflows/e2e.yml) runs the browser tests whenever either half changes.
