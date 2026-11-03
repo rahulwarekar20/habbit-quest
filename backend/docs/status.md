@@ -27,6 +27,15 @@ Also done:
   (API contract for the frontend) and this file. The old generated `openwiki/` pages were removed; regenerate
   them from `openwiki/INSTRUCTIONS.md`.
 
+## Update 2026-11-03: coach crew, whole catalog, custom habits
+
+- **Coach crew** (`COACH_ENGINE=crew`, [coach-crew.md](coach-crew.md)): triage, research and progress side by side,
+  planner, fit and safety review; scored against the old agent with `scripts/eval_coach.py`. Runs on Groq's
+  gpt-oss models (free tier: about two turns a minute).
+- **Whole catalog** (`GET /v1/catalog`) and **custom habits** (`/v1/families/{id}/habits`, `/v1/habits/{id}`),
+  migration `202611030002_custom_habits.sql`: row-level security on `hq.habits` (catalog for all, custom habits
+  for their family and its kids), caregivers may write only a custom habit's text. Shown in the Quest library.
+
 ## Update 2026-10-31: AI helpers and browser features moved to the backend
 
 On branches `feat/ai-coach` (backend) and `feat/ai-coach-ui` (frontend), not yet merged. Added: the habit coach

@@ -14,10 +14,19 @@ def http_client(settings: Settings) -> httpx.Client:
     return httpx.Client(timeout=settings.ai_timeout_seconds)
 
 
-def chat_model(settings: Settings, *, small: bool = False, temperature: float = 0) -> BaseChatModel:
-    """The large model, or with `small` the faster one for buddy lines and safety checks."""
+def chat_model(
+    settings: Settings,
+    *,
+    small: bool = False,
+    temperature: float = 0,
+    model: str = "",
+    reasoning_effort: str | None = None,
+) -> BaseChatModel:
+    """The large model, or with `small` the faster one for buddy lines and safety checks. `model` names another
+    one outright; `reasoning_effort` (low, medium, high) trades a reasoning model's accuracy for speed.
+    """
     return init_chat_model(
-        model=(settings.openai_small_model if small else "") or settings.openai_model,
+        model=model or (settings.openai_small_model if small else "") or settings.openai_model,
         model_provider="openai",
         base_url=settings.openai_base_url,
         api_key=settings.openai_api_key.get_secret_value() if settings.openai_api_key else "",
@@ -25,4 +34,5 @@ def chat_model(settings: Settings, *, small: bool = False, temperature: float = 
         max_tokens=MAX_TOKENS,
         max_retries=1,
         http_client=http_client(settings),
+        reasoning_effort=reasoning_effort,
     )

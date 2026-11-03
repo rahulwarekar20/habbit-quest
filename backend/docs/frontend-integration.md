@@ -113,6 +113,13 @@ VITE_DEV_LOGIN=true
   plan and for later changes.
 - `PATCH /v1/child-habits/{childHabitId} {cue_time?, days?, status?: "active" | "paused" | "removed"}` → Plan.
 - Catalog: `GET /v1/goals` → `[{id, title, description}]`; `GET /v1/goals/{id}/habits?age=&max_tier=`.
+- Whole catalog: `GET /v1/catalog` → every pre-approved habit with `goal_title`, `min_age`, `max_age`, `tier`,
+  `points`, `kid_title`, `icon`, ordered by goal, tier and title. The Quest library groups it by age (3-5, 6-8, 9-13).
+- Custom habits (a family's own): `GET /v1/families/{id}/habits`; `POST /v1/families/{id}/habits {goal_id, title,
+  kid_title?, description?, kid_hint?, icon, anchor}` → 201 habit with an id starting `my-` (every age, tier 1,
+  10 points); `PUT /v1/habits/{id}` edits; `DELETE /v1/habits/{id}` retires it and takes it out of every plan.
+  422 for an unknown goal or text unsuitable for kids, 409 past 30 per family. Add one to a child with
+  `PUT /v1/children/{id}/plan`, listing its goal. Custom habits show their own `icon`; they never reach the AI.
 
 ### Kid mode and the daily loop
 - `POST /v1/children/{id}/kid-session [{pin}]` (caregiver token) → `{access_token, token_type, expires_in, child: {id, name}}`.

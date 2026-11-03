@@ -92,12 +92,15 @@ class ChildHabitUpdate(StrictModel):
 
 
 def candidates(conn, age: int, tier: int) -> list[Candidate]:
-    """Active goals, each with the active habits suited to this age and unlocked tier (goals with none left out)."""
+    """Active goals, each with the active catalog habits suited to this age and unlocked tier (goals with none
+    left out). The AI chooses from these, so a family's custom habits are never among them.
+    """
     goals = conn.execute(
         "SELECT id,title,description,keywords FROM hq.goals WHERE is_active ORDER BY title"
     ).fetchall()
     habits = conn.execute(
-        "SELECT id,goal_id,title,tier FROM hq.habits WHERE is_active AND %s BETWEEN min_age AND max_age"
+        "SELECT id,goal_id,title,tier FROM hq.habits WHERE is_active AND family_id IS NULL"
+        " AND %s BETWEEN min_age AND max_age"
         " AND tier<=%s ORDER BY tier,title",
         (age, tier),
     ).fetchall()

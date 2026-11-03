@@ -12,6 +12,7 @@ from habitquest_backend import (
     coach,
     daily,
     extras,
+    habits,
     insights,
     journey,
     onboarding,
@@ -152,7 +153,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with transaction(settings) as conn:
             one(conn, "SELECT id FROM hq.goals WHERE id=%s AND is_active", (goal_id,))
             return conn.execute(
-                f"SELECT {HABIT_COLUMNS} FROM hq.habits WHERE goal_id=%s AND is_active"
+                f"SELECT {HABIT_COLUMNS} FROM hq.habits WHERE goal_id=%s AND is_active AND family_id IS NULL"
                 " AND (%s::int IS NULL OR %s::int BETWEEN min_age AND max_age)"
                 " AND (%s::int IS NULL OR tier <= %s::int) ORDER BY tier,title",
                 (goal_id, age, age, max_tier, max_tier),
@@ -160,6 +161,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(accounts.router(settings))
     application.include_router(onboarding.router(settings))
+    application.include_router(habits.router(settings))
     application.include_router(journey.router(settings))
     application.include_router(daily.router(settings))
     application.include_router(rewards.router(settings))

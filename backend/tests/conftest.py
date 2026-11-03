@@ -21,8 +21,20 @@ SECRET = "test-only-signing-key-at-least-32-bytes-long"
 PARENT = UUID("11111111-1111-1111-1111-111111111111")
 OTHER = UUID("22222222-2222-2222-2222-222222222222")
 load_dotenv()
-# Tests never reach a real model, whatever a developer's .env says.
-for name in ("AI_MODE", "OPENAI_BASE_URL", "OPENAI_MODEL", "OPENAI_SMALL_MODEL", "OPENAI_API_KEY"):
+# Tests never reach a real model or use a developer's sign-in settings, whatever their .env says.
+for name in (
+    "AI_MODE",
+    "OPENAI_BASE_URL",
+    "OPENAI_MODEL",
+    "OPENAI_SMALL_MODEL",
+    "OPENAI_SAFETY_MODEL",
+    "OPENAI_API_KEY",
+    "COACH_ENGINE",
+    "CREW_ROLES",
+    "GOOGLE_CLIENT_ID",
+    "DEV_LOGIN",
+    "DEV_LOGIN_PASSWORD",
+):
     os.environ.pop(name, None)
 os.environ["TRACE_COACH"] = "false"
 URL = os.getenv("TEST_DATABASE_URL", "postgresql://hq_dev@127.0.0.1:55432/hq_test")

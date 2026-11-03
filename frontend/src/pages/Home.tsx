@@ -1,6 +1,6 @@
 /**
  * Home page: what HabbitQuest is, how a day works, the habits parents can choose,
- * the worlds children unlock, and why parents can trust it.
+ * the worlds children unlock, and why parents can trust it. One call to action: Get started.
  */
 import Buddy from "../components/Buddy";
 import Clock from "../components/Clock";
@@ -31,20 +31,21 @@ export default function Home() {
         <FloatingSparks />
         <div className="wrap hero__inner">
           <div className="hero__copy">
-            <p className="eyebrow">For parents &amp; kids, ages 4 to 12</p>
+            <p className="eyebrow">For families with kids aged 3 to 13</p>
             <h1>
               Little habits.
               <br />
               <span className="gradient-text">Big adventures.</span>
             </h1>
             <p className="lead">
-              HabbitQuest turns everyday routines like waking up on time, finishing homework and getting to bed early
-              into picture quests your child loves. Every habit you approve earns a sparkling reward that unlocks
-              new worlds to explore.
+              Everyday routines become picture quests your child loves. Every quest you approve earns a Spark, and
+              Sparks unlock new worlds to explore.
             </p>
             <div className="hero__ctas">
               <a className="btn btn--primary btn--lg" href="#/login">Get started</a>
+              <a className="hero__kid" href="#/join">I'm a kid &rarr;</a>
             </div>
+            <p className="hero__note">Free · No ads · Every reward approved by you</p>
           </div>
 
           <div className="hero__stage" aria-hidden="true">
@@ -90,12 +91,14 @@ export default function Home() {
             <p className="eyebrow">A simple daily journey</p>
             <h2>Five small steps, every day</h2>
           </div>
-          <ol className="steps">
-            {STEPS.map((s, i) => (
-              <li key={s.title} className={`step step--${i + 1}`}>
-                <span className="step__num">{i + 1}</span>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
+          <ol className="flow">
+            {STEPS.map((step, i) => (
+              <li key={step.title} className="flow__step">
+                <span className="flow__num">{i + 1}</span>
+                <div>
+                  <b>{step.title}</b>
+                  <p>{step.text}</p>
+                </div>
               </li>
             ))}
           </ol>
@@ -108,22 +111,19 @@ export default function Home() {
           <div className="section__head">
             <p className="eyebrow">Good habits, your way</p>
             <h2>Choose the habits. Set the times.</h2>
-            <p className="lead">Start with one or two, or choose all six. You can change them any time.</p>
+            <p className="lead">Start with the daily routines, then add quests from a catalog of over forty, or make your own.</p>
           </div>
-          <div className="habit-grid">
+          <div className="mini-habits">
             {HABITS.map((h) => (
-              <article key={h.id} className="habit-tile">
-                <HabitArt habit={h.id} />
-                <div className="habit-tile__body">
-                  <h3>{h.parentTitle}</h3>
-                  <p>{h.description}</p>
-                  {h.setting.kind === "time" && (
-                    <span className="chip">{h.setting.label} {formatTime(h.setting.default)}</span>
-                  )}
-                  {h.setting.kind === "minutes" && (
-                    <span className="chip">Limit {formatMinutes(Number(h.setting.default))} a day</span>
-                  )}
-                  {h.setting.kind === "none" && <span className="chip">Every school day</span>}
+              <article key={h.id} className="mini-habit">
+                <HabitArt habit={h.id} className="mini-habit__art" />
+                <div>
+                  <b>{h.parentTitle}</b>
+                  <span>
+                    {h.setting.kind === "time" && `${h.setting.label} ${formatTime(h.setting.default)}`}
+                    {h.setting.kind === "minutes" && `Up to ${formatMinutes(Number(h.setting.default))} a day`}
+                    {h.setting.kind === "none" && "Every school day"}
+                  </span>
                 </div>
               </article>
             ))}
@@ -139,17 +139,12 @@ export default function Home() {
             <h2>Sparks unlock worlds to explore</h2>
             <p className="lead">Sparks are never taken away. Once a world is open, it stays open.</p>
           </div>
-          <div className="world-grid">
+          <div className="mini-worlds">
             {WORLDS.map((w) => (
-              <article key={w.id} className="world-tile">
+              <article key={w.id} className="mini-world">
                 <WorldArt world={w.id} />
-                <div className="world-tile__body">
-                  <h3>{w.name}</h3>
-                  <p>{w.blurb}</p>
-                  <span className="chip chip--gold">
-                    <SparkIcon size={14} /> {w.sparks === 0 ? "Open from day one" : `${w.sparks} Sparks to unlock`}
-                  </span>
-                </div>
+                <b>{w.name}</b>
+                <span><SparkIcon size={12} /> {w.sparks === 0 ? "Open from day one" : `${w.sparks} Sparks`}</span>
               </article>
             ))}
           </div>
@@ -173,17 +168,6 @@ export default function Home() {
             <li><b>Encouraging, never punishing.</b> &ldquo;Not yet&rdquo; lets them try again. Sparks are never taken away.</li>
             <li><b>No ads, no chat, no strangers.</b> Kid mode is a closed space just for your family.</li>
           </ul>
-        </div>
-      </section>
-
-      {/* ── Final call to action ─────────────────────────────────────── */}
-      <section className="cta-band">
-        <div className="wrap cta-band__inner">
-          <div>
-            <h2>Start your family's first quest tonight</h2>
-            <p>Two minutes to set up. One sparkle to win them over.</p>
-          </div>
-          <a className="btn btn--gold btn--lg" href="#/login">Get started free</a>
         </div>
       </section>
 

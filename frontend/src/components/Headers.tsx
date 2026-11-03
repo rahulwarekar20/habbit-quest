@@ -2,7 +2,7 @@
  * Page headers: SiteHeader for the public home page, ParentHeader for the grown-up area.
  * (The kid screen has its own playful header inside KidQuests.)
  */
-import type { MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 import Logo from "./Logo";
@@ -23,10 +23,7 @@ export function SiteHeader() {
           {family ? (
             <a className="btn btn--primary" href="#/parent">Open dashboard</a>
           ) : (
-            <>
-              <a className="btn btn--ghost" href="#/login">Sign in</a>
-              <a className="btn btn--primary" href="#/login">Get started</a>
-            </>
+            <a className="btn btn--primary" href="#/login">Get started</a>
           )}
         </div>
       </div>
@@ -42,7 +39,7 @@ function scrollTo(id: string) {
   };
 }
 
-export function ParentHeader({ active }: { active: "dashboard" | "coach" | "habits" | "quests" | "rewards" }) {
+export function ParentHeader({ active }: { active: "dashboard" | "coach" | "habits" | "quests" | "rewards" | "family" }) {
   const { family, logout, enterKidMode } = useStore();
   return (
     <header className="topbar topbar--app">
@@ -66,19 +63,43 @@ export function ParentHeader({ active }: { active: "dashboard" | "coach" | "habi
           </a>
         </nav>
         <div className="topbar__actions">
-          <span className="topbar__hello">Hi, {family?.parentName}</span>
-          <button
-            className="btn btn--ghost btn--sm"
-            onClick={() => {
-              logout();
-              go("/");
-            }}
-          >
-            Sign out
-          </button>
+          <AccountMenu name={family?.parentName ?? ""} active={active === "family"} onSignOut={() => { logout(); go("/"); }} />
         </div>
       </div>
     </header>
+  );
+}
+
+/** "Hi, Sam" opens Family settings and Sign out. Closes on outside click or Escape. */
+function AccountMenu({ name, active, onSignOut }: { name: string; active: boolean; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+  return (
+    <div className="account" ref={box}>
+      <button type="button" className={`account__button ${active ? "is-active" : ""}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="account__avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase() || "?"}</span>
+        <span className="account__name">Hi, {name}</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="account__menu" role="menu">
+          <a role="menuitem" href="#/family" onClick={() => setOpen(false)}>Family settings</a>
+          <button role="menuitem" type="button" onClick={onSignOut}>Sign out</button>
+        </div>
+      )}
+    </div>
   );
 }
 

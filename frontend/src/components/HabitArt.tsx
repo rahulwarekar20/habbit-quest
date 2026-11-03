@@ -1,12 +1,13 @@
 /**
  * Picture for each quest: a small illustrated scene so children who can't read yet
  * still know what the quest is. Routine habits have hand-drawn scenes; bonus quests from
- * the library get their emoji on a soft scene coloured by category. Pure SVG, no image files.
+ * the library get their emoji on a soft scene coloured by category, and a family's own habits
+ * (ids starting "my-") show the `icon` they were given. Pure SVG, no image files.
  */
 import { QUEST_BY_ID, isHabitId, type Category, type HabitId } from "../lib/habits";
 
-export default function HabitArt({ habit, className = "" }: { habit: string; className?: string }) {
-  if (!isHabitId(habit)) return <BonusArt quest={habit} className={className} />;
+export default function HabitArt({ habit, icon, className = "" }: { habit: string; icon?: string; className?: string }) {
+  if (!isHabitId(habit)) return <BonusArt quest={habit} icon={icon} className={className} />;
   return (
     <svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" className={`habit-art ${className}`} role="img" aria-label={LABELS[habit]}>
       {SCENES[habit]}
@@ -20,7 +21,7 @@ const CATEGORY_COLORS: Record<Category, [string, string]> = {
   feelings: ["#E6F0FF", "#BFD6FF"], active: ["#DFF6F2", "#A8E6DA"], screen: ["#EDEBFA", "#C9C3F0"],
 };
 
-function BonusArt({ quest, className }: { quest: string; className: string }) {
+function BonusArt({ quest, icon, className }: { quest: string; icon?: string; className: string }) {
   const q = QUEST_BY_ID[quest];
   const [a, b] = CATEGORY_COLORS[q?.category ?? "routine"];
   const id = `ba-${quest}`;
@@ -36,7 +37,7 @@ function BonusArt({ quest, className }: { quest: string; className: string }) {
       <circle cx="26" cy="24" r="10" fill="#fff" opacity="0.35" />
       <circle cx="136" cy="96" r="16" fill="#fff" opacity="0.25" />
       <circle cx="80" cy="62" r="38" fill="#fff" opacity="0.55" />
-      <text x="80" y="64" textAnchor="middle" dominantBaseline="central" fontSize="46">{q?.emoji ?? "⭐"}</text>
+      <text x="80" y="64" textAnchor="middle" dominantBaseline="central" fontSize="46">{q?.emoji ?? icon ?? "⭐"}</text>
     </svg>
   );
 }

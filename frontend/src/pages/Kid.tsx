@@ -338,7 +338,7 @@ function QuestCard({ habit, status, points, boost, multiplier, golden, onDone }:
   return (
     <article className={`quest quest--${status} ${golden ? "quest--golden" : ""}`}>
       <div className="quest__art">
-        <HabitArt habit={habit.habit_id} />
+        <HabitArt habit={habit.habit_id} icon={habit.icon} />
         {golden && status !== "approved" && <span className="quest__golden">✨ Golden quest</span>}
         {known && !known.routine && <span className="quest__tier">Bonus · Tier {habit.tier}</span>}
         {status === "approved" && (

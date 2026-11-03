@@ -50,6 +50,10 @@ Python 3.12, uv, FastAPI and Pydantic, PostgreSQL with row-level security, psyco
    child's routine time for that part of the day; days default to every day. Use the same call to change the
    plan later: unlisted habits are removed and kept as history.
 4. **Adjust one habit.** `PATCH /v1/child-habits/{id}` changes its time or days, pauses it or removes it.
+5. **Browse or make habits.** `GET /v1/catalog` lists every pre-approved habit with its age range. A family can
+   also make its own habits (`POST /v1/families/{id}/habits`) under one of the catalog's goals: they suit every
+   age, open at tier 1, pay 10 points, and are visible only to that family. Their text is never sent to the AI
+   provider: the coach and reviews call them "a family habit for <goal>", and buddy lines leave them out.
 
 The plan also reports the child's `progress`: Sparks, the world and level they have reached (Starter Camp 0, Mosswood
 Forest 30, Sky Islands 90, Coral Cove 180, Crystal Caves 300, Star Harbour 450), and the highest habit tier unlocked

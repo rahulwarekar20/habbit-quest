@@ -1,21 +1,19 @@
 /**
  * Parent dashboard: safety alerts, quests waiting for approval (from the backend, PIN-protected),
- * reward requests, each child's day, level, Sparks and points, the family's invite code and
- * caregivers, check-ins, the surprise planner, adding a child, and the AI helpers.
+ * reward requests, each child's day, level, Sparks and points, check-ins, the surprise planner,
+ * adding a child, and the AI helpers. Family settings (devices, grown-ups, PIN, data) have their own page.
  */
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AiHelpers from "../components/AiHelpers";
-import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, useCheckins } from "../components/ParentPanels";
+import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, recentCheckins, useCheckins } from "../components/ParentPanels";
 import Buddy from "../components/Buddy";
 import Celebration from "../components/Celebration";
 import { ChildForm } from "../components/ChildForm";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
-import ShareFamily from "../components/ShareFamily";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
-  addChild, approveCompletion, deleteFamily, errorText, exportFamily, getChildExtras, getChildToday, getFamily, listApprovals, newInviteCode,
-  rejectCompletion, removePin, setPin,
+  addChild, approveCompletion, errorText, getChildExtras, getChildToday, listApprovals, rejectCompletion,
   type Approval, type ChildInput, type Today,
 } from "../lib/api";
 import { nextWorld, type Child, type Family, type QuestStatus } from "../lib/family";
@@ -152,7 +150,7 @@ export default function ParentDashboard() {
                 const dayOf = days[item.child_id]?.day ?? dayKey();
                 return (
                   <li key={item.completion_id} className="approval">
-                    <HabitArt habit={item.habit_id} className="approval__art" />
+                    <HabitArt habit={item.habit_id} icon={item.icon} className="approval__art" />
                     <div className="approval__text">
                       <span className="approval__who">{child && <Buddy buddy={child.buddy} size={24} />} {item.child_name}</span>
                       <b>{item.title}</b>
@@ -181,12 +179,14 @@ export default function ParentDashboard() {
           <AddChildCard onAdd={add} />
         </div>
 
-        <FamilyPanel />
-
-        <div className="two-col">
-          <KidFeedback items={checkins.items} onRead={() => void checkins.markRead()} />
-          <SurprisePlanner family={fam} familyId={familyId} />
-        </div>
+        {recentCheckins(checkins.items).length > 0 ? (
+          <div className="two-col">
+            <KidFeedback items={checkins.items} onRead={() => void checkins.markRead()} />
+            <SurprisePlanner family={fam} familyId={familyId} />
+          </div>
+        ) : (
+          <SurprisePlanner family={fam} familyId={familyId} wide />
+        )}
 
         <AiHelpers family={fam} onPlanSaved={() => void load()} />
       </main>
@@ -260,7 +260,7 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
           const status = localStatus(h.status);
           return (
             <li key={h.child_habit_id}>
-              <HabitArt habit={h.habit_id} className="mini-art" />
+              <HabitArt habit={h.habit_id} icon={h.icon} className="mini-art" />
               <span>{h.kid_title}<small className="tier-tag">Tier {h.tier}</small></span>
               <span className={`status status--${status}`}>{STATUS_LABEL[status]}</span>
             </li>
@@ -289,154 +289,6 @@ function ChildCard({ family, child, today, onOpen }: { family: Family; child: Ch
         <button className="btn btn--soft btn--sm" onClick={onOpen}>Open {child.name}'s quests</button>
       </div>
     </article>
-  );
-}
-
-function FamilyPanel() {
-  const { server, setServer, askPinValue, logout } = useStore();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fam = server!;
-
-  async function refreshCode() {
-    setBusy(true);
-    setError(null);
-    try {
-      setServer(await newInviteCode(fam.id));
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function download() {
-    setError(null);
-    try {
-      const url = URL.createObjectURL(new Blob([JSON.stringify(await exportFamily(fam.id), null, 2)], { type: "application/json" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "habitquest-family.json";
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setError(errorText(e));
-    }
-  }
-
-  async function remove() {
-    if (!window.confirm(`Delete ${fam.name} and all its data? This cannot be undone.`)) return;
-    const pin = await askPinValue("Delete your family and all its data.");
-    if (pin === null) return;
-    try {
-      await deleteFamily(fam.id, pin);
-      logout();
-      go("/");
-    } catch (e) {
-      setError(errorText(e));
-    }
-  }
-
-  return (
-    <section className="panel" aria-labelledby="family-title">
-      <div className="panel__head">
-        <h2 id="family-title">{fam.name}</h2>
-        <span className="muted">{fam.timezone}</span>
-      </div>
-      <ShareFamily family={fam} />
-      <div className="invite">
-        <div>
-          <span className="muted">Grown-up invite code (share only with grown-ups)</span>
-          <code className="invite__code">{fam.invite_code}</code>
-        </div>
-        <button className="btn btn--ghost btn--sm" disabled={busy} onClick={refreshCode}>New code</button>
-      </div>
-      <ParentPin />
-      <ul className="mini-list">
-        {fam.caregivers.map((c) => <li key={c.user_id}><span>{c.display_name}</span><span className="muted">{c.role}</span></li>)}
-      </ul>
-      <div className="modal__actions">
-        <a className="btn btn--ghost btn--sm" href="#/privacy">Privacy</a>
-        <button className="btn btn--ghost btn--sm" onClick={download}>Export data</button>
-        <button className="btn btn--ghost btn--sm" onClick={remove}>Delete family</button>
-      </div>
-      {error && <p className="form-error">{error}</p>}
-    </section>
-  );
-}
-
-/** The parent PIN is optional: on, it guards approvals and grown-up screens; off, nothing asks for it. */
-function ParentPin() {
-  const { server, setServer, askPinValue, forgetPin } = useStore();
-  const fam = server!;
-  const [pin, setPinText] = useState("");
-  const [editing, setEditing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function run(action: () => Promise<void>) {
-    setBusy(true);
-    setError(null);
-    try {
-      await action();
-      forgetPin();
-      setServer(await getFamily(fam.id));
-      setPinText("");
-      setEditing(false);
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    if (fam.has_pin && (await askPinValue("Change the parent PIN.")) === null) return;
-    await run(() => setPin(fam.id, pin));
-  }
-
-  async function turnOff() {
-    const current = await askPinValue("Turn off the parent PIN.");
-    if (current === null) return;
-    await run(() => removePin(fam.id, current));
-  }
-
-  return (
-    <div className="parent-pin">
-      <div className="parent-pin__head">
-        <span>
-          <b>Parent PIN</b> <span className="muted">{fam.has_pin ? "On" : "Off"}</span>
-        </span>
-        {!editing && (
-          <span className="share__actions">
-            <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => setEditing(true)}>
-              {fam.has_pin ? "Change" : "Turn on"}
-            </button>
-            {fam.has_pin && <button className="btn btn--ghost btn--sm" disabled={busy} onClick={turnOff}>Turn off</button>}
-          </span>
-        )}
-      </div>
-      <p className="hint">
-        {fam.has_pin
-          ? "Approvals, rewards and grown-up screens ask for it, so kids can't approve their own quests."
-          : "Nothing asks for a PIN. Turn it on if kids use a device where a grown-up is signed in."}
-      </p>
-      {editing && (
-        <form className="form kid-pin" onSubmit={save}>
-          <label className="field field--narrow">
-            <span>{fam.has_pin ? "New PIN" : "PIN"}</span>
-            <input inputMode="numeric" pattern="\d{4}" maxLength={4} value={pin} placeholder="••••" autoComplete="off" autoFocus
-              onChange={(e) => setPinText(e.target.value.replace(/\D/g, ""))} aria-label="Parent PIN, 4 digits" />
-          </label>
-          <div className="share__actions">
-            <button className="btn btn--primary btn--sm" disabled={busy || pin.length !== 4}>Save PIN</button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setEditing(false); setPinText(""); }}>Cancel</button>
-          </div>
-        </form>
-      )}
-      {error && <p className="form-error">{error}</p>}
-    </div>
   );
 }
 

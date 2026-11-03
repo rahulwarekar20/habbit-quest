@@ -126,22 +126,25 @@ export function RewardRequests({ family, familyId, onCount }: { family: Family; 
   );
 }
 
-export function KidFeedback({ items: all, onRead }: { items: Checkin[]; onRead: () => void }) {
+/** Check-ins from the last 7 days, or nothing at all when there are none. */
+export function recentCheckins(all: Checkin[]): Checkin[] {
   const recent = new Set(lastDays(7));
-  const items = all.filter((f) => recent.has(f.day)).slice(0, 6);
+  return all.filter((f) => recent.has(f.day)).slice(0, 6);
+}
+
+export function KidFeedback({ items: all, onRead }: { items: Checkin[]; onRead: () => void }) {
+  const items = recentCheckins(all);
   const unseen = items.filter((f) => !f.read_at).length;
+  if (items.length === 0) return null;
   return (
     <section className="panel" aria-labelledby="feedback-title">
       <div className="panel__head">
         <h2 id="feedback-title">From your kids</h2>
         {unseen > 0 ? (
           <button className="btn btn--ghost btn--sm" onClick={onRead}>Mark {unseen} as read</button>
-        ) : <span className="muted">Last 7 days</span>}
+        ) : <span className="muted">Check-ins, last 7 days</span>}
       </div>
-      {items.length === 0 ? (
-        <p className="empty">In kid mode, children tap "How was today?" to tell you how their quests felt. Their check-ins show up here.</p>
-      ) : (
-        <ul className="feedback-list">
+      <ul className="feedback-list">
           {items.map((f) => {
             const mood = MOODS.find((m) => m.id === f.mood);
             return (
@@ -169,13 +172,13 @@ export function KidFeedback({ items: all, onRead }: { items: Checkin[]; onRead: 
               </li>
             );
           })}
-        </ul>
-      )}
+      </ul>
     </section>
   );
 }
 
-export function SurprisePlanner({ family, familyId }: { family: Family; familyId: string }) {
+/** `wide`: alone on its row, so the description sits beside the form instead of above it. */
+export function SurprisePlanner({ family, familyId, wide = false }: { family: Family; familyId: string; wide?: boolean }) {
   const [childId, setChildId] = useState<string>("all");
   const [kind, setKind] = useState<"note" | "double">("note");
   const [message, setMessage] = useState("");
@@ -208,12 +211,14 @@ export function SurprisePlanner({ family, familyId }: { family: Family; familyId
   }
 
   return (
-    <section className="panel panel--surprise" aria-labelledby="surprise-title">
-      <div className="panel__head">
-        <h2 id="surprise-title">Plant a surprise 🎁</h2>
-        {waiting.length > 0 && <span className="muted">{waiting.length} waiting to be found</span>}
+    <section className={`panel panel--surprise ${wide ? "panel--surprise-wide" : ""}`} aria-labelledby="surprise-title">
+      <div className="surprise-intro">
+        <div className="panel__head">
+          <h2 id="surprise-title">Plant a surprise 🎁</h2>
+          {waiting.length > 0 && <span className="muted">{waiting.length} waiting to be found</span>}
+        </div>
+        <p className="muted">Hide a present for your kids: a note with bonus points, or a double-points day. They find it in kid mode.</p>
       </div>
-      <p className="muted">Hide a present for your kids: a note with bonus points, or a double-points day. They find it in kid mode.</p>
       <form className="surprise-form" onSubmit={submit}>
         <div className="field-row">
           <label className="field">

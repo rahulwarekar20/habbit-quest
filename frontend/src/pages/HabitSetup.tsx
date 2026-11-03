@@ -49,7 +49,6 @@ export default function HabitSetup({ childId }: { childId?: string }) {
       <main className="wrap app-main">
         <div className="page-head">
           <div>
-            <p className="eyebrow">Child details</p>
             <h1>{child.name}'s day</h1>
             <p className="lead">New quests start at the routine times below. Quests already in the plan keep theirs, and you can change those in the quest library.</p>
           </div>
@@ -67,7 +66,7 @@ export default function HabitSetup({ childId }: { childId?: string }) {
         <section className="panel">
           {error && <p className="form-error">{error}</p>}
           {loaded
-            ? <ChildForm key={loaded.id} initial={loaded} onSubmit={save} onCancel={() => go("/parent")} onEdit={() => setSaved(false)} submitLabel="Save changes" />
+            ? <ChildForm key={loaded.id} initial={loaded} onSubmit={save} onCancel={() => go("/parent")} onEdit={() => setSaved(false)} submitLabel="Save changes" wide />
             : !error && <p className="empty">Loading…</p>}
           {saved && <p className="form-ok" role="status">Saved.</p>}
         </section>
@@ -123,7 +122,7 @@ function KidPin({ child, onChange }: { child: ApiChild; onChange: () => Promise<
         <li>
           {loginCode
             ? <>Open HabitQuest, tap <b>I'm a kid</b> and enter the family code <b className="kid-pin__code">{loginCode.slice(0, 4)} {loginCode.slice(4)}</b>, or scan the family QR code.</>
-            : <>Make the family QR code on the <a href="#/parent">dashboard</a> (family panel). Its family code is what {child.name} enters first.</>}
+            : <>Make the family QR code in <a href="#/family">Family settings</a>. Its family code is what {child.name} enters first.</>}
         </li>
         <li>Pick their name.</li>
         <li>Enter this PIN.</li>

@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from habitquest_backend.accounts import StrictModel
 from habitquest_backend.auth import KID, signed_in
 from habitquest_backend.coach import (
+    AI_TITLE,
     APP_FACTS,
     LABELS,
     save_suggestion,
@@ -31,6 +32,7 @@ from habitquest_backend.coach_tools import TIME, Snapshot
 from habitquest_backend.config import Settings
 from habitquest_backend.daily import today_view
 from habitquest_backend.db import one, transaction
+from habitquest_backend.habits import is_custom
 from habitquest_backend.llm import chat_model
 from habitquest_backend.safety import check_text
 
@@ -137,10 +139,10 @@ class FamilyView:
 
 def weekly_counts(conn, child_id: UUID) -> dict:
     rows = conn.execute(
-        "SELECT h.title,count(*) FILTER (WHERE c.day>hq.child_today(%s)-7) AS this_week,"
+        f"SELECT {AI_TITLE} AS title,count(*) FILTER (WHERE c.day>hq.child_today(%s)-7) AS this_week,"
         "count(*) FILTER (WHERE c.day<=hq.child_today(%s)-7) AS week_before"
         " FROM hq.completions c JOIN hq.child_habits ch ON ch.id=c.child_habit_id JOIN hq.habits h ON h.id=ch.habit_id"
-        " WHERE ch.child_id=%s AND c.status='approved' AND c.day>hq.child_today(%s)-14 GROUP BY h.title",
+        " WHERE ch.child_id=%s AND c.status='approved' AND c.day>hq.child_today(%s)-14 GROUP BY 1",
         (child_id, child_id, child_id, child_id),
     ).fetchall()
     return {r["title"]: {"this_week": r["this_week"], "week_before": r["week_before"]} for r in rows}
@@ -312,7 +314,7 @@ def router(settings: Settings) -> APIRouter:
         with transaction(settings, kid=kid) as conn:
             child = one(conn, "SELECT age FROM hq.children WHERE id=%s", (kid,))
             view = today_view(conn, kid)
-            quests = [h["kid_title"] for h in view["habits"]]
+            quests = [h["kid_title"] for h in view["habits"] if not is_custom(h["habit_id"])]
             calls = conn.execute("SELECT hq.kid_ai_call() AS n").fetchone()["n"]
         if calls > settings.ai_daily_limit:
             return {"line": BUDDY_FALLBACK[body.event]}

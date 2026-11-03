@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 
 const SCRIPT = "https://accounts.google.com/gsi/client";
+/** Google draws its button at this width; the "I'm a kid" button beside it matches (see .auth-choice). */
+export const BUTTON_WIDTH = 320;
 
 interface GoogleId {
   initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void;
@@ -36,7 +38,7 @@ export default function GoogleButton({ onCredential }: { onCredential: (credenti
       .then(() => {
         if (!live || !box.current || !window.google) return;
         window.google.accounts.id.initialize({ client_id: clientId, callback: (r) => callback.current(r.credential) });
-        window.google.accounts.id.renderButton(box.current, { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: Math.min(300, box.current.clientWidth) });
+        window.google.accounts.id.renderButton(box.current, { theme: "outline", size: "large", shape: "pill", text: "continue_with", width: Math.min(BUTTON_WIDTH, box.current.clientWidth) });
       })
       .catch(() => live && setFailed(true));
     return () => {
