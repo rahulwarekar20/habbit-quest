@@ -36,7 +36,7 @@ from habitquest_backend.db import one, transaction
 from habitquest_backend.guidance import search_guidance
 from habitquest_backend.llm import chat_model
 from habitquest_backend.onboarding import DAYS, DEFAULT_CUES, MAX_ACTIVE_HABITS, candidates, progress
-from habitquest_backend.safety import parent_at_risk
+from habitquest_backend.safety import parent_at_risk, parent_risk_model
 from habitquest_backend.tracing import keeps_text, send_trace, start_trace
 
 log = logging.getLogger(__name__)
@@ -228,6 +228,11 @@ def run_turn(
     if settings.ai_mode == "fake":
         return fallback(snapshot, problem)
     labels = {name: f"Child {LABELS[i]}" for i, name in enumerate(names[: len(LABELS)])}
+    # Word lists miss unusual wording, so the safety model reads the message too, before any coach model does. If
+    # it cannot answer, the turn goes on: the word lists already ran, and blocking would stop all coaching.
+    recent = [m["content"] for m in history if m["role"] == "parent"][-2:]
+    if parent_risk_model(settings, swap_names("\n".join([*recent, text]), labels)):
+        return Reply(SAFETY_GUIDANCE, safety=SAFETY_GUIDANCE, mapped_by="manual")
     restore = {f"the {label}": name for name, label in labels.items()} | {
         label: name for name, label in labels.items()
     }

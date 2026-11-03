@@ -105,18 +105,33 @@ def remote(settings):
     )
 
 
+def schema_name(body: dict) -> str | None:
+    """The JSON schema a structured call asked for, if any."""
+    found = body.get("response_format")
+    return found.get("json_schema", {}).get("name") if isinstance(found, dict) else None
+
+
 @pytest.fixture
 def llm_reply(monkeypatch):
-    """Routes model calls to the returned function's handler; `.seen` holds each request's JSON body."""
+    """Routes model calls to the returned function's handler; `.seen` holds each request's JSON body. The coach's
+    parent risk check is answered apart, from `.risk` (no risk unless a test sets it), and kept in `.risk_seen`.
+    """
 
     def route(*handlers):
         queue = list(handlers)
 
         def respond(request):
-            route.seen.append(json.loads(request.content))
-            reply = queue.pop(0) if len(queue) > 1 else queue[0]
+            body = json.loads(request.content)
+            if schema_name(body) == "ParentRisk":
+                route.risk_seen.append(body)
+                reply = route.risk
+            else:
+                route.seen.append(body)
+                reply = queue.pop(0) if len(queue) > 1 else queue[0]
             if isinstance(reply, httpx.Response):
                 return reply
+            if isinstance(reply, dict) and "risk" in reply:
+                reply = json.dumps(reply)
             message = {"role": "assistant", **(reply if isinstance(reply, dict) else {"content": reply})}
             return httpx.Response(
                 200,
@@ -134,4 +149,6 @@ def llm_reply(monkeypatch):
         )
 
     route.seen = []
+    route.risk_seen = []
+    route.risk = {"risk": False, "reason": ""}
     return route

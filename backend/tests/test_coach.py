@@ -460,3 +460,19 @@ def test_keywords_use_the_whole_conversation(settings):
     history = [{"role": "parent", "content": BEDTIME}]
     reply = run_turn(settings, snapshot(), history, "Something different please", ["Alex"])
     assert reply.turn.recommendations and reply.mapped_by == "keywords"
+
+
+def test_the_safety_model_catches_what_the_word_lists_miss(remote, llm_reply):
+    llm_reply("Never reached.")
+    llm_reply.risk = {"risk": True, "reason": "child left alone"}
+    reply = run_turn(remote, snapshot(), [], "Alex has been on her own most nights this month", ["Alex"])
+    assert reply.safety == SAFETY_GUIDANCE and reply.text == SAFETY_GUIDANCE and llm_reply.seen == []
+    assert "Child A has been on her own" in json.dumps(llm_reply.risk_seen)
+
+
+def test_a_failed_risk_check_lets_the_turn_go_on(remote, llm_reply, caplog):
+    llm_reply("When does it happen?")
+    llm_reply.risk = httpx.Response(429, json={"error": "busy"})
+    reply = run_turn(remote, snapshot(), [], "Evenings are hard", ["Alex"])
+    assert reply.text == "When does it happen?" and reply.safety is None
+    assert "Parent risk check failed" in caplog.text

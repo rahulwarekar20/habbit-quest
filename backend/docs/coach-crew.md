@@ -65,6 +65,14 @@ flowchart LR
 - **One revision.** A poor fit or an unsafe reply sends the planner back once, with what was wrong. Whatever still
   fails is dropped, and an unsafe reply becomes a plain one.
 
+## Before the crew: two risk checks
+
+Every parent message passes two checks before any coach model sees it. Word lists catch clear risk signals (self-harm,
+abuse, "not safe at home") without a model call. Then the safety model (`OPENAI_SAFETY_MODEL`, else the small one)
+reads the message and the parent's previous two, with children's names already swapped for labels, and catches
+unusual wording the lists miss, such as a child left alone most nights. Either one ends the turn with crisis guidance;
+nothing is stored or sent further. Both coach engines share these checks (`coach.run_turn`).
+
 ## When a step fails
 
 | Step | On failure |
@@ -74,7 +82,8 @@ flowchart LR
 | Progress analyst | Passes the counts on without patterns |
 | Planner | The whole turn falls back to keyword matching (`mapped_by: keywords`) |
 | Fit check | Drops the cards (tips only) |
-| Safety reviewer | Keeps the reply: it talks to parents and the planner's prompt carries the same rules |
+| Safety reviewer | Fails closed: the reply is never shown unchecked. With cards it becomes a plain line pointing to them; without, "please try again in a minute". No second planner call |
+| Parent risk check | The turn goes on; the word lists already ran (blocking would stop all coaching whenever the provider is busy) |
 
 ## Configuration
 
