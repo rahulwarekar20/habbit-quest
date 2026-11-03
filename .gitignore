@@ -1,3 +1,4 @@
 
 # Personal Claude Code settings
 .claude/settings.local.json
+.shots/

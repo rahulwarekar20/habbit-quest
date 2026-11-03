@@ -14,7 +14,7 @@ import { updateChild } from "../lib/family";
 import { useStore } from "../lib/store";
 import { applyExtras } from "../lib/sync";
 import { useKidDay } from "../lib/useKidDay";
-import { KidBar, KidLapsed, NotFound } from "./Kid";
+import { KidBar, KidLapsed, NotFound } from "../components/KidChrome";
 
 export default function KidShop({ childId }: { childId: string }) {
   const { family, update } = useStore();

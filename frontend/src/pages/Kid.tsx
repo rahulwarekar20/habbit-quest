@@ -1,5 +1,6 @@
 /**
- * Kid mode: "Who's playing?", the child's picture quests for today, and world exploring.
+ * Kid mode: "Who's playing?" and the child's picture quests for today. Exploring a world is
+ * WorldExplore.tsx; the top bar and other shared pieces are components/KidChrome.tsx.
  *
  * Everything here comes from the backend with the kid token, which also pays the boosts.
  *
@@ -16,70 +17,25 @@
 import { useEffect, useState } from "react";
 import Buddy from "../components/Buddy";
 import Celebration from "../components/Celebration";
-import Clock from "../components/Clock";
-import HabitArt from "../components/HabitArt";
-import { JourneyCard, WorldPath } from "../components/Journey";
-import {
-  BreakTime, ChestCard, CheckIn, LevelBadge, PointsPill, SurpriseReveal, TimeWarning, usePlaytime,
-} from "../components/KidExtras";
-import Logo from "../components/Logo";
+import { JourneyCard } from "../components/Journey";
+import { BreakTime, ChestCard, CheckIn, LevelBadge, SurpriseReveal, TimeWarning, usePlaytime } from "../components/KidExtras";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
 import PinDialog from "../components/PinDialog";
-import { ApiError, errorText, getTodayCheckin, startKidSession, updateKidExtras, type Landmark, type TodayHabit } from "../lib/api";
+import { ApiError, errorText, getTodayCheckin, startKidSession, updateKidExtras, type TodayHabit } from "../lib/api";
 import { useBuddyLine, type BuddyEvent } from "../lib/buddy";
 import { BUDDY_THEME, buddyNudge } from "../lib/buddyTheme";
-import {
-  BOOST_LABEL, WORLDS, celebrationsDue, discover, isUnlocked, markCelebrated,
-  type Child, type QuestStatus,
-} from "../lib/family";
-import { QUEST_BY_ID } from "../lib/habits";
-import { landmarkKey, readyLandmarks } from "../lib/journeyPath";
+import { BOOST_LABEL, WORLDS, celebrationsDue, isUnlocked, markCelebrated, type Child } from "../lib/family";
+import { readyLandmarks } from "../lib/journeyPath";
 import { go } from "../lib/router";
-import { getKidLogin, getKidSession, saveKidSession, setKidMode } from "../lib/storage";
+import { getKidLogin, getKidSession, saveKidSession } from "../lib/storage";
 import { useStore } from "../lib/store";
 import { weekdayName } from "../lib/schedule";
 import { localStatus } from "../lib/sync";
-import { formatTime, greeting } from "../lib/time";
+import { greeting } from "../lib/time";
 import { useKidDay } from "../lib/useKidDay";
-
-/**
- * Top bar shared by the kid screens, with the PIN-protected way back to the parent area. A child who
- * signed in on their own signs out instead: there is no grown-up session on this device.
- */
-export function KidBar({ child }: { child?: Child }) {
-  const { askPin, logout } = useStore();
-  const own = getKidLogin();
-  async function grownUps() {
-    if (own) {
-      // Back to the family's code page for the next child; reloading keeps the sign-in redirect out of the way.
-      logout();
-      window.location.hash = `#/join/${own.code}`;
-      window.location.reload();
-      return;
-    }
-    if (await askPin("Leave kid mode and open the parent dashboard.")) {
-      setKidMode(false);
-      go("/parent");
-    }
-  }
-  return (
-    <header className="kidbar">
-      <div className="wrap kidbar__inner">
-        <Logo href={child ? `#/kid/${child.id}` : "#/kid"} />
-        <div className="kidbar__right">
-          {child && <a href={`#/shop/${child.id}`} className="kidbar__points" aria-label="Reward shop"><PointsPill points={child.balance} /></a>}
-          {child && <SparkCount count={child.sparks} />}
-          <button className="btn btn--ghost btn--sm kidbar__lock" onClick={grownUps} aria-label={own ? "Sign out" : "Grown-ups"}>
-            <LockIcon /> <span className="lock-label">{own ? "Sign out" : "Grown-ups"}</span>
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-// ── Who's playing? ────────────────────────────────────────────────────────────
+import { KidBar, KidLapsed, NotFound, LockIcon } from "../components/KidChrome";
+import { QuestCard } from "../components/QuestCard";
 
 export function KidPicker() {
   const { family } = useStore();
@@ -328,174 +284,5 @@ export function KidQuests({ childId }: { childId: string }) {
       {checkIn && <CheckIn child={child} quests={quests.map((h) => ({ id: h.habit_id, kidTitle: h.kid_title }))} onClose={() => setCheckIn(false)} />}
       {secondsLeft === 0 && <BreakTime child={child} family={fam} />}
     </div>
-  );
-}
-
-function QuestCard({ habit, status, points, boost, multiplier, golden, onDone }: {
-  habit: TodayHabit; status: QuestStatus; points: number; boost: string[]; multiplier: number; golden: boolean; onDone: () => void;
-}) {
-  const known = QUEST_BY_ID[habit.habit_id];
-  return (
-    <article className={`quest quest--${status} ${golden ? "quest--golden" : ""}`}>
-      <div className="quest__art">
-        <HabitArt habit={habit.habit_id} icon={habit.icon} />
-        {golden && status !== "approved" && <span className="quest__golden">✨ Golden quest</span>}
-        {known && !known.routine && <span className="quest__tier">Bonus · Tier {habit.tier}</span>}
-        {status === "approved" && (
-          <span className="quest__stamp"><SparkIcon size={40} /></span>
-        )}
-      </div>
-      <div className="quest__body">
-        <div className="quest__title">
-          <div>
-            <h3>{habit.kid_title}</h3>
-            <p>{habit.kid_hint}</p>
-          </div>
-          <Clock time={habit.cue_time} size={54} />
-        </div>
-        <div className="quest__chips">
-          <span className="chip">by {formatTime(habit.cue_time)}</span>
-          {habit.stars > 0 && <span className="chip chip--gold" aria-label={`${habit.stars} of 3 stars`}>{"⭐".repeat(habit.stars)}</span>}
-          {status !== "approved" && (
-            <span className={`chip ${boost.length ? "chip--gold" : ""}`} title={boost.join(" + ")}>
-              🪙 {points} pts{multiplier > 1 ? ` · ${multiplier}x` : ""}
-            </span>
-          )}
-        </div>
-
-        {status === "todo" && <button className="btn btn--gold btn--block btn--lg" onClick={onDone}>I did it!</button>}
-        {status === "notyet" && (
-          <>
-            <p className="quest__note">Not quite yet. You can do it!</p>
-            <button className="btn btn--gold btn--block btn--lg" onClick={onDone}>I did it now!</button>
-          </>
-        )}
-        {status === "submitted" && (
-          <div className="quest__state quest__state--wait">
-            <HourglassIcon /> Waiting for a grown-up
-          </div>
-        )}
-        {status === "approved" && (
-          <div className="quest__state quest__state--done">
-            <SparkIcon size={20} /> Spark earned!
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-// ── Explore a world ───────────────────────────────────────────────────────────
-
-export function WorldExplore({ childId, worldId }: { childId: string; worldId: string }) {
-  const { family, update } = useStore();
-  const child = family!.children.find((c) => c.id === childId);
-  const { today, journey, lapsed, resume } = useKidDay(childId); // keeps Sparks current on a direct visit
-  const [found, setFound] = useState<Landmark | null>(null);
-  const secondsLeft = usePlaytime(child);
-
-  const world = journey?.worlds.find((w) => w.id === worldId);
-  if (!child) return <NotFound />;
-  if (lapsed) return <KidLapsed onResume={resume} />;
-  if (journey && !world) return <NotFound />;
-  const summary = WORLDS.find((w) => w.id === worldId);
-  if (!summary) return <NotFound />;
-  const open = isUnlocked(summary, child.sparks);
-  const foundCount = world?.landmarks.filter((m) => child.discoveries.includes(landmarkKey(world, m))).length ?? 0;
-  const progress = today?.progress;
-  const next = progress?.next_landmark;
-
-  function reveal(mark: Landmark) {
-    setFound(mark);
-    const key = `${worldId}:${mark.id}`;
-    update((f) => discover(f, childId, key));
-    updateKidExtras({ discover: key }).catch(() => {});
-  }
-
-  return (
-    <div className="page page--kid" data-buddy={child.buddy}>
-      <KidBar child={child} />
-      <main className="wrap kid-main">
-        <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>
-        <div className="explore-head">
-          <h1>{summary.name}</h1>
-          {open && world && <span className="chip chip--gold">Found {foundCount} of {world.landmarks.length}</span>}
-        </div>
-
-        {!open ? (
-          <div className="explore-locked">
-            <WorldArt world={summary.id} />
-            <div>
-              <LockIcon />
-              <p>Earn {summary.sparks - child.sparks} more Sparks to open {summary.name}!</p>
-            </div>
-          </div>
-        ) : world && progress ? (
-          <>
-            <p className="lead">{world.blurb}</p>
-            <WorldPath child={child} world={world} progress={progress} onReveal={reveal} />
-            {next?.world === world.id && (
-              <p className="path__next"><SparkIcon size={20} /> {next.sparks - progress.sparks} more {next.sparks - progress.sparks === 1 ? "Spark" : "Sparks"} to reveal the next find!</p>
-            )}
-            {progress.pending_sparks > 0 && <p className="hint">The dotted steps are quests waiting for a grown-up.</p>}
-          </>
-        ) : <p className="lead">Getting your map…</p>}
-      </main>
-      {found && (
-        <div className="kid-overlay" role="dialog" aria-modal="true" aria-label={`You found ${found.name}`} onClick={() => setFound(null)}>
-          <div className="kid-overlay__card" onClick={(e) => e.stopPropagation()}>
-            <div className="reveal__emoji" aria-hidden="true">{found.emoji}</div>
-            <h2>You found the {found.name}!</h2>
-            <p>It's in your field journal now.</p>
-            <button className="btn btn--gold btn--lg" onClick={() => setFound(null)} autoFocus>Yay!</button>
-          </div>
-        </div>
-      )}
-      <TimeWarning seconds={secondsLeft} />
-      {secondsLeft === 0 && <BreakTime child={child} family={family!} />}
-    </div>
-  );
-}
-
-/** The kid session ran out: a grown-up starts it again with the PIN. */
-export function KidLapsed({ onResume }: { onResume: () => void }) {
-  const own = !!getKidLogin(); // a child who signed in on their own just signs in again
-  return (
-    <div className="page page--kid">
-      <main className="wrap kid-main">
-        <h1>Quest time paused</h1>
-        <p className="lead">{own ? "Enter your PIN to keep going." : "Ask a grown-up to start your quests again."}</p>
-        <button className="btn btn--gold btn--lg" onClick={onResume}>{own ? "Enter my PIN" : "Grown-ups: enter PIN"}</button>
-      </main>
-    </div>
-  );
-}
-
-export function NotFound() {
-  return (
-    <div className="page page--kid">
-      <main className="wrap kid-main">
-        <h1>Hmm, we couldn't find that.</h1>
-        <a className="btn btn--primary" href="#/kid">Back to quests</a>
-      </main>
-    </div>
-  );
-}
-
-export function LockIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="10" width="16" height="11" rx="3" fill="currentColor" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2.5" fill="none" />
-    </svg>
-  );
-}
-
-function HourglassIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6 2h12v4l-4 6 4 6v4H6v-4l4-6-4-6z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M9 19h6l-3-4z" fill="currentColor" />
-    </svg>
   );
 }
