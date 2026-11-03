@@ -1,0 +1,133 @@
+/* 02-home.css: The public site: page header and footer, the home page hero and its sections. */
+
+/* ── Header & footer ───────────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(251, 248, 255, 0.82); backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(236, 230, 251, 0.8);
+}
+.topbar__inner { display: flex; align-items: center; gap: 24px; height: 72px; }
+.topbar__nav { display: flex; gap: 26px; margin-left: 24px; }
+.topbar__nav a { white-space: nowrap; }
+.topbar__nav a { color: var(--ink-soft); font-weight: 700; font-size: var(--text-base); padding: 6px 0; border-bottom: 2.5px solid transparent; }
+.topbar__nav a:hover { color: var(--ink); text-decoration: none; }
+.topbar__nav a.is-active { color: var(--violet-deep); border-color: var(--gold); }
+.topbar__actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar__hello { font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
+
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none !important; }
+.logo__badge {
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px;
+  background: linear-gradient(135deg, #8f6bff, var(--violet-deep));
+  box-shadow: 0 4px 12px rgba(90, 63, 198, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.logo__text { font: 700 var(--text-2xl)/1 var(--font-display); color: var(--ink); letter-spacing: -0.01em; }
+.logo__text span { color: var(--violet); }
+
+.footer { margin-top: auto; padding: 32px 0; border-top: 1px solid var(--line); background: #fff; }
+.footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.footer p { margin: 0; color: var(--muted); font-size: var(--text-sm); }
+
+/* ── Home: hero ────────────────────────────────────────────────────────── */
+.hero { position: relative; overflow: hidden; padding: 48px 0 56px; }
+.hero__glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(600px 400px at 85% 20%, rgba(255, 194, 61, 0.28), transparent 70%),
+    radial-gradient(700px 500px at 70% 80%, rgba(123, 92, 240, 0.22), transparent 70%),
+    radial-gradient(500px 400px at 5% 10%, rgba(255, 143, 171, 0.18), transparent 70%),
+    linear-gradient(180deg, #fbf8ff, #fff8ef);
+}
+.hero__inner { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.hero h1 { font-size: clamp(2.4rem, 4.8vw, 3.9rem); margin-bottom: 16px; }
+.hero__ctas { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 24px 0 12px; }
+.hero__kid { color: var(--violet-deep); font-weight: 800; }
+.hero__note { font-size: var(--text-sm); font-weight: 700; color: var(--muted); margin: 0; }
+
+.floaters span { position: absolute; animation: float 7s ease-in-out infinite; opacity: 0.8; }
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(18deg); }
+}
+
+.hero__stage { position: relative; min-height: 440px; }
+.stage-card { position: absolute; background: var(--surface); border-radius: 28px; box-shadow: var(--shadow-lg); }
+.stage-card--quest { left: 4%; top: 0; width: min(360px, 80%); padding: 16px; transform: rotate(-2deg); }
+.stage-card__top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.stage-card__top div { display: flex; flex-direction: column; line-height: 1.25; flex: 1; }
+.stage-card__top span { font-size: var(--text-sm); color: var(--muted); }
+.stage-quest { border-radius: 20px; background: var(--bg-warm); padding: 12px; }
+.stage-quest .habit-art { border-radius: 14px; }
+.stage-quest__row { display: flex; align-items: center; justify-content: space-between; margin: 12px 4px; }
+.stage-quest__row div { display: flex; flex-direction: column; }
+.stage-quest__row b { font: 600 var(--text-xl) var(--font-display); }
+.stage-quest__row span { color: var(--muted); font-weight: 700; font-size: var(--text-sm); }
+.stage-card--approve {
+  right: 0; bottom: 30px; width: min(290px, 64%); padding: 20px 22px; display: flex; flex-direction: column; gap: 4px;
+  transform: rotate(2.5deg); border: 1px solid var(--line);
+}
+.stage-card--approve b { font: 600 var(--text-lg) var(--font-display); }
+.stage-card--approve .btn { margin-top: 10px; align-self: flex-start; }
+.stage-badge {
+  position: absolute; right: 10%; top: 6%; display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px 10px 12px; border-radius: 999px; background: #fff; box-shadow: var(--shadow);
+  font: 700 var(--text-lg) var(--font-display); color: #9a5b00; animation: bob 3.2s ease-in-out infinite;
+}
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+/* ── Home: sections (compact: one column of content, small cards) ───────── */
+.page--home .wrap { max-width: 1180px; }
+.section { padding: 64px 0; }
+.section--tint { background: linear-gradient(180deg, #f6f2ff, #fcfaff); }
+.section__head { margin-bottom: 24px; max-width: 640px; }
+.section__head h2 { margin-bottom: 8px; }
+.section__head .lead { margin: 0; font-size: var(--text-base); }
+
+/* How it works: one strip of five steps */
+.flow {
+  list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-sm);
+}
+.flow__step { display: flex; gap: 12px; padding: 20px 18px; min-width: 0; }
+.flow__step + .flow__step { border-left: 1px solid var(--line); }
+.flow__step b { display: block; font: 600 var(--text-base)/1.3 var(--font-display); margin-bottom: 4px; }
+.flow__step p { margin: 0; color: var(--ink-soft); font-size: var(--text-sm); line-height: 1.5; }
+.flow__num {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px;
+  font: 700 var(--text-base) var(--font-display); color: var(--violet-deep); background: var(--violet-soft);
+}
+.flow__step:last-child .flow__num { background: var(--gold-soft); color: #9a5b00; }
+
+/* Habits: small rows with a thumbnail */
+.mini-habits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mini-habit {
+  display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+}
+.mini-habit__art.habit-art { flex: none; width: 84px; height: 60px; border-radius: 12px; }
+.mini-habit div { display: flex; flex-direction: column; min-width: 0; }
+.mini-habit b { font: 600 var(--text-base) var(--font-display); }
+.mini-habit span { color: var(--muted); font-size: var(--text-sm); font-weight: 700; }
+.habit-art { display: block; width: 100%; height: auto; }
+
+/* Worlds: one row of six small cards */
+.mini-worlds { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.mini-world { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mini-world .world-art { border-radius: 14px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.mini-world b { font: 600 var(--text-base) var(--font-display); }
+.mini-world span { display: inline-flex; align-items: center; gap: 4px; color: #9a5b00; font-size: var(--text-sm); font-weight: 800; }
+.world-art { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; }
+
+/* For parents */
+.parents { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; }
+.parents .lead { margin: 0; }
+.trust { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.trust li {
+  background: var(--surface); border-radius: 16px; padding: 14px 16px 14px 50px; position: relative;
+  border: 1px solid var(--line); color: var(--ink-soft); font-size: var(--text-sm); line-height: 1.5;
+}
+.trust li b { display: block; color: var(--ink); }
+.trust li::before {
+  content: ""; position: absolute; left: 14px; top: 15px; width: 24px; height: 24px; border-radius: 8px;
+  background: var(--mint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' stroke='%233f9a58' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 16px no-repeat;
+}
