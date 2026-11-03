@@ -347,7 +347,7 @@ input, select { font: inherit; color: inherit; }
 .kid-card__quests li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
 .kid-card__quests li > span:nth-child(2) { flex: 1; min-width: 0; }
 .mini-art { width: 52px; border-radius: 10px; flex: none; }
-.kid-card--add { place-items: center; text-align: center; border: 2px dashed #d9cff8; background: rgba(255, 255, 255, 0.6); box-shadow: none; min-height: 260px; color: var(--ink); }
+.kid-card--add { place-items: center; text-align: center; border: 2px dashed #d9cff8; background: rgba(255, 255, 255, 0.6); box-shadow: none; min-height: 0; padding: 28px 22px; align-content: center; gap: 8px; color: var(--ink); }
 .kid-card--add:hover { background: #fff; border-color: var(--violet); }
 .kid-card--add b { font: 600 1.25rem var(--font-display); }
 .plus { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font: 600 2rem var(--font-display); color: var(--violet-deep); background: var(--violet-soft); }
@@ -1051,3 +1051,28 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .panel--surprise-wide .surprise-form { margin-top: 0; }
 .panel--surprise-wide .surprise-intro p { margin: 0; }
 @media (max-width: 900px) { .panel--surprise-wide { grid-template-columns: minmax(0, 1fr); gap: 0; } .panel--surprise-wide .surprise-form { margin-top: 12px; } }
+
+/* Habit coach: a slim toolbar instead of a second header, and an empty chat that fits its examples */
+.ai-chat__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ai-chat__bar .about { margin: 0; }
+.ai-chat__bar .ai-chat__clear { margin-left: auto; }
+.ai-chat__log.is-empty, .page--coach .ai-chat__log.is-empty { min-height: 0; }
+.ai-chat__log.is-empty .ai-chat__suggest { margin: 0; }
+
+/* Catalog habits: compact rows with a thumbnail */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; }
+.cat-habit { display: flex; gap: 12px; align-items: flex-start; padding: 10px; min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.cat-habit.is-added { border-color: #d9ccff; box-shadow: 0 0 0 3px var(--violet-soft); }
+.cat-habit__art.habit-art { flex: none; width: 76px; height: 56px; border-radius: 12px; }
+.cat-habit__body { display: grid; gap: 2px; min-width: 0; flex: 1; justify-items: start; }
+.cat-habit__body b { font: 600 0.98rem/1.25 var(--font-display); }
+.cat-habit__body .muted { font-size: 0.78rem; font-weight: 700; }
+.cat-habit__kid { font-size: 0.82rem; color: var(--ink-soft); }
+.cat-habit__body .btn, .cat-habit__body .catalog__status { margin-top: 6px; }
+.cat-habit .lib-card__actions { margin-top: 4px; }
+
+/* Family settings: the share block sits flat inside its section */
+.settings__section .share { padding: 0; background: none; border: 0; }
+
+/* Dashboard: the Add a child card stays its own size */
+.kid-card--add { align-self: start; }

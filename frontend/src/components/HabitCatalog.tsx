@@ -136,7 +136,7 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
         {custom.length === 0 && editing === null ? (
           <p className="empty">No custom habits yet. Create one for something the catalog doesn't cover, like practising an instrument or feeding a pet.</p>
         ) : (
-          <div className="lib-grid">
+          <div className="cat-grid">
             {custom.map((h) => (
               <HabitCard key={h.id} habit={h} status={status(h)} busy={busy === h.id} childName={child.name} onAdd={() => add(h)}>
                 <div className="lib-card__actions">
@@ -177,7 +177,7 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
         {[...byGoal.entries()].map(([title, habits]) => (
           <div key={title} className="catalog__goal">
             <h4>{title} <span className="muted">{habits.length}</span></h4>
-            <div className="lib-grid">
+            <div className="cat-grid">
               {habits.map((h) => (
                 <HabitCard key={h.id} habit={h} status={status(h)} busy={busy === h.id} childName={child.name} onAdd={() => add(h)} />
               ))}
@@ -209,12 +209,12 @@ function HabitCard({ habit, status, busy, childName, onAdd, children }: {
   children?: ReactNode;
 }) {
   return (
-    <article className={`lib-card ${status.kind === "in" ? "is-added" : ""}`}>
-      <HabitArt habit={habit.id} icon={habit.icon} />
-      <div className="lib-card__body">
+    <article className={`cat-habit ${status.kind === "in" ? "is-added" : ""}`}>
+      <HabitArt habit={habit.id} icon={habit.icon} className="cat-habit__art" />
+      <div className="cat-habit__body">
         <b>{habit.title}</b>
-        <span className="muted">{habit.goal_title} · Tier {habit.tier} · {habit.points} pts · Ages {habit.min_age}–{habit.max_age}</span>
-        {habit.kid_title !== habit.title && <p>Kids see: “{habit.kid_title}”</p>}
+        <span className="muted">Tier {habit.tier} · {habit.points} pts · Ages {habit.min_age}–{habit.max_age}</span>
+        {habit.kid_title !== habit.title && <span className="cat-habit__kid">Kids see “{habit.kid_title}”</span>}
         {status.kind === "add" ? (
           <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={onAdd}>
             {busy ? "Adding…" : `Add to ${childName}`}

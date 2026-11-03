@@ -26,7 +26,7 @@ export default function FamilySettings() {
         </div>
 
         <div className="settings__grid">
-          <Section title="Connect a kid's device" note="On a child's own tablet or phone: scan the QR code, or open the app and enter the family code. Each child then signs in with their own PIN.">
+          <Section title="Connect a kid's device" note="On a child's own tablet or phone, scan the QR code or open HabitQuest and enter the family code. Each child picks themselves and enters their own PIN.">
             <ShareFamily family={fam} />
           </Section>
           <GrownUps />

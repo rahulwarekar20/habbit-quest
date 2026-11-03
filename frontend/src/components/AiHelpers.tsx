@@ -369,34 +369,30 @@ export function Coach({ family, childId: start, onChange }: { family: Family; ch
 
   return (
     <article className="ai-card ai-chat">
-      <header className="ai-card__head">
-        <span className="ai-card__icon ai-card__icon--chat" aria-hidden="true">✉</span>
-        <div>
-          <h3>Habit coach</h3>
-          <span className="muted">Tell the coach what's going on in your own words. It suggests new quests from expert guidance; you pick.</span>
-        </div>
-        {messages.length > 0 && <button className="btn btn--ghost btn--sm ai-chat__clear" disabled={busy} onClick={reset}>New chat</button>}
-      </header>
-
-      {family.children.length > 1 && (
-        <div className="about" role="radiogroup" aria-label="Talking about">
-          <span className="muted">Talking about:</span>
-          {family.children.map((c) => (
-            <button key={c.id} role="radio" aria-checked={child.id === c.id} className={`about__chip ${child.id === c.id ? "is-on" : ""}`}
-              onClick={() => setAbout(c.id)} disabled={busy}>
-              <Buddy buddy={c.buddy} accessory={c.wearing} size={22} /> {c.name}
-            </button>
-          ))}
+      {(family.children.length > 1 || messages.length > 0) && (
+        <div className="ai-chat__bar">
+          {family.children.length > 1 && (
+            <div className="about" role="radiogroup" aria-label="Talking about">
+              <span className="muted">Talking about:</span>
+              {family.children.map((c) => (
+                <button key={c.id} role="radio" aria-checked={child.id === c.id} className={`about__chip ${child.id === c.id ? "is-on" : ""}`}
+                  onClick={() => setAbout(c.id)} disabled={busy}>
+                  <Buddy buddy={c.buddy} accessory={c.wearing} size={22} /> {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+          {messages.length > 0 && <button className="btn btn--ghost btn--sm ai-chat__clear" disabled={busy} onClick={reset}>New chat</button>}
         </div>
       )}
 
       {safety && <p className="safety-banner" role="alert">{safety}</p>}
       {fallback && <p className="hint">The coach couldn't reach its full notes just now, so these come from a simple match.</p>}
 
-      <div className="ai-chat__log" ref={logRef} aria-live="polite">
+      <div className={`ai-chat__log ${messages.length === 0 && !pending ? "is-empty" : ""}`} ref={logRef} aria-live="polite">
         {messages.length === 0 && !pending && (
           <div className="ai-chat__suggest">
-            <p className="muted">Describe a problem, for example:</p>
+            <p className="muted">Try one of these, or write your own below:</p>
             {examples.map((s) => <button key={s} className="chip chip--button" onClick={() => send(s)} disabled={busy}>{s}</button>)}
           </div>
         )}

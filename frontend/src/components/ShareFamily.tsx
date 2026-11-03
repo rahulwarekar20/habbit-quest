@@ -53,11 +53,6 @@ export default function ShareFamily({ family }: { family: ApiFamily }) {
   return (
     <div className="share">
       <div className="share__text">
-        <b>Sign in on another device</b>
-        <span className="muted">
-          Scan the QR code, or open HabitQuest and enter the family code. Kids pick themselves and enter their own PIN;
-          grown-ups sign in and use the invite code below.
-        </span>
         {code ? (
           <>
             <span className="share__code" aria-label={`Family code ${code.split("").join(" ")}`}>{spaced(code)}</span>
