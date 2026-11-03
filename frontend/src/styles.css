@@ -1022,3 +1022,24 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .world-strip li { display: grid; justify-items: center; gap: 6px; width: 76px; }
 .world-strip .world-art { width: 64px; height: 64px; aspect-ratio: 1; border-radius: 50%; border: 3px solid #fff; box-shadow: var(--shadow); }
 .world-strip span { font: 600 0.78rem/1.2 var(--font-display); color: var(--ink-soft); text-align: center; }
+
+/* Account menu in the parent header */
+.account { position: relative; }
+.account__button { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft); font: 700 0.9rem var(--font-body); }
+.account__button:hover, .account__button[aria-expanded="true"], .account__button.is-active { border-color: #d9cff8; color: var(--ink); }
+.account__avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; font: 700 0.85rem var(--font-display); background: linear-gradient(135deg, #8f6bff, var(--violet-deep)); }
+.account__menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 190px; padding: 6px; display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); }
+.account__menu a, .account__menu button { display: block; text-align: left; padding: 10px 12px; border-radius: 10px; border: 0; background: none; color: var(--ink); font: 700 0.92rem var(--font-body); text-decoration: none; }
+.account__menu a:hover, .account__menu button:hover { background: var(--violet-soft); text-decoration: none; }
+@media (max-width: 640px) { .account__name { display: none; } }
+
+/* Family settings */
+.settings__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.settings__section { display: grid; gap: 14px; margin: 0; }
+.settings__head h2 { margin: 0 0 4px; font-size: 1.2rem; }
+.settings__head p, .settings__section > p { margin: 0; }
+.settings__section .share { margin: 0; }
+.settings__danger { color: #b3361f; }
+.status-pill { display: inline-flex; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 0.85rem; background: var(--bg); color: var(--ink-soft); }
+.status-pill.is-on { background: var(--mint); color: var(--mint-deep); }
+@media (max-width: 900px) { .settings__grid { grid-template-columns: minmax(0, 1fr); } }

@@ -11,6 +11,7 @@
  *   #/coach[/:child]       Habit coach chat (parent)
  *   #/quests[/:child]      Quest library: a child's plan (parent)
  *   #/rewards              Record rewards, shop prices and time limits (parent)
+ *   #/family               Family settings: devices, grown-ups, parent PIN, data (parent)
  *   #/kid                  Who's playing?          (kid mode)
  *   #/kid/:child           Today's picture quests  (kid mode)
  *   #/world/:child/:world  Explore a world         (kid mode)
@@ -24,6 +25,7 @@ import { useEffect } from "react";
 import Logo from "./components/Logo";
 import { Login, Welcome } from "./pages/Auth";
 import CoachPage from "./pages/CoachPage";
+import FamilySettings from "./pages/FamilySettings";
 import Join from "./pages/Join";
 import HabitSetup from "./pages/HabitSetup";
 import Home from "./pages/Home";
@@ -71,12 +73,13 @@ export default function App() {
   if (page === "shop" && a) return <KidShop childId={a} />;
   if (page === "journal" && a) return <Journal childId={a} />;
 
-  if (["setup", "parent", "coach", "quests", "rewards"].includes(page)) {
+  if (["setup", "parent", "coach", "quests", "rewards", "family"].includes(page)) {
     if (getKidMode()) return <ParentLock />;
     if (page === "setup") return <HabitSetup childId={a} />;
     if (page === "coach") return <CoachPage childId={a} />;
     if (page === "quests") return <QuestLibrary childId={a} />;
     if (page === "rewards") return <RewardsPage />;
+    if (page === "family") return <FamilySettings />;
     return <ParentDashboard />;
   }
   return <Home />;
