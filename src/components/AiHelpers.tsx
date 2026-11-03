@@ -100,7 +100,7 @@ function Proposals({ cards, onChange }: { cards: Suggestion[]; onChange: () => P
 
   async function approve(list: Suggestion[]) {
     const pin = await askPinValue(list.length === 1 ? `Approve: ${describe(list[0])}.` : `Approve ${list.length} suggested changes.`);
-    if (!pin) return;
+    if (pin === null) return;
     setError(null);
     try {
       for (const card of list) await acceptSuggestion(card.id, pin);
@@ -350,7 +350,7 @@ export function Coach({ family, childId: start, onChange }: { family: Family; ch
     const chosen = addCards.filter((c) => picked.includes(c.id));
     if (chosen.length === 0) return;
     const pin = await askPinValue(`Add ${chosen.length} new ${chosen.length === 1 ? "quest" : "quests"} for ${name}.`);
-    if (!pin) return;
+    if (pin === null) return;
     await run(async () => {
       let thread = { messages, suggestions: cards };
       for (const card of chosen) thread = await acceptSuggestion(card.id, pin);

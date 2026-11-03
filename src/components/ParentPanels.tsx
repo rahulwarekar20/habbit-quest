@@ -82,7 +82,7 @@ export function RewardRequests({ family, familyId, onCount }: { family: Family; 
       let result;
       if (approve) {
         const pin = await askPinValue(`Say yes to "${r.title}" for ${r.child_name}.`);
-        if (!pin) return;
+        if (pin === null) return;
         result = await approveRewardRequest(r.id, pin);
       } else {
         result = await declineRewardRequest(r.id);

@@ -38,10 +38,14 @@ interface Store {
   /** Reloads the account, family and children from the backend. */
   reload: () => Promise<void>;
   setServer: (family: api.ApiFamily) => void;
-  /** Asks for the parent PIN (remembered for 5 minutes). Resolves true when correct. */
+  /** Asks for the parent PIN (remembered for 5 minutes). Resolves true when correct, or at once when the
+   * family has no PIN. */
   askPin: (reason: string) => Promise<boolean>;
-  /** The same prompt, for actions the server checks itself: resolves with the PIN, or null if cancelled. */
+  /** The same prompt, for actions the server checks itself: resolves with the PIN ("" when the family has
+   * none), or null if cancelled. */
   askPinValue: (reason: string) => Promise<string | null>;
+  /** Forgets a recently entered PIN, after it changes. */
+  forgetPin: () => void;
   /** Hands the device over: kid mode on, and a recent PIN no longer counts. */
   enterKidMode: () => void;
 }
@@ -229,21 +233,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // A family that turned the PIN off is never asked for one.
+  const noPin = snapshot?.server.has_pin === false;
+
   const askPin = useCallback((reason: string) => {
-    if (Date.now() < pinOkUntil.current) return Promise.resolve(true);
+    if (noPin || Date.now() < pinOkUntil.current) return Promise.resolve(true);
     return new Promise<boolean>((resolve) => setPinPrompt({ reason, resolve }));
-  }, []);
+  }, [noPin]);
 
   const askPinValue = useCallback(async (reason: string) => {
+    if (noPin) return "";
     if (Date.now() >= pinOkUntil.current) lastPin.current = null;
     return (await askPin(reason)) ? lastPin.current : null;
-  }, [askPin]);
+  }, [askPin, noPin]);
 
-  const enterKidMode = useCallback(() => {
+  const forgetPin = useCallback(() => {
     pinOkUntil.current = 0;
     lastPin.current = null;
-    setKidMode(true);
   }, []);
+
+  const enterKidMode = useCallback(() => {
+    forgetPin();
+    setKidMode(true);
+  }, [forgetPin]);
 
   const onPin = useCallback(
     async (pin: string | null): Promise<boolean | string> => {
@@ -277,9 +289,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(
     () => ({
       phase, loadError, waking, notice, me: snapshot?.me ?? null, server: snapshot?.server ?? null, family, update,
-      signInGoogle, signInDev, signInKid, logout: endSession, retry: boot, reload: load, setServer, askPin, askPinValue, enterKidMode,
+      signInGoogle, signInDev, signInKid, logout: endSession, retry: boot, reload: load, setServer, askPin, askPinValue, forgetPin, enterKidMode,
     }),
-    [phase, loadError, waking, notice, snapshot, family, update, signInGoogle, signInDev, signInKid, endSession, boot, load, setServer, askPin, askPinValue, enterKidMode]
+    [phase, loadError, waking, notice, snapshot, family, update, signInGoogle, signInDev, signInKid, endSession, boot, load, setServer, askPin, askPinValue, forgetPin, enterKidMode]
   );
 
   return (

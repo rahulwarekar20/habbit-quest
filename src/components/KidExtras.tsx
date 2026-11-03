@@ -50,7 +50,7 @@ export function BreakTime({ child, family }: { child: Child; family: Family }) {
   const day = dayKey();
   async function more(minutes: number) {
     const pin = await askPinValue(`Give ${child.name} ${minutes} more minutes in the app today.`);
-    if (!pin) return;
+    if (pin === null) return;
     try {
       const extras = await extendAppTime(child.id, minutes, pin);
       update((f) => applyExtras(f, child.id, extras));

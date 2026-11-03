@@ -426,7 +426,10 @@ export const getMe = () => request<Me>("GET", "/v1/me");
 
 // ── Families ──────────────────────────────────────────────────────────────────
 
-export const createFamily = (input: { name: string; timezone: string; pin: string; display_name: string; role: Role }) =>
+/** The family PIN for a request body, left out when the family has none (an empty PIN). */
+const withPin = (pin: string) => (pin ? { pin } : {});
+
+export const createFamily = (input: { name: string; timezone: string; pin?: string; display_name: string; role: Role }) =>
   request<ApiFamily>("POST", "/v1/families", input);
 export const joinFamily = (input: { invite_code: string; display_name: string; role: Role }) =>
   request<ApiFamily>("POST", "/v1/families/join", input);
@@ -437,8 +440,9 @@ export const updateCaregiver = (id: string, changes: { display_name?: string; ro
   request<ApiFamily>("PATCH", `/v1/families/${id}/caregivers/me`, changes);
 export const newInviteCode = (id: string) => request<ApiFamily>("POST", `/v1/families/${id}/invite-code`);
 export const setPin = (id: string, pin: string) => request<void>("PUT", `/v1/families/${id}/pin`, { pin });
+export const removePin = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/pin/remove`, withPin(pin));
 export const exportFamily = (id: string) => request<unknown>("GET", `/v1/families/${id}/export`);
-export const deleteFamily = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/delete`, { pin });
+export const deleteFamily = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/delete`, withPin(pin));
 export const leaveFamily = (id: string) => request<void>("DELETE", `/v1/families/${id}/caregivers/me`);
 export const verifyPin = (id: string, pin: string) => request<{ valid: boolean }>("POST", `/v1/families/${id}/pin/verify`, { pin });
 
@@ -529,7 +533,7 @@ export const listKidRequests = (limit = 6) =>
 export const listRewardRequests = (familyId: string) =>
   request<FamilyRewardRequest[]>("GET", `/v1/families/${familyId}/reward-requests`);
 export const approveRewardRequest = (id: string, pin: string) =>
-  request<{ points: number }>("POST", `/v1/reward-requests/${id}/approve`, { pin });
+  request<{ points: number }>("POST", `/v1/reward-requests/${id}/approve`, withPin(pin));
 export const declineRewardRequest = (id: string) => request<{ points: number }>("POST", `/v1/reward-requests/${id}/decline`);
 
 // ── Check-ins and surprises ───────────────────────────────────────────────────
@@ -557,7 +561,7 @@ export const openChest = () =>
   request<{ prize: ChestPrize; points: number; extras: Extras }>("POST", "/v1/kid/chest", undefined, KID);
 export const reportAppTime = (seconds: number) => request<Extras>("POST", "/v1/kid/app-time", { seconds }, KID);
 export const extendAppTime = (childId: string, minutes: number, pin: string) =>
-  request<Extras>("POST", `/v1/children/${childId}/app-time/extend`, { minutes, pin });
+  request<Extras>("POST", `/v1/children/${childId}/app-time/extend`, { minutes, ...withPin(pin) });
 export const getChildExtras = (childId: string) => request<Extras>("GET", `/v1/children/${childId}/extras`);
 export const getFamilySettings = (familyId: string) => request<FamilySettings>("GET", `/v1/families/${familyId}/settings`);
 export const updateFamilySettings = (familyId: string, changes: Partial<FamilySettings>) =>
@@ -573,7 +577,7 @@ export const sendCoachMessage = (childId: string, text: string) =>
 export const resetCoachThread = (childId: string) => request<void>("DELETE", `/v1/children/${childId}/coach/messages`);
 export const listSuggestions = (familyId: string) => request<Suggestion[]>("GET", `/v1/families/${familyId}/suggestions`);
 export const acceptSuggestion = (id: string, pin: string) =>
-  request<CoachThread>("POST", `/v1/suggestions/${id}/accept`, { pin });
+  request<CoachThread>("POST", `/v1/suggestions/${id}/accept`, withPin(pin));
 export const dismissSuggestion = (id: string) => request<CoachThread>("POST", `/v1/suggestions/${id}/dismiss`);
 export const requestPlan = (familyId: string) =>
   request<Report<PlanReport>>("POST", `/v1/families/${familyId}/plan-suggestions`, undefined, AI);

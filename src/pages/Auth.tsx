@@ -180,11 +180,11 @@ function CreateFamily() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!isValidPin(pin)) return setError("Your parent PIN needs exactly 4 digits.");
+    if (pin && !isValidPin(pin)) return setError("A parent PIN needs exactly 4 digits, or leave it empty.");
     setBusy(true);
     setError(null);
     try {
-      await createFamily({ name: name.trim(), timezone: timezone.trim(), pin, display_name: you.trim(), role });
+      await createFamily({ name: name.trim(), timezone: timezone.trim(), pin: pin || undefined, display_name: you.trim(), role });
       await reload();
     } catch (err) {
       setError(errorText(err));
@@ -205,12 +205,15 @@ function CreateFamily() {
           <input required value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
         <label className="field field--narrow">
-          <span>Parent PIN</span>
-          <input required inputMode="numeric" maxLength={4} value={pin} placeholder="••••"
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} aria-label="Parent PIN, 4 digits" />
+          <span>Parent PIN (optional)</span>
+          <input inputMode="numeric" maxLength={4} value={pin} placeholder="••••"
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} aria-label="Parent PIN, 4 digits, optional" />
         </label>
       </div>
-      <p className="hint">Your PIN protects approvals, so only a grown-up can award Sparks.</p>
+      <p className="hint">
+        A PIN stops kids approving their own quests on a shared device. Leave it empty if you don't need one; you can
+        add one later on the dashboard.
+      </p>
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn--primary btn--lg btn--block" disabled={busy}>{busy ? "Creating…" : "Create family"}</button>
     </form>

@@ -918,6 +918,9 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .invite { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .invite > div { display: flex; flex-direction: column; gap: 4px; }
 .invite__code { font-size: 1.3rem; font-weight: 800; letter-spacing: .08em; }
+.parent-pin { display: grid; gap: 6px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.parent-pin__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.parent-pin .hint { margin: 0; }
 .lib-card.is-paused { opacity: .65; }
 .lib-card__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .day-picker { display: grid; gap: 8px; }

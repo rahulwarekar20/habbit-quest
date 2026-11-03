@@ -1,8 +1,8 @@
 /** The API client: auth headers, error text, tokens, and waiting for a sleeping server. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  ApiError, detailText, getKidToday, getMe, getPlan, listGoalHabits, redeemPoints, request, resetWakeState,
-  setExpiredListener, setPin, setWakingListener, signInDev,
+  ApiError, approveRewardRequest, detailText, extendAppTime, getKidToday, getMe, getPlan, listGoalHabits, redeemPoints, request,
+  resetWakeState, setExpiredListener, setPin, setWakingListener, signInDev,
 } from "./api";
 import { getCaregiverToken, getKidSession, saveCaregiverToken, saveKidSession } from "./storage";
 
@@ -78,6 +78,16 @@ describe("requests", () => {
   it("treats 204 as no content", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     await expect(setPin("f1", "1234")).resolves.toBeUndefined();
+  });
+
+  it("leaves the parent PIN out when the family has none", async () => {
+    fetchMock.mockResolvedValue(json(200, { points: 5 }));
+    await approveRewardRequest("r1", "");
+    expect(lastInit().body).toBe("{}");
+    await approveRewardRequest("r1", "1234");
+    expect(lastInit().body).toBe('{"pin":"1234"}');
+    await extendAppTime("c1", 10, "");
+    expect(lastInit().body).toBe('{"minutes":10}');
   });
 });
 

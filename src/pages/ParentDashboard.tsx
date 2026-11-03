@@ -3,7 +3,7 @@
  * reward requests, each child's day, level, Sparks and points, the family's invite code and
  * caregivers, check-ins, the surprise planner, adding a child, and the AI helpers.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import AiHelpers from "../components/AiHelpers";
 import { KidFeedback, RewardRequests, SafetyAlerts, SurprisePlanner, useCheckins } from "../components/ParentPanels";
 import Buddy from "../components/Buddy";
@@ -14,7 +14,8 @@ import { Footer, ParentHeader } from "../components/Headers";
 import ShareFamily from "../components/ShareFamily";
 import { SparkCount, SparkIcon } from "../components/Spark";
 import {
-  addChild, approveCompletion, deleteFamily, errorText, exportFamily, getChildExtras, getChildToday, listApprovals, newInviteCode, rejectCompletion,
+  addChild, approveCompletion, deleteFamily, errorText, exportFamily, getChildExtras, getChildToday, getFamily, listApprovals, newInviteCode,
+  rejectCompletion, removePin, setPin,
   type Approval, type ChildInput, type Today,
 } from "../lib/api";
 import { nextWorld, type Child, type Family, type QuestStatus } from "../lib/family";
@@ -326,7 +327,7 @@ function FamilyPanel() {
   async function remove() {
     if (!window.confirm(`Delete ${fam.name} and all its data? This cannot be undone.`)) return;
     const pin = await askPinValue("Delete your family and all its data.");
-    if (!pin) return;
+    if (pin === null) return;
     try {
       await deleteFamily(fam.id, pin);
       logout();
@@ -350,6 +351,7 @@ function FamilyPanel() {
         </div>
         <button className="btn btn--ghost btn--sm" disabled={busy} onClick={refreshCode}>New code</button>
       </div>
+      <ParentPin />
       <ul className="mini-list">
         {fam.caregivers.map((c) => <li key={c.user_id}><span>{c.display_name}</span><span className="muted">{c.role}</span></li>)}
       </ul>
@@ -360,6 +362,81 @@ function FamilyPanel() {
       </div>
       {error && <p className="form-error">{error}</p>}
     </section>
+  );
+}
+
+/** The parent PIN is optional: on, it guards approvals and grown-up screens; off, nothing asks for it. */
+function ParentPin() {
+  const { server, setServer, askPinValue, forgetPin } = useStore();
+  const fam = server!;
+  const [pin, setPinText] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+      forgetPin();
+      setServer(await getFamily(fam.id));
+      setPinText("");
+      setEditing(false);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (fam.has_pin && (await askPinValue("Change the parent PIN.")) === null) return;
+    await run(() => setPin(fam.id, pin));
+  }
+
+  async function turnOff() {
+    const current = await askPinValue("Turn off the parent PIN.");
+    if (current === null) return;
+    await run(() => removePin(fam.id, current));
+  }
+
+  return (
+    <div className="parent-pin">
+      <div className="parent-pin__head">
+        <span>
+          <b>Parent PIN</b> <span className="muted">{fam.has_pin ? "On" : "Off"}</span>
+        </span>
+        {!editing && (
+          <span className="share__actions">
+            <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => setEditing(true)}>
+              {fam.has_pin ? "Change" : "Turn on"}
+            </button>
+            {fam.has_pin && <button className="btn btn--ghost btn--sm" disabled={busy} onClick={turnOff}>Turn off</button>}
+          </span>
+        )}
+      </div>
+      <p className="hint">
+        {fam.has_pin
+          ? "Approvals, rewards and grown-up screens ask for it, so kids can't approve their own quests."
+          : "Nothing asks for a PIN. Turn it on if kids use a device where a grown-up is signed in."}
+      </p>
+      {editing && (
+        <form className="form kid-pin" onSubmit={save}>
+          <label className="field field--narrow">
+            <span>{fam.has_pin ? "New PIN" : "PIN"}</span>
+            <input inputMode="numeric" pattern="\d{4}" maxLength={4} value={pin} placeholder="••••" autoComplete="off" autoFocus
+              onChange={(e) => setPinText(e.target.value.replace(/\D/g, ""))} aria-label="Parent PIN, 4 digits" />
+          </label>
+          <div className="share__actions">
+            <button className="btn btn--primary btn--sm" disabled={busy || pin.length !== 4}>Save PIN</button>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setEditing(false); setPinText(""); }}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {error && <p className="form-error">{error}</p>}
+    </div>
   );
 }
 
