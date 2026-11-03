@@ -569,7 +569,8 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 .ai { display: grid; gap: 20px; }
 .ai__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
 .ai__head h2 { font-size: 1.6rem; margin-bottom: 4px; }
-.ai__head p.muted { margin: 0; max-width: 62ch; }
+.ai__head > div { flex: 1 1 auto; min-width: 0; }
+.ai__head p.muted { margin: 0; }
 .ai__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .ai-card { background: var(--surface); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); display: grid; gap: 14px; align-content: start; }
 .ai-card__head { display: flex; align-items: center; gap: 14px; }
