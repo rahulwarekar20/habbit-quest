@@ -2,7 +2,6 @@
 import { useState, type FormEvent } from "react";
 import { ROUTINE_PARTS, errorText, type ApiChild, type Buddy as BuddyName, type ChildInput, type RoutinePart, type RoutineTimes } from "../lib/api";
 import { MAX_AGE, MIN_AGE } from "../lib/habits";
-import { formatTime } from "../lib/time";
 import Buddy, { BUDDIES } from "./Buddy";
 
 export const ROUTINE_LABEL: Record<RoutinePart, string> = {
@@ -21,13 +20,12 @@ export function RoutineFields({ times, onChange }: { times: RoutineTimes; onChan
       {ROUTINE_PARTS.map((part) => {
         const value = times[part] ?? "";
         return (
-          <label key={part} className="setting">
+          <label key={part} className="routine-time">
             <span>{ROUTINE_LABEL[part]}</span>
-            <input type="time" value={value} onChange={(e) => {
+            <input id={`routine-${part}`} type="time" value={value} aria-label={`${ROUTINE_LABEL[part]} starts at`} onChange={(e) => {
               const { [part]: _gone, ...rest } = times;
               onChange(e.target.value ? { ...rest, [part]: e.target.value } : rest);
             }} />
-            <em>{value ? formatTime(value) : "Not set"}</em>
           </label>
         );
       })}
@@ -36,12 +34,14 @@ export function RoutineFields({ times, onChange }: { times: RoutineTimes; onChan
 }
 
 /** Adds a child, or edits one when `initial` is given. */
-export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: {
+/** `wide`: a full-width page form (Child details), not a card or a step of setup. */
+export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel, wide = false }: {
   initial?: ChildInput;
   onSubmit: (input: ChildInput) => Promise<ApiChild | void>;
   onCancel?: () => void;
   onEdit?: () => void;
   submitLabel: string;
+  wide?: boolean;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [age, setAge] = useState(initial?.age ?? 7);
@@ -66,7 +66,7 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
   }
 
   return (
-    <form className="form" onSubmit={submit} onChange={onEdit}>
+    <form className={`form ${wide ? "form--wide" : ""}`} onSubmit={submit} onChange={onEdit}>
       <div className="field-row">
         <label className="field">
           <span>Child's first name</span>
@@ -97,9 +97,11 @@ export function ChildForm({ initial, onSubmit, onCancel, onEdit, submitLabel }: 
           </select>
         </label>
       )}
-      <span className="field__label">Daily routine</span>
+      <div className="routine-head">
+        <span className="field__label">Daily routine</span>
+        <span className="hint">Quests start at these times. You can change them later.</span>
+      </div>
       <RoutineFields times={times} onChange={setTimes} />
-      <p className="hint">Quests start at these times. You can change them later.</p>
       {error && <p className="form-error">{error}</p>}
       <div className="modal__actions">
         {onCancel && <button type="button" className="btn btn--ghost" onClick={onCancel}>Cancel</button>}

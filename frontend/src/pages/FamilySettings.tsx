@@ -19,9 +19,8 @@ export default function FamilySettings() {
       <main className="wrap app-main settings">
         <div className="page-head">
           <div>
-            <p className="eyebrow">Family settings</p>
-            <h1>{fam.name}</h1>
-            <p className="lead">Connect devices, invite another grown-up, and choose how approvals are protected.</p>
+            <h1>Family settings</h1>
+            <p className="lead">{fam.name}: connect devices, invite another grown-up, and choose how approvals are protected.</p>
           </div>
         </div>
 

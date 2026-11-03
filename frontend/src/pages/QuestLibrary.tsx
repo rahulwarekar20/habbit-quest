@@ -57,7 +57,6 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
       <main className="wrap app-main">
         <div className="page-head">
           <div>
-            <p className="eyebrow">Quest library</p>
             <h1>Quests for {child.name}</h1>
             <p className="lead">
               Up to {MAX_HABITS} quests, chosen from goals. Harder tiers unlock as {child.name} levels up.

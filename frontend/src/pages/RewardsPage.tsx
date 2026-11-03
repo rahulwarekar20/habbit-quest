@@ -42,7 +42,6 @@ export default function RewardsPage() {
       <main className="wrap app-main">
         <div className="page-head">
           <div>
-            <p className="eyebrow">Rewards &amp; limits</p>
             <h1>What can points buy?</h1>
             <p className="lead">
               Children earn points for every quest you approve. When they use points on something, record it here.

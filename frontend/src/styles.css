@@ -1076,3 +1076,14 @@ button.kid-picker__card:disabled { opacity: 0.6; cursor: not-allowed; transform:
 
 /* Dashboard: the Add a child card stays its own size */
 .kid-card--add { align-self: start; }
+
+/* Child details: a full-width form, and the daily routine as one row of times */
+.form--wide { max-width: none; }
+.form--wide > .field-row, .form--wide > .field, .form--wide > .buddy-picker, .form--wide > label.field { max-width: 720px; }
+.routine-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.routine-head .hint { margin: 0; }
+.routine-times { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.routine-time { display: grid; gap: 6px; padding: 10px 12px; border-radius: 14px; background: var(--bg); min-width: 0; }
+.routine-time span { font-weight: 800; font-size: 0.85rem; color: var(--ink-soft); }
+.routine-time input { width: 100%; min-width: 0; height: 42px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; }
+.routine-time input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 4px rgba(123, 92, 240, 0.15); }

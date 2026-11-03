@@ -15,7 +15,6 @@ export default function CoachPage({ childId }: { childId?: string }) {
       <main className="wrap app-main">
         <div className="page-head">
           <div>
-            <p className="eyebrow">Habit coach</p>
             <h1>What's going on?</h1>
             <p className="lead">
               Describe a problem in your own words. The coach suggests quests from expert guidance, and nothing
