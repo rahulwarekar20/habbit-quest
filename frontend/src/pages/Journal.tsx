@@ -7,7 +7,7 @@ import { BuddyPicker } from "../components/Journey";
 import { landmarkKey } from "../lib/journeyPath";
 import { useStore } from "../lib/store";
 import { useKidDay } from "../lib/useKidDay";
-import { KidBar, KidLapsed, NotFound } from "./Kid";
+import { KidBar, KidLapsed, NotFound } from "../components/KidChrome";
 
 const MEDAL = ["", "Bronze", "Silver", "Gold"];
 

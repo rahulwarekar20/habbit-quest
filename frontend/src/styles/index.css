@@ -1,0 +1,16 @@
+/*
+ * HabbitQuest styles, one file per area, imported in cascade order: when two rules conflict the later
+ * file wins, so keep this order. Use the --text-* sizes and colour tokens from 01-tokens.css.
+ */
+@import "./01-tokens.css";
+@import "./02-home.css";
+@import "./03-auth.css";
+@import "./04-parent.css";
+@import "./05-kid.css";
+@import "./06-overlays-ai.css";
+@import "./07-points-shop.css";
+@import "./08-parent-pages.css";
+@import "./09-responsive.css";
+@import "./10-journey.css";
+@import "./11-refinements.css";
+@import "./12-typography-and-hero.css";

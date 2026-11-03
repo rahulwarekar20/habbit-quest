@@ -25,7 +25,7 @@ jobs:
       DATABASE_URL: postgresql://hq_dev:local-ci-only@127.0.0.1:55432/hq_test
       TEST_DATABASE_URL: postgresql://hq_dev:local-ci-only@127.0.0.1:55432/hq_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.12.23"

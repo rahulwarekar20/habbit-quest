@@ -1,0 +1,80 @@
+/* 08-parent-pages.css: Dashboard additions, the habit coach, the quest library and rewards admin. */
+
+/* ── Parent dashboard additions ───────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; align-items: start; }
+.kid-card__stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.kid-card__stats span { padding: 5px 10px; border-radius: 999px; background: #faf8ff; border: 1px solid var(--line); font-size: var(--text-sm); color: var(--ink-soft); }
+.kid-card__stats b { color: var(--ink); }
+.kid-card__stats .is-over { background: var(--rose); border-color: #ffc2d3; color: #b23a63; }
+.kid-card__buttons { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.panel--rewards { background: linear-gradient(160deg, #fff, #fff4ea); border: 1px solid #ffd9bd; }
+.panel--surprise { background: linear-gradient(160deg, #fff, #fff0f6); }
+.panel--alert { background: #fff4f4; border: 2px solid #ffb3b3; }
+.panel--alert h2 { color: #b3261e; }
+.surprise-form { display: grid; gap: 12px; margin-top: 12px; }
+.form-ok { background: var(--mint); color: var(--mint-deep); border-radius: 12px; padding: 10px 14px; font-weight: 700; margin: 0; }
+.feedback-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.feedback { display: flex; gap: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: #fff; }
+.feedback.is-new { border-color: #d9ccff; background: #faf8ff; }
+.feedback > div { min-width: 0; }
+.feedback__mood { flex: none; font-size: var(--text-3xl); line-height: 1; }
+.feedback p { margin: 4px 0 0; }
+.feedback__stickers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.feedback__note { font-style: italic; color: var(--ink); }
+.feedback__flag { color: #b3261e; font-weight: 700; }
+
+/* ── Habit coach ──────────────────────────────────────────────────────────── */
+.about { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.about__chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font: 800 var(--text-sm) var(--font-body); color: var(--ink-soft); cursor: pointer; }
+.about__chip.is-on { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); }
+.safety-banner { margin: 0; padding: 12px 16px; border-radius: 14px; background: #fff0f0; color: #b3261e; font-weight: 700; border: 1.5px solid #ffc4c4; }
+.ai-chat__suggest p { width: 100%; margin: 0 0 2px; }
+.bubble-wrap { display: grid; gap: 4px; }
+.bubble-wrap--parent { justify-items: end; }
+.bubble-wrap--assistant { justify-items: start; }
+.bubble__sources { margin: 0 4px; font-size: var(--text-xs); color: var(--muted); font-weight: 700; max-width: 88%; }
+.bubble__warning { margin: 2px 4px 0; padding: 8px 12px; max-width: 88%; border-radius: 12px; border: 1px solid #ffe3a3; background: var(--gold-soft); color: #8a5200; font-size: var(--text-sm); font-weight: 700; }
+.recs { border: 1.5px solid #ddd2ff; border-radius: 20px; padding: 14px; background: linear-gradient(160deg, #fff, #f8f5ff); display: grid; gap: 10px; }
+.recs__head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.recs__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rec { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 16px; background: #fff; border: 1.5px solid var(--line); }
+.rec.is-on { border-color: var(--violet); }
+.rec label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; min-width: 0; }
+.rec input { width: 20px; height: 20px; accent-color: var(--violet); flex: none; }
+.rec__art { width: 84px; border-radius: 12px; flex: none; }
+.rec__text { display: grid; gap: 2px; min-width: 0; }
+.rec__text b { font: 600 var(--text-base) var(--font-display); }
+.rec__text .tier-tag { margin-left: 0; justify-self: start; }
+.recs__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+
+/* ── Quest library and rewards admin ──────────────────────────────────────── */
+.lib-row, .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 16px; }
+.lib-card { border-radius: 20px; overflow: hidden; background: #fff; border: 1px solid var(--line); display: flex; flex-direction: column; }
+.lib-card .habit-art { aspect-ratio: 16 / 9; }
+.lib-card__body { padding: 12px 14px 14px; display: grid; gap: 6px; flex: 1; align-content: start; }
+.lib-card__body b { font: 600 var(--text-base) var(--font-display); }
+.lib-card__body p { margin: 0; color: var(--ink-soft); font-size: var(--text-sm); }
+.lib-card__body .muted { font-size: var(--text-sm); }
+.lib-card__body .btn { justify-self: start; margin-top: 4px; }
+.lib-card.is-added { border-color: #d9ccff; box-shadow: 0 0 0 3px var(--violet-soft); }
+.tier--locked .lib-card { filter: grayscale(0.6); opacity: 0.75; }
+.tier .panel__head p { margin: 2px 0 0; }
+.reward-admin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.reward-admin__row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; border: 1px solid var(--line); flex-wrap: wrap; }
+.reward-admin__row > div { flex: 1; display: grid; min-width: min(160px, 100%); }
+.reward-admin__cost { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--ink-soft); }
+.reward-admin__cost input { width: 90px; font: inherit; padding: 8px 10px; border-radius: 12px; border: 1.5px solid var(--line); }
+.reward-add { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); display: grid; gap: 12px; }
+.reward-add h3 { margin: 0; }
+.emoji-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-pick button { width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-size: var(--text-xl); cursor: pointer; }
+.emoji-pick button.is-on { border-color: var(--violet); background: var(--violet-soft); }
+
+/* Grids of stacked content must never grow wider than the page because of a long name or a nowrap child. */
+.ai, .ai-card, .ai-card__body, .recs, .recs__list, .approvals, .form, .form__group, .mini-list, .feedback-list, .reward-admin,
+.kid-card__quests, .setup-card__body, .quest__body, .lib-card__body, .surprise-form, .reward-add { grid-template-columns: minmax(0, 1fr); }
+.form__group { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}

@@ -1,0 +1,94 @@
+/* 09-responsive.css: Layout changes for tablets and phones. */
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .flow__step + .flow__step { border-left: 0; border-top: 1px solid var(--line); }
+  .flow__step { padding: 14px 18px; }
+  .mini-habits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mini-worlds { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .setup-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar--app .topbar__inner { height: auto; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; gap: 8px 16px; }
+  .topbar__nav--app { order: 3; width: 100%; margin-left: 0; gap: 20px; overflow-x: auto; scrollbar-width: none; }
+}
+@media (max-width: 900px) {
+  .topbar__nav:not(.topbar__nav--app) { display: none; }
+  .topbar__hello { display: none; }
+  .hero__inner, .parents { grid-template-columns: 1fr; }
+  .hero__stage { min-height: 470px; }
+  .kid-worlds__grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .topbar__inner { height: auto; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .topbar { backdrop-filter: none; background: var(--bg); }
+  .topbar__nav--app {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+    padding: 0 4px env(safe-area-inset-bottom); background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(76, 52, 170, 0.08);
+  }
+  .topbar__nav--app a {
+    display: grid; place-items: center; min-height: 58px; padding: 6px 2px; border-bottom: 0; border-top: 3px solid transparent;
+    text-align: center; white-space: normal; font-size: var(--text-xs); line-height: 1.15;
+  }
+  .topbar__nav--app a.is-active { background: var(--violet-soft); }
+  .page:has(.topbar__nav--app) { padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
+  .page:has(.topbar__nav--app) .savebar { bottom: calc(62px + env(safe-area-inset-bottom)); }
+  .page:has(.topbar__nav--app) .toast, .page:has(.topbar__nav--app) .waking { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  h1 { font-size: var(--text-3xl); }
+  .btn { white-space: normal; text-align: center; }
+  .section { padding: 56px 0; }
+  .section__head { margin-bottom: 28px; }
+  .app-main { padding-top: 24px; gap: 20px; }
+  .kid-main { gap: 24px; }
+  .page-head { align-items: stretch; gap: 14px; }
+  .page-head__actions > .btn { flex: 1; }
+  .panel { padding: 18px 16px; border-radius: 20px; }
+  .panel__head { flex-wrap: wrap; }
+  .ai-card, .kid-card { padding: 18px 16px; }
+  .form__group { padding: 18px 16px 20px; }
+  .modal__card, .kid-overlay__card { padding: 22px 18px; border-radius: 24px; }
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .shop-hero, .goal-jar { padding: 18px 16px; border-radius: 24px; }
+  .bubble { max-width: 94%; }
+  .ai-chat__log { padding: 10px; }
+  .kid-picker__card { padding: 20px 28px; }
+  .explore-scene, .explore-locked { border-radius: 20px; }
+  .mini-habits, .trust, .setup-grid, .kid-worlds__grid { grid-template-columns: minmax(0, 1fr); }
+  .mini-worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .section { padding: 44px 0; }
+  .hero { padding: 40px 0 56px; }
+  .hero__stage { min-height: 430px; }
+  .stage-card--quest { width: 92%; left: 0; }
+  .stage-card--approve { width: 70%; bottom: 0; }
+  .field-row { flex-direction: column; }
+  .field--narrow { flex: 1; }
+  .kids-grid, .ai__grid, .two-col, .kid-actions, .sticker-grid { grid-template-columns: minmax(0, 1fr); }
+  .mood-grid { grid-template-columns: repeat(2, 1fr); }
+  .kid-hero__side { justify-items: center; }
+  .level-badge { min-width: 0; }
+  .rec__art { width: 64px; }
+  .ai-chat__form .btn { padding: 10px 16px; }
+  .approval { flex-wrap: wrap; }
+  .approval__art { width: 84px; }
+  .approval__actions { width: 100%; }
+  .approval__actions .btn { flex: 1; }
+  .kid-hero { flex-direction: column; text-align: center; padding: 24px 18px; }
+  .star-path { justify-content: center; }
+  .buddy-picker { grid-template-columns: repeat(2, 1fr); }
+  .hotspot { width: 44px; height: 44px; }
+  .hotspot--hidden { width: 30px; height: 30px; }
+  .explore-scene .world-art { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 480px) {
+  .logo__text { font-size: var(--text-xl); }
+  .logo__badge { width: 34px; height: 34px; }
+  .kidbar__lock { padding: 8px 12px; }
+  .kidbar__lock .lock-label { display: none; }
+  .topbar__actions .btn { padding: 8px 14px; }
+  .topbar:not(.topbar--app) .topbar__actions .btn--ghost { display: none; }
+  .approval__art { width: 64px; }
+  .celebrate h2 { font-size: var(--text-4xl); }
+  .kid-hero p { font-size: var(--text-base); }
+  .quest-grid { grid-template-columns: minmax(0, 1fr); }
+  .kid-card__head { flex-wrap: wrap; }
+  .kid-card__buttons { grid-template-columns: minmax(0, 1fr); }
+}

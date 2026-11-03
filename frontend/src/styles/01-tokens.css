@@ -1,0 +1,121 @@
+/*
+ * HabbitQuest design system.
+ * Warm, light and rich: creamy lavender backgrounds, deep violet ink, gold Sparks,
+ * soft layered shadows. Type: Fredoka for headings, Plus Jakarta Sans for everything else, on one
+ * scale (--text-xs to --text-4xl); use those tokens rather than new sizes.
+ * This file: tokens, base elements, buttons and chips. The other areas each have their own file (see index.css).
+ */
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg: #fbf8ff;
+  --bg-warm: #fff8ef;
+  --surface: #ffffff;
+  --ink: #241d4f;
+  --ink-soft: #5b5486;
+  --muted: #8a84ad;
+  --line: #ece6fb;
+  --violet: #7b5cf0;
+  --violet-deep: #5a3fc6;
+  --violet-soft: #efe9ff;
+  --gold: #ffc23d;
+  --gold-deep: #f29a1f;
+  --gold-soft: #fff4d6;
+  --mint: #e3f4ea;
+  --mint-deep: #3f9a58;
+  --peach: #ffe6d6;
+  --rose: #ffe1ea;
+  --radius: 24px;
+  --radius-sm: 14px;
+  --shadow-sm: 0 1px 2px rgba(36, 29, 79, 0.06), 0 2px 8px rgba(36, 29, 79, 0.05);
+  --shadow: 0 2px 4px rgba(36, 29, 79, 0.04), 0 12px 32px rgba(76, 52, 170, 0.1);
+  --shadow-lg: 0 4px 8px rgba(36, 29, 79, 0.05), 0 24px 60px rgba(76, 52, 170, 0.18);
+  --font-display: "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Type scale: 12 / 14 / 16 / 18 / 20 / 24 / 32 / 40 px */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font: 400 var(--text-base)/1.6 var(--font-body);
+  letter-spacing: 0.006em;
+  overflow-wrap: break-word;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; margin: 0 0 0.4em; letter-spacing: -0.015em; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4.2vw, 3.3rem); }
+h2 { font-size: clamp(1.5rem, 2.6vw, 2.2rem); }
+h3 { font-size: var(--text-xl); }
+p { margin: 0 0 0.8em; }
+a { color: var(--violet-deep); font-weight: 700; text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; cursor: pointer; }
+input, select { font: inherit; color: inherit; }
+
+.wrap { width: 100%; max-width: 1360px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 40px); }
+.page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.eyebrow { font: 800 var(--text-xs)/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--violet); margin-bottom: 12px; }
+.lead { font-size: var(--text-lg); color: var(--ink-soft); max-width: 62ch; }
+.muted { color: var(--muted); }
+.hint { font-size: var(--text-sm); color: var(--muted); margin: 6px 0 0; }
+.link { font-size: var(--text-sm); }
+.gradient-text {
+  background: linear-gradient(100deg, var(--violet) 10%, #c35cf0 55%, var(--gold-deep) 95%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* ── Buttons & chips ────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 999px; padding: 11px 22px;
+  font: 800 var(--text-base)/1.1 var(--font-body); text-decoration: none !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn--sm { padding: 8px 16px; font-size: var(--text-sm); }
+.btn--lg { padding: 15px 30px; font-size: var(--text-base); }
+.btn--block { width: 100%; }
+.btn--primary {
+  color: #fff; background: linear-gradient(135deg, #8f6bff, var(--violet-deep));
+  box-shadow: 0 6px 18px rgba(90, 63, 198, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn--primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(90, 63, 198, 0.4); }
+.btn--gold {
+  color: #4a2a00; background: linear-gradient(180deg, #ffe07a, var(--gold) 55%, var(--gold-deep));
+  box-shadow: 0 6px 16px rgba(242, 154, 31, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.55);
+}
+.btn--gold:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(242, 154, 31, 0.42); }
+.btn--soft { color: var(--violet-deep); background: var(--violet-soft); }
+.btn--soft:hover:not(:disabled) { background: #e4dbff; }
+.btn--ghost { color: var(--ink-soft); background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn--ghost:hover:not(:disabled) { background: #fff; box-shadow: inset 0 0 0 1.5px #d9cff8; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
+  background: var(--violet-soft); color: var(--violet-deep); font-weight: 800; font-size: var(--text-sm);
+}
+.chip--gold { background: var(--gold-soft); color: #9a5b00; }
+
+.spark-count {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px 6px 10px; border-radius: 999px;
+  background: linear-gradient(180deg, #fffaf0, var(--gold-soft)); color: #8a5200;
+  box-shadow: inset 0 0 0 1.5px #ffe3a3; font-weight: 700; font-size: var(--text-sm); white-space: nowrap;
+}
+.spark-count b { font-family: var(--font-display); font-size: var(--text-base); }
+.spark-count--lg { padding: 10px 20px 10px 14px; font-size: var(--text-lg); }
+.spark-count--lg b { font-size: var(--text-2xl); }

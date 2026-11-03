@@ -2,7 +2,7 @@
  * Habit coach (parent): its own tab, so a parent can talk through a child's problem without
  * scrolling past the dashboard. Opens on the child in the route, or the first child.
  */
-import { Coach } from "../components/AiHelpers";
+import { Coach } from "../components/Coach";
 import { Footer, ParentHeader } from "../components/Headers";
 import { useStore } from "../lib/store";
 
