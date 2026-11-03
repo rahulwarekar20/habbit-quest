@@ -206,9 +206,16 @@ def test_the_fit_check_sees_titles_but_not_the_planners_reasons(crew_settings, a
 
 
 def test_a_clarifying_question_ends_the_turn_after_triage(crew_settings, agents):
-    agents(Triage=TRIAGE | {"intent": "clarify", "queries": [], "question": "When does it happen?"})
+    agents(
+        Triage=TRIAGE | {"intent": "clarify", "queries": [], "question": "When does it happen?"},
+        SafetyVerdict=SAFE,
+    )
     reply = run_turn(crew_settings, snapshot(), [], "Evenings are hard", ["Alex"])
-    assert reply.text == "When does it happen?" and list(agents.seen) == ["ParentRisk", "Triage"]
+    assert reply.text == "When does it happen?" and list(agents.seen) == [
+        "ParentRisk",
+        "Triage",
+        "SafetyVerdict",
+    ]
     assert not reply.no_habit_match and reply.turn.recommendations == {}
 
 
@@ -349,3 +356,11 @@ def test_the_safety_model_reads_the_message_first_with_labels(crew_settings, age
     sent = json.dumps(agents.seen["ParentRisk"][0])
     assert "Child A is scared" in sent and "Alex" not in sent
     assert agents.seen["ParentRisk"][0]["model"] == "vendor/safety"
+
+
+def test_an_unsafe_or_unchecked_question_becomes_a_plain_one(crew_settings, agents):
+    question = TRIAGE | {"intent": "clarify", "queries": [], "question": "Is Child A's ADHD worse at night?"}
+    agents(Triage=question, SafetyVerdict={"safe": False, "problems": ["1 diagnosis"]})
+    assert run_turn(crew_settings, snapshot(), [], "Evenings are hard", ["Alex"]).text == crew.PLAIN_QUESTION
+    agents(Triage=question, SafetyVerdict=FAIL)
+    assert run_turn(crew_settings, snapshot(), [], "Evenings are hard", ["Alex"]).text == crew.PLAIN_QUESTION

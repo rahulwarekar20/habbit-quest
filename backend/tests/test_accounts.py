@@ -236,7 +236,9 @@ def test_the_pin_is_checked_and_can_be_changed(client, family):
     base = f"/v1/families/{family['id']}/pin"
     assert client.post(base + "/verify", json={"pin": "1234"}).json() == {"valid": True}
     assert client.post(base + "/verify", json={"pin": "4321"}).json() == {"valid": False}
-    assert client.put(base, json={"pin": "4321"}).status_code == 204
+    assert client.put(base, json={"pin": "4321"}).status_code == 403  # the current PIN is needed
+    assert client.put(base, json={"pin": "4321", "current_pin": "9999"}).status_code == 403
+    assert client.put(base, json={"pin": "4321", "current_pin": "1234"}).status_code == 204
     assert client.post(base + "/verify", json={"pin": "1234"}).json() == {"valid": False}
     assert client.post(base + "/verify", json={"pin": "4321"}).json() == {"valid": True}
 

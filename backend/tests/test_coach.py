@@ -476,3 +476,23 @@ def test_a_failed_risk_check_lets_the_turn_go_on(remote, llm_reply, caplog):
     reply = run_turn(remote, snapshot(), [], "Evenings are hard", ["Alex"])
     assert reply.text == "When does it happen?" and reply.safety is None
     assert "Parent risk check failed" in caplog.text
+
+
+def test_restoring_names_leaves_ordinary_words_alone():
+    restore = {"Child A": "Mia"}
+    text = "Give your child a sticker. Child A did well."
+    assert swap_names(text, restore, ignore_case=False) == "Give your child a sticker. Mia did well."
+
+
+def test_a_child_hitting_a_parent_is_coached_not_treated_as_risk():
+    from habitquest_backend.safety import parent_at_risk
+
+    assert not parent_at_risk("When I turn off the TV he hits me and screams")
+    assert parent_at_risk("She told me she wants to kill herself")
+    assert parent_at_risk("He keeps saying I want to die")
+
+
+def test_every_model_call_shares_one_http_client(settings):
+    from habitquest_backend import llm
+
+    assert llm.http_client(settings) is llm.http_client(settings)
