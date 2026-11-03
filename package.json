@@ -1,0 +1,11 @@
+{
+  "name": "habitquest",
+  "private": true,
+  "description": "Shortcuts so the frontend's npm scripts also run from the repository root.",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "test": "npm test --prefix frontend",
+    "install:frontend": "npm install --prefix frontend"
+  }
+}

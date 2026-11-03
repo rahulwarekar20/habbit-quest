@@ -21,6 +21,8 @@ flowchart LR
 
 ## Run both locally
 
+From the repository root, `npm run dev`, `npm run build` and `npm test` run the frontend's scripts.
+
 ```mermaid
 flowchart TD
     A["cd backend<br/>follow docs/localsetup.md"] --> B["uvicorn on :8000<br/>.env has DEV_LOGIN_PASSWORD"]
