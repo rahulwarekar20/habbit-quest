@@ -86,7 +86,7 @@ def test_login_exists_only_when_enabled(client, login_client):
 def test_dev_login_requires_a_secret_and_a_long_password(settings, overrides):
     values = {"database_url": settings.database_url, "jwt_secret": "s" * 32, **overrides}
     with pytest.raises(ValidationError, match="DEV_LOGIN requires"):
-        Settings(**values)
+        Settings(_env_file=None, **values)
 
 
 def test_a_complete_dev_login_configuration_is_accepted(settings):

@@ -24,6 +24,8 @@ completions, caregivers approving them, Sparks (progress, never spent) and point
 | `ai.py` | Onboarding goal mapping: safety screen, one structured call, checks, keyword fallback |
 | `llm.py` | The chat model through LangChain (any OpenAI-compatible endpoint, e.g. Nebius) |
 | `coach.py`, `coach_tools.py` | The habit coach agent, its tools, suggestions accepted with the PIN |
+| `crew.py` | The coach crew (`COACH_ENGINE=crew`): triage, research and progress side by side, planner, fit and safety review. See [docs/coach-crew.md](docs/coach-crew.md) |
+| `evals/`, `scripts/eval_coach.py` | Realistic parent messages and a script scoring both coach engines with real models |
 | `insights.py` | Quest planner, weekly review, buddy lines |
 | `guidance.py`, `guidance.json` | Parenting guidance and BM25 search |
 | `safety.py` | Screening text children write and read |

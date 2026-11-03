@@ -31,6 +31,7 @@ from habitquest_backend.ai import SAFETY_GUIDANCE, keyword_goals
 from habitquest_backend.auth import family_pin_ok, signed_in
 from habitquest_backend.coach_tools import MAX_RECOMMENDATIONS, Snapshot, Turn, build_tools
 from habitquest_backend.config import Settings
+from habitquest_backend.crew import build_crew, initial_state
 from habitquest_backend.db import one, transaction
 from habitquest_backend.guidance import search_guidance
 from habitquest_backend.llm import chat_model
@@ -236,7 +237,9 @@ def run_turn(
     ]
     messages.append(HumanMessage(content=swap_names(text, labels)))
     turn = Turn()
-    graph = build_graph(settings, snapshot, turn, "Child A")
+    crew = settings.coach_engine == "crew"
+    graph = (build_crew if crew else build_graph)(settings, snapshot, turn, "Child A")
+    start = initial_state(messages) if crew else {"messages": messages, "retried": False, "poor_fit": []}
     private = [*names, *caregivers]
     collector = start_trace(settings)
     config: dict[str, Any] = {"recursion_limit": STEP_LIMIT, "callbacks": [collector] if collector else []}
@@ -244,7 +247,7 @@ def run_turn(
     try:
         future = executor.submit(
             graph.invoke,
-            {"messages": messages, "retried": False, "poor_fit": []},
+            start,
             config,
         )
         final = future.result(timeout=settings.coach_timeout_seconds)
@@ -254,7 +257,11 @@ def run_turn(
         status = exc.status_code if isinstance(exc, openai.APIStatusError) else ""
         log.warning("Coach turn failed (%s %s); using keyword matching", type(exc).__name__, status)
         send_trace(
-            settings, collector, private, True, {"outcome": "failed", "age_band": age_band(snapshot.age)}
+            settings,
+            collector,
+            private,
+            True,
+            {"outcome": "failed", "age_band": age_band(snapshot.age), "engine": settings.coach_engine},
         )
         return fallback(snapshot, problem)
     finally:
@@ -288,6 +295,7 @@ def run_turn(
             "changes": [change.kind for change in turn.changes],
             "sources": list(turn.sources),
             "retried": final["retried"],
+            "engine": settings.coach_engine,
         },
     )
     return Reply(swap_names(answer, restore)[:REPLY_LENGTH], turn, no_habit_match=no_match)

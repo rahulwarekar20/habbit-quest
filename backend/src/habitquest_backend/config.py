@@ -1,3 +1,4 @@
+import re
 from functools import cached_property
 from typing import Literal
 
@@ -5,6 +6,10 @@ from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from habitquest_backend.limits import RateLimiter
+
+CREW_ROLE = re.compile(
+    r"^(triage|research|progress|planner|fit|safety):(large|small|safety):(low|medium|high)$"
+)
 
 
 class Settings(BaseSettings):
@@ -26,7 +31,14 @@ class Settings(BaseSettings):
     openai_base_url: str = ""
     openai_model: str = ""
     openai_small_model: str = ""
+    # Optional policy model for the crew's safety reviewer, e.g. openai/gpt-oss-safeguard-20b; else the small one.
+    openai_safety_model: str = ""
     openai_api_key: SecretStr | None = None
+    # The habit coach: `agent` is one model calling tools in a loop; `crew` is a fixed workflow of small agents
+    # (triage, research and progress side by side, planner, fit and safety review), see crew.py.
+    coach_engine: Literal["agent", "crew"] = "agent"
+    # Per-agent overrides of crew.ROLES as role:size:effort, comma-separated, e.g. "planner:large:low".
+    crew_roles: str = ""
     ai_timeout_seconds: float = Field(default=30, gt=0, le=60)
     # The coach's whole turn (several model calls), and model-backed requests per family per day.
     coach_timeout_seconds: float = Field(default=50, gt=0, le=120)
@@ -46,6 +58,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def modes_configured(self) -> "Settings":
+        for entry in filter(None, (e.strip() for e in self.crew_roles.split(","))):
+            if not CREW_ROLE.match(entry):
+                raise ValueError(f"CREW_ROLES: {entry!r} is not role:size:effort")
         if self.ai_mode == "openai" and not (
             self.openai_base_url and self.openai_model and self.openai_api_key
         ):
