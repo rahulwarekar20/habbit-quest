@@ -6,6 +6,10 @@
  */
 import { QUEST_BY_ID, isHabitId, type Category, type HabitId } from "../lib/habits";
 
+/**
+ * The picture for a quest: a hand-drawn scene for the six routine habits, otherwise the quest's emoji (or the
+ * custom habit's `icon`) on a soft background.
+ */
 export default function HabitArt({ habit, icon, className = "" }: { habit: string; icon?: string; className?: string }) {
   if (!isHabitId(habit)) return <BonusArt quest={habit} icon={icon} className={className} />;
   return (

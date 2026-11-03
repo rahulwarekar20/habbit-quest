@@ -11,6 +11,7 @@ import { errorText, getChild, removeKidPin, setKidPin, updateChild, type ApiChil
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
+/** The Child details page (#/setup[/:child]). */
 export default function HabitSetup({ childId }: { childId?: string }) {
   const { family, reload } = useStore();
   const fam = family!;

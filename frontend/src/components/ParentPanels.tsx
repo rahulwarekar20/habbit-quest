@@ -35,6 +35,9 @@ export function useCheckins(familyId: string) {
   return { items, markRead };
 }
 
+/**
+ * Check-in notes that raised a safety concern, shown first on the dashboard until a grown-up marks them done.
+ */
 export function SafetyAlerts({ items, onDone }: { items: Checkin[]; onDone: () => void }) {
   const alerts = items.filter((c) => c.flagged && !c.read_at);
   if (alerts.length === 0) return null;
@@ -57,6 +60,10 @@ export function SafetyAlerts({ items, onDone }: { items: Checkin[]; onDone: () =
   );
 }
 
+/**
+ * Reward requests from the kid shop: approve with the PIN, or "not this time" to refund the points.
+ * `onCount` reports how many are waiting.
+ */
 export function RewardRequests({ family, familyId, onCount }: { family: Family; familyId: string; onCount: (count: number) => void }) {
   const { update, askPinValue } = useStore();
   const [pending, setPending] = useState<FamilyRewardRequest[]>([]);
@@ -132,6 +139,7 @@ export function recentCheckins(all: Checkin[]): Checkin[] {
   return all.filter((f) => recent.has(f.day)).slice(0, 6);
 }
 
+/** The children's check-ins from the last 7 days; renders nothing when there are none. */
 export function KidFeedback({ items: all, onRead }: { items: Checkin[]; onRead: () => void }) {
   const items = recentCheckins(all);
   const unseen = items.filter((f) => !f.read_at).length;

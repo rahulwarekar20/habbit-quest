@@ -1,6 +1,7 @@
 /** HabbitQuest wordmark: a spark badge plus the name. Links home. */
 import { SparkIcon } from "./Spark";
 
+/** The HabbitQuest logo, linking to `href` (the home page by default). */
 export default function Logo({ href = "#/" }: { href?: string }) {
   return (
     <a href={href} className="logo" aria-label="HabbitQuest home">

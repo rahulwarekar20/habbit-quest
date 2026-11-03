@@ -1,6 +1,7 @@
 /** What HabitQuest stores, what reaches the AI provider, and how a family can export or delete it. */
 import { Footer, SiteHeader } from "../components/Headers";
 
+/** The privacy page (#/privacy). */
 export default function Privacy() {
   return (
     <div className="page">

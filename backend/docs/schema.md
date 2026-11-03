@@ -289,7 +289,7 @@ A few links are left out of the diagrams to keep them readable:
 | People | `caregivers` | Which grown-ups belong to which family, with their display name and role (mother, father, guardian, other). Every family permission comes from this table |
 | People | `children` | Each child: name, age, buddy, current world, the start times of their routines, and their own kid PIN |
 | Catalog | `goals` | The pre-approved goals, such as "Calmer bedtimes", with the keywords that match a parent's description of a problem |
-| Catalog | `habits` | The pre-approved quests under each goal: the kid's wording, time of day, suitable ages, difficulty tier and points. Only these can go into a plan |
+| Catalog | `habits` | The pre-approved quests under each goal: the kid's wording, time of day, suitable ages, difficulty tier and points. A family's own custom habits sit here too, with its `family_id` and an id starting `my-`; only these rows can go into a plan |
 | Plan | `pain_points` | A problem a parent described, and whether the AI, keywords or the parent matched it to goals |
 | Plan | `child_goals` | Goals suggested for or chosen for a child, with the reason and the recommended quests |
 | Plan | `child_habits` | The child's quest plan: which quest, at what time and on which days. Paused and removed quests stay, as history |

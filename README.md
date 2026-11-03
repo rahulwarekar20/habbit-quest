@@ -14,10 +14,23 @@ flowchart LR
     BE --> AI["AI coach<br/>(OpenAI-compatible)"]
 ```
 
-| Folder | What it is | Start here |
+| Folder or file | What it is | Start here |
 |---|---|---|
-| [frontend/](frontend/) | The web app families use | [frontend/README.md](frontend/README.md) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How the parts fit together, with diagrams | start here |
+| [frontend/](frontend/) | The web app families use | [frontend/README.md](frontend/README.md) (pages, game rules, code layout, tests) |
 | [backend/](backend/) | The API, database and AI coach | [backend/README.md](backend/README.md), [backend/docs/localsetup.md](backend/docs/localsetup.md) |
+
+The backend's [docs/](backend/docs/) folder also holds the API contract for the frontend
+([frontend-integration.md](backend/docs/frontend-integration.md)), the database tables
+([schema.md](backend/docs/schema.md)), the habit coach crew ([coach-crew.md](backend/docs/coach-crew.md)) and what is
+done and left to do ([status.md](backend/docs/status.md)).
+
+## Recent changes
+
+| When | What changed |
+|---|---|
+| 2026-11-02 | Frontend and backend moved into one repository. The habit coach became a crew of small agents ([coach-crew.md](backend/docs/coach-crew.md)). The Quest library shows the whole catalog by age group, and families can make their own habits. The parent PIN became optional, and kids can sign in on their own device with the family code. |
+| 2026-11-03 | Calmer, more compact pages: one type scale, a violet hero band on every parent page, Family settings on a page of its own. Coach safety: a model risk check on every parent message and a safety reviewer that fails closed (PR #2). Ten defects fixed after a full code review, and frontend checks added to CI (PR #3). The large files split into one module per area (PR #4). Comments in every file, and [ARCHITECTURE.md](ARCHITECTURE.md). |
 
 ## Run both locally
 
@@ -26,7 +39,7 @@ From the repository root, `npm run dev`, `npm run build` and `npm test` run the 
 ```mermaid
 flowchart TD
     A["cd backend<br/>follow docs/localsetup.md"] --> B["uvicorn on :8000<br/>.env has DEV_LOGIN_PASSWORD"]
-    C["cd frontend<br/>npm install"] --> D["frontend/.env<br/>VITE_API_URL=http://127.0.0.1:8000"]
+    C["cd frontend<br/>npm install"] --> D["frontend/.env.local<br/>VITE_API_URL=http://127.0.0.1:8000"]
     B --> E["npm run dev → http://localhost:5180"]
     D --> E
     E --> F["Sign in: parent + your DEV_LOGIN_PASSWORD"]
@@ -34,7 +47,14 @@ flowchart TD
 
 ## Where things run
 
-- **CI**: [.github/workflows/test.yml](.github/workflows/test.yml) runs the backend checks when `backend/` changes.
+- **CI** runs on every push and pull request, for the half of the repo that changed:
+
+  ```mermaid
+  flowchart LR
+      PR["push or pull request"] -- "backend/ changed" --> B["backend-checks (test.yml)<br/>ruff, format, mypy,<br/>pytest at 100% coverage on PostgreSQL 17"]
+      PR -- "frontend/ changed" --> F["frontend-checks (frontend.yml)<br/>vitest, tsc, production build"]
+  ```
+
 - **Render**: [render.yaml](render.yaml) deploys the API from `backend/` (`rootDir: backend`).
 
 ## Backend upstream

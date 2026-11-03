@@ -53,6 +53,7 @@ people, unsafe suggestions, or anything confusing or mean."""
 
 
 def words(*items: str) -> re.Pattern:
+    """A case-insensitive pattern matching any of `items` as whole words."""
     return re.compile(r"\b(?:" + "|".join(items) + r")\b", re.IGNORECASE)
 
 
@@ -150,12 +151,18 @@ SELF_HARM = dict(PATTERNS)["self-harm"]
 
 @dataclass
 class Screen:
+    """The outcome of a safety check: whether the text is fine, what kind of problem it has, and whether a
+    grown-up should know.
+    """
+
     ok: bool  # safe to show or save as-is
     category: str | None = None
     risk: bool = False  # a grown-up should know
 
 
 class Verdict(BaseModel):
+    """The safety classifier's structured answer."""
+
     safe: bool = Field(description="True when the text is fine for this audience")
     category: str = Field(description=f'"none" when safe, otherwise one of: {", ".join(CATEGORIES)}')
     risk: bool = Field(description="True when the text suggests the child may be hurt or unsafe")
@@ -187,6 +194,8 @@ reason: a few words when risk is true, otherwise empty."""
 
 
 class ParentRisk(BaseModel):
+    """The safety model's answer for a parent's message: is a child at risk, and why in a few words."""
+
     risk: bool
     reason: str
 
@@ -210,6 +219,9 @@ def parent_risk_model(settings: Settings, text: str) -> bool | None:
 
 
 def model_screen(settings: Settings, text: str, audience: Audience) -> Screen:
+    """The safety model's check of kid text for `audience`. Raises on model errors; check_text decides what
+    that means for each audience.
+    """
     classifier = chat_model(settings, small=True).with_structured_output(Verdict)
     data = re.sub(r"</?text>", "", text)
     messages = [("system", CLASSIFIER_PROMPT), ("user", f"Audience: {audience}\n<text>{data}</text>")]

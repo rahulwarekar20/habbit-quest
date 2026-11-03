@@ -14,6 +14,7 @@ import { useStore } from "../lib/store";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound, LockIcon } from "../components/KidChrome";
 
+/** Exploring one world (#/world/:child/:world). */
 export function WorldExplore({ childId, worldId }: { childId: string; worldId: string }) {
   const { family, update } = useStore();
   const child = family!.children.find((c) => c.id === childId);

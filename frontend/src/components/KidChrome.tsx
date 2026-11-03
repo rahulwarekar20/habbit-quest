@@ -62,6 +62,9 @@ export function KidLapsed({ onResume }: { onResume: () => void }) {
   );
 }
 
+/**
+ * Shown when a kid screen can't find the child or page it was opened for, with a way back to the quests.
+ */
 export function NotFound() {
   return (
     <div className="page page--kid">
@@ -73,6 +76,7 @@ export function NotFound() {
   );
 }
 
+/** A small padlock, for buttons that need the parent PIN. */
 export function LockIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">

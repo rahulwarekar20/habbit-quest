@@ -35,6 +35,8 @@ APP_LIMIT_OPTIONS = {0, 15, 20, 30, 45, 60}
 
 
 class ExtrasUpdate(StrictModel):
+    """The request body of `PATCH /v1/kid/extras`."""
+
     discover: str | None = Field(
         default=None, max_length=80, description='A "<world>:<item>" key the child found'
     )
@@ -46,10 +48,14 @@ class ExtrasUpdate(StrictModel):
 
 
 class AppTime(StrictModel):
+    """The request body of `POST /v1/kid/app-time`."""
+
     seconds: int = Field(gt=0, le=300, description="Seconds used since the last report")
 
 
 class AppExtension(StrictModel):
+    """The request body of `POST /v1/children/{child_id}/app-time/extend`."""
+
     minutes: int = Field(gt=0, le=120)
     pin: str | None = Field(
         default=None, pattern=r"^\d{4}$", description="Left out when the family has no PIN"
@@ -57,11 +63,14 @@ class AppExtension(StrictModel):
 
 
 class SettingsUpdate(StrictModel):
+    """The request body of `PATCH /v1/families/{family_id}/settings`."""
+
     app_limit: int | None = Field(default=None, description="Daily minutes in kid mode; 0 means no limit")
     buddy_talk: bool | None = None
 
 
 def extras_view(conn, child_id: UUID) -> dict:
+    """A child's kid-mode extras with the family's app limit and buddy-talk setting, as the API returns them."""
     extras = one(conn, f"SELECT {EXTRAS_COLUMNS} FROM hq.child_extras WHERE child_id=%s", (child_id,))
     settings_row = one(
         conn,

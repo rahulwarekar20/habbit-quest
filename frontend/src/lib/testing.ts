@@ -2,6 +2,7 @@
 import { defaultHabits, type Family } from "./family";
 import { normalizeFamily } from "./migrate";
 
+/** A family with no children, for tests. */
 export function emptyFamily(): Family {
   return normalizeFamily({
     email: "p@example.com", parentName: "Pat", children: [],

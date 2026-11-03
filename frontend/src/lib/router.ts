@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const parse = () => window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
 
+/** The current route as parts ("#/kid/abc" -> ["kid", "abc"]); re-renders when the address changes. */
 export function useRoute(): string[] {
   const [route, setRoute] = useState(parse);
   useEffect(() => {
@@ -19,6 +20,7 @@ export function useRoute(): string[] {
   return route;
 }
 
+/** Navigates to a route, e.g. go("/parent"). */
 export function go(path: string): void {
   window.location.hash = path.startsWith("/") ? path : `/${path}`;
 }

@@ -20,6 +20,8 @@ CREW_ROLE = re.compile(
 
 
 class Settings(BaseSettings):
+    """Every setting, read from environment variables or `.env`; see the module docstring for the checks at startup."""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql://hq_dev@127.0.0.1:55432/habitquest"

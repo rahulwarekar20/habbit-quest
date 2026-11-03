@@ -38,11 +38,17 @@ export interface Habit extends QuestDef {
   id: HabitId;
 }
 
+/** Youngest age the app is for. */
 export const MIN_AGE = 3;
+/** Oldest age the app is for. */
 export const MAX_AGE = 13;
 
 const routine = { tier: 1 as Tier, category: "routine" as Category, ages: [MIN_AGE, MAX_AGE] as [number, number], routine: true };
 
+/**
+ * The six daily routine habits every family starts with (wake-up, meals, homework, screen time, bedtime), with
+ * the times the parent sets.
+ */
 export const HABITS: Habit[] = [
   {
     ...routine,
@@ -106,11 +112,16 @@ export const HABITS: Habit[] = [
   },
 ];
 
+/** The routine habits by id. */
 export const HABIT_BY_ID = Object.fromEntries(HABITS.map((h) => [h.id, h])) as Record<HabitId, Habit>;
 
 type LibraryEntry = Omit<QuestDef, "setting" | "routine">;
 const bonus = (q: LibraryEntry): QuestDef => ({ ...q, setting: { kind: "none" }, routine: false });
 
+/**
+ * Picture and wording for the catalog's bonus quests, by the backend's habit id. The backend owns the catalog;
+ * this supplies the emoji, category and kid-facing text the kid screens draw.
+ */
 export const LIBRARY: QuestDef[] = [
   // ── Tier 1: small, concrete steps (open from the start) ──
   bonus({ id: "brush-teeth", tier: 1, category: "health", emoji: "🪥", ages: [3, 13], parentTitle: "Brush teeth morning and night", description: "Two minutes, twice a day, without a battle.", kidTitle: "Sparkly teeth", kidHint: "Brush in the morning and at night" }),
@@ -152,14 +163,22 @@ export const LIBRARY: QuestDef[] = [
   bonus({ id: "plan-tomorrow", tier: 3, category: "learning", emoji: "🗓️", ages: [8, 13], parentTitle: "Plan for tomorrow", description: "Clothes picked and tomorrow's plan checked the evening before.", kidTitle: "Tomorrow planner", kidHint: "Pick your clothes and plan tomorrow" }),
 ];
 
+/** Routine habits and bonus quests together. */
 export const ALL_QUESTS: QuestDef[] = [...HABITS, ...LIBRARY];
+/**
+ * Any routine habit or bonus quest by id; undefined for a family's custom habit (those come from the backend).
+ */
 export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(ALL_QUESTS.map((q) => [q.id, q]));
+/** The ids of the bonus quests. */
 export const LIBRARY_IDS = LIBRARY.map((q) => q.id);
 
+/** True for one of the six routine habits (which have their own hand-drawn pictures). */
 export const isHabitId = (id: string): id is HabitId => id in HABIT_BY_ID;
 
+/** True when a quest suits a child of this age. */
 export const fitsAge = (q: QuestDef, age: number) => age >= q.ages[0] && age <= q.ages[1];
 
+/** Display names for quest categories. */
 export const CATEGORY_LABEL: Record<Category, string> = {
   routine: "Daily routine", sleep: "Sleep", health: "Healthy body", learning: "Learning", home: "Helping at home",
   kindness: "Kindness", feelings: "Feelings", active: "Active play", screen: "Screen balance",

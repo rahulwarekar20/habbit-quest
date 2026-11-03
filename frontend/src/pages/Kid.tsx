@@ -37,6 +37,7 @@ import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound, LockIcon } from "../components/KidChrome";
 import { QuestCard } from "../components/QuestCard";
 
+/** "Who's playing?" (#/kid): the children of this family; one with a kid PIN asks for it. */
 export function KidPicker() {
   const { family } = useStore();
   const fam = family!;
@@ -103,6 +104,9 @@ interface Celebrating {
   unlocks: string[];
 }
 
+/**
+ * A child's quests for today (#/kid/:child), with the journey, chest, surprises, check-in and celebrations.
+ */
 export function KidQuests({ childId }: { childId: string }) {
   const { family, update } = useStore();
   const fam = family!;

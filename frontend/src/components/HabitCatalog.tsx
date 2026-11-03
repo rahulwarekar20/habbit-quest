@@ -40,6 +40,9 @@ export function suits(h: CatalogHabit, show: string, age: number, unlockedTier =
   return h.min_age <= range.max && h.max_age >= range.min;
 }
 
+/**
+ * The Add quests panel for one child (see above). `onPlan` receives the plan after a habit is added or removed.
+ */
 export default function HabitCatalog({ child, familyId, plan, onPlan }: {
   child: Child;
   familyId: string;

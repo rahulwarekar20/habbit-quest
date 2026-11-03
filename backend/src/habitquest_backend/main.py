@@ -78,6 +78,9 @@ HABIT_COLUMNS = "id,goal_id,title,description,kid_title,kid_hint,icon,anchor,min
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    """Builds the API with `settings` (from the environment when None): CORS, health checks, the development
+    login when enabled, the catalog endpoints and every feature's router. Tests call it with their own settings.
+    """
     settings = settings or Settings()
     application = FastAPI(
         title="HabitQuest backend",

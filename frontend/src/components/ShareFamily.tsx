@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { errorText, newLoginCode, type ApiFamily } from "../lib/api";
 import { useStore } from "../lib/store";
 
+/** The address a family code's QR code opens: this app's join page for that code. */
 export const joinLink = (code: string) => `${window.location.origin}${window.location.pathname}#/join/${code}`;
 const spaced = (code: string) => `${code.slice(0, 4)} ${code.slice(4)}`;
 
+/** The family code and its QR code for a child's own device, with Share link and New code. */
 export default function ShareFamily({ family }: { family: ApiFamily }) {
   const { setServer } = useStore();
   const [qr, setQr] = useState<string | null>(null);

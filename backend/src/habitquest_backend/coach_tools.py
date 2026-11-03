@@ -33,6 +33,8 @@ class Snapshot:
 
 @dataclass
 class Change:
+    """A proposed change to a habit already in the plan; a caregiver approves it with the PIN."""
+
     habit_id: str
     kind: Action
     cue_time: str | None
@@ -50,11 +52,16 @@ class Turn:
 
 
 class Pick(BaseModel):
+    """One habit the coach recommends, with its reason."""
+
     habit_id: str
     reason: str = Field(description="One sentence linking this habit to the parent's problem")
 
 
 def build_tools(snapshot: Snapshot, turn: Turn) -> list[BaseTool]:
+    """The single-agent coach's tools, bound to this turn's snapshot (read) and `turn` (where results are
+    collected). None of them can change the database.
+    """
     titles = {h["id"]: h["title"] for goal in snapshot.goals for h in goal.habits}
 
     @tool

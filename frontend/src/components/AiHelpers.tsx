@@ -36,6 +36,10 @@ function describe(s: Suggestion): string {
   return `${verb} "${s.title}" for ${s.child_name}`;
 }
 
+/**
+ * The dashboard's AI section: suggested changes waiting for a decision, the coach link, the weekly review and
+ * quest planner cards, and the buddy-talk switch. `onPlanSaved` runs after a suggestion changes a plan.
+ */
 export default function AiHelpers({ family, onPlanSaved }: { family: Family; onPlanSaved: () => void }) {
   const { server } = useStore();
   const familyId = server!.id;

@@ -30,10 +30,13 @@ BLOCKED = "Please reword this habit: kids will read it, so keep it kind and free
 
 
 def is_custom(habit_id: str) -> bool:
+    """True for a family's own habit (its id starts with "my-"), false for a catalog habit."""
     return habit_id.startswith(CUSTOM_PREFIX)
 
 
 class CustomHabit(StrictModel):
+    """The request body of `POST /v1/families/{family_id}/habits`, `PUT /v1/habits/{habit_id}`."""
+
     goal_id: str = Field(
         min_length=1, max_length=40, description="The goal it belongs to, from GET /v1/goals"
     )

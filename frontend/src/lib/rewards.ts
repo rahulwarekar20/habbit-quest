@@ -1,10 +1,12 @@
 /** Labels for the reward shop and the buddy accessories found in treasure chests. Their rules live on the backend. */
 import type { RewardKind } from "./api";
 
+/** Display names for the kinds of reward in the shop. */
 export const REWARD_KIND_LABEL: Record<RewardKind, string> = {
   screen: "Screen time", privilege: "Privilege", outing: "Family fun", toy: "Toy or treat", mystery: "Mystery",
 };
 
+/** Things a child can buy for their buddy in the wardrobe. */
 export const ACCESSORIES = [
   { id: "party-hat", name: "Party hat" },
   { id: "crown", name: "Golden crown" },

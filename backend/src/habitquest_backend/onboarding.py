@@ -34,12 +34,15 @@ Days = Annotated[list[Day], Field(min_length=1, max_length=7)]
 
 
 def unique(values: list | None) -> list | None:
+    """A validator that refuses lists with repeated items."""
     if values is not None and len(set(values)) != len(values):
         raise ValueError("List items must be unique")
     return values
 
 
 class ChildInput(StrictModel):
+    """The request body of `POST /v1/families/{family_id}/children`."""
+
     name: str = Field(min_length=1, max_length=40)
     age: int = Field(ge=3, le=13)
     buddy: Buddy = "fox"
@@ -49,6 +52,8 @@ class ChildInput(StrictModel):
 
 
 class ChildUpdate(StrictModel):
+    """The request body of `PATCH /v1/children/{child_id}`."""
+
     name: str | None = Field(default=None, min_length=1, max_length=40)
     age: int | None = Field(default=None, ge=3, le=13)
     buddy: Buddy | None = None
@@ -59,10 +64,14 @@ class ChildUpdate(StrictModel):
 
 
 class PainPointInput(StrictModel):
+    """The request body of `POST /v1/children/{child_id}/pain-points`."""
+
     text: str = Field(min_length=5, max_length=2000, description="The problem, in the parent's own words")
 
 
 class PlanHabit(StrictModel):
+    """One habit in `PUT /v1/children/{child_id}/plan`: its id, and optionally its time and days."""
+
     habit_id: str
     cue_time: Time | None = None
     days: Days | None = None
@@ -71,6 +80,8 @@ class PlanHabit(StrictModel):
 
 
 class PlanInput(StrictModel):
+    """The request body of `PUT /v1/children/{child_id}/plan`."""
+
     goals: list[str] = Field(max_length=7, description="Goal ids to work on; others are dropped")
     habits: list[PlanHabit] = Field(max_length=MAX_ACTIVE_HABITS)
 
@@ -84,6 +95,8 @@ class PlanInput(StrictModel):
 
 
 class ChildHabitUpdate(StrictModel):
+    """The request body of `PATCH /v1/child-habits/{child_habit_id}`."""
+
     cue_time: Time | None = None
     days: Days | None = None
     status: Literal["active", "paused", "removed"] | None = None
@@ -122,6 +135,9 @@ def candidates(conn, age: int, tier: int) -> list[Candidate]:
 
 
 def plan_view(conn, child_id: UUID) -> dict:
+    """A child's plan as the API returns it: progress, suggested and active goals with the habits the child can
+    pick for each, and current habits with their time, days and status.
+    """
     child = one(conn, "SELECT id,age FROM hq.children WHERE id=%s", (child_id,))
     level = progress(conn, child_id)
     goals = conn.execute(

@@ -1,6 +1,7 @@
 /** Choosing habits for a child's plan: what starts ticked, and what a save sends. */
 import { putPlan, updateChildHabit, type Option, type Plan, type PlanGoal, type PlanInput } from "./api";
 
+/** Most quests a child can have in their plan at once (the backend enforces the same limit). */
 export const MAX_HABITS = 6;
 
 /** Current habits (paused ones too), then recommended options, up to the limit. */

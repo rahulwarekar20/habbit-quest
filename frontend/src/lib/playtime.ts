@@ -5,9 +5,12 @@
  */
 import type { Child, Family } from "./family";
 
+/** Daily kid-mode time limits a parent can choose, in minutes (0 means no limit). */
 export const APP_LIMIT_OPTIONS = [0, 15, 20, 30, 45, 60]; // 0 = no limit
+/** How long before the limit the child sees a "time is nearly up" warning. */
 export const WARN_SECONDS = 120;
 
+/** Seconds of kid mode this child has used on this day. */
 export const appUsedSeconds = (child: Child, day: string) => child.appSeconds[day] ?? 0;
 
 /** Today's allowance in minutes (limit plus any parent extension), or null when there is no limit. */

@@ -13,6 +13,7 @@ interface Props {
   title?: string;
 }
 
+/** The four-digit PIN prompt (see above), with the `reason` the PIN is needed. */
 export default function PinDialog({ reason, onSubmit, eyebrow = "Grown-ups only", title = "Enter your parent PIN" }: Props) {
   const [pin, setPin] = useState("");
   const [wrong, setWrong] = useState<string | null>(null);

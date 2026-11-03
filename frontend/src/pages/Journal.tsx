@@ -11,6 +11,7 @@ import { KidBar, KidLapsed, NotFound } from "../components/KidChrome";
 
 const MEDAL = ["", "Bronze", "Silver", "Gold"];
 
+/** A child's field journal (#/journal/:child). */
 export default function Journal({ childId }: { childId: string }) {
   const { family } = useStore();
   const child = family!.children.find((c) => c.id === childId);

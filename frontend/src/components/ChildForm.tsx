@@ -4,9 +4,11 @@ import { ROUTINE_PARTS, errorText, type ApiChild, type Buddy as BuddyName, type 
 import { MAX_AGE, MIN_AGE } from "../lib/habits";
 import Buddy, { BUDDIES } from "./Buddy";
 
+/** Display names for the parts of a child's day. */
 export const ROUTINE_LABEL: Record<RoutinePart, string> = {
   morning: "Morning", midday: "Midday", after_school: "After school", evening: "Evening", bedtime: "Bedtime",
 };
+/** Start times suggested for a new child's day. */
 export const DEFAULT_ROUTINE: RoutineTimes = { morning: "07:00", midday: "12:30", after_school: "16:00", evening: "18:00", bedtime: "20:00" };
 
 const TIER_CHOICES = [
@@ -14,6 +16,7 @@ const TIER_CHOICES = [
   { value: 2, label: "Up to medium quests" }, { value: 3, label: "All quests" },
 ];
 
+/** One time box per part of the day; clearing a box removes that time. */
 export function RoutineFields({ times, onChange }: { times: RoutineTimes; onChange: (times: RoutineTimes) => void }) {
   return (
     <div className="routine-times">

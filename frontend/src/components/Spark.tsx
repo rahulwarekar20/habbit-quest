@@ -1,5 +1,6 @@
 /** The Spark: a four-point gold star used for rewards, counters and celebrations. */
 
+/** The four-pointed gold Spark. */
 export function SparkIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">

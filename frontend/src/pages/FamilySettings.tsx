@@ -10,6 +10,7 @@ import { deleteFamily, errorText, exportFamily, getFamily, newInviteCode, remove
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
+/** The Family settings page (#/family). */
 export default function FamilySettings() {
   const { server } = useStore();
   const fam = server!;

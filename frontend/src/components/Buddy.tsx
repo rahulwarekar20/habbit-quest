@@ -4,6 +4,7 @@
  */
 import type { BuddyId } from "../lib/family";
 
+/** The four buddies a child can pick, with their display names. */
 export const BUDDIES: { id: BuddyId; name: string }[] = [
   { id: "fox", name: "Fox" },
   { id: "owl", name: "Owl" },
@@ -13,6 +14,7 @@ export const BUDDIES: { id: BuddyId; name: string }[] = [
 
 const BG: Record<BuddyId, string> = { fox: "#FFE3CC", owl: "#E6DEFF", bear: "#F3E2CF", bunny: "#FFE1EA" };
 
+/** A buddy's face, drawn in SVG at `size` pixels, wearing an accessory from the wardrobe if given. */
 export default function Buddy({ buddy, size = 56, accessory }: { buddy: BuddyId; size?: number; accessory?: string | null }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className="buddy" role="img" aria-label={buddy} overflow="visible">

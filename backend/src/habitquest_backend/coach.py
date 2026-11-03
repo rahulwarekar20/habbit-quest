@@ -99,26 +99,38 @@ FALLBACK_NONE = (
 
 
 class CoachMessage(StrictModel):
+    """The request body of `POST /v1/children/{child_id}/coach/messages`."""
+
     text: str = Field(min_length=1, max_length=2000, description="What the parent typed")
 
 
 class PinConfirm(StrictModel):
+    """The request body of `POST /v1/suggestions/{suggestion_id}/accept`."""
+
     pin: str | None = Field(
         default=None, pattern=r"^\d{4}$", description="Left out when the family has no PIN"
     )
 
 
 class FitVerdict(BaseModel):
+    """The single-agent coach's fit check: which suggested habits do not address the problem."""
+
     poor_fit: list[str] = Field(default_factory=list, description="Habit ids that do not address the problem")
 
 
 class CoachState(MessagesState):
+    """The single-agent coach graph's state: the messages, whether it has retried, and the poor fits."""
+
     retried: bool
     poor_fit: list[str]
 
 
 @dataclass
 class Reply:
+    """One coach answer: the text, the cards it suggests (`turn`), crisis guidance when the message raised a
+    risk (`safety`), how it was made (`mapped_by`) and whether no approved habit fitted.
+    """
+
     text: str
     turn: Turn = field(default_factory=Turn)
     safety: str | None = None
@@ -147,6 +159,9 @@ def tidy_reply(text: str, has_cards: bool) -> str:
 
 
 def build_graph(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
+    """The single-agent coach (COACH_ENGINE=agent): one model calling tools in a loop, then a fit check that can
+    send it back once. The crew engine is crew.build_crew.
+    """
     tools = build_tools(snapshot, turn)
     agent = create_agent(
         chat_model(settings, temperature=0.3),
@@ -196,6 +211,7 @@ def build_graph(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
 
 
 def age_band(age: int) -> str:
+    """The child's age group, as recorded in traces instead of the exact age."""
     return "3-5" if age < 6 else "6-8" if age < 9 else "9-13"
 
 
@@ -329,6 +345,9 @@ def spend_ai_call(conn, family_id: UUID, settings: Settings) -> None:
 
 
 def take_snapshot(conn, child: dict) -> Snapshot:
+    """Everything a coach turn may read about a child, gathered in one short transaction: age, unlocked catalog,
+    plan, recent approvals, check-ins and habits already shown. Custom habits are named only by their goal.
+    """
     tier = progress(conn, child["id"])["unlocked_tier"]
     plan = {
         row["habit_id"]: {"title": row["title"], "cue_time": row["cue_time"], "status": row["status"]}
@@ -364,6 +383,7 @@ def take_snapshot(conn, child: dict) -> Snapshot:
 
 
 def suggestions_view(conn, where: str, params: tuple) -> list[dict]:
+    """Suggestions still waiting for a decision, with their child and habit, for the given filter."""
     return conn.execute(
         "SELECT s.id,s.child_id,k.name AS child_name,s.source,s.kind,s.habit_id,h.title,h.icon,h.tier,"
         "to_char(s.cue_time,'HH24:MI') AS cue_time,s.reason,s.created_at FROM hq.ai_suggestions s"
@@ -389,6 +409,7 @@ def save_suggestion(
 
 
 def thread_view(conn, child_id: UUID) -> dict:
+    """A child's coach conversation (without app notes) and the suggestions waiting for that child."""
     return {
         "messages": conn.execute(
             "SELECT id,role,content,sources,no_habit_match,created_at FROM hq.coach_messages WHERE child_id=%s"

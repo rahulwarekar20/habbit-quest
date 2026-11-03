@@ -6,6 +6,7 @@ import { Coach } from "../components/Coach";
 import { Footer, ParentHeader } from "../components/Headers";
 import { useStore } from "../lib/store";
 
+/** The Habit coach page (#/coach[/:child]). */
 export default function CoachPage({ childId }: { childId?: string }) {
   const { family } = useStore();
   const fam = family!;

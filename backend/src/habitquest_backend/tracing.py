@@ -66,6 +66,7 @@ def scrub(value: Any, names: Iterable[str], keep_text: bool) -> Any:
 
 
 def steps(run: Run) -> Iterator[Run]:
+    """A traced run and every run beneath it, depth first."""
     yield run
     for child in run.child_runs:
         yield from steps(child)
@@ -73,14 +74,17 @@ def steps(run: Run) -> Iterator[Run]:
 
 @lru_cache(maxsize=1)
 def client(url: str, key: str) -> Client:
+    """One LangSmith client per endpoint and key."""
     return Client(api_url=url, api_key=key)
 
 
 def start_trace(settings: Settings) -> RunCollectorCallbackHandler | None:
+    """A collector for this turn's steps when coach tracing is on; None otherwise."""
     return RunCollectorCallbackHandler() if settings.trace_coach else None
 
 
 def keeps_text(settings: Settings, *, wanted: bool) -> bool:
+    """Whether a trace keeps its redacted text: always when `wanted` (failures, retries), else a sample."""
     return wanted or random.random() < settings.trace_sample  # noqa: S311
 
 

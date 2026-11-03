@@ -43,10 +43,13 @@ CHILD_EXPORT = {
 
 
 class StrictModel(BaseModel):
+    """Base for request bodies: unknown fields are refused (422) and text is trimmed."""
+
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
 def valid_timezone(value: str | None) -> str | None:
+    """Accepts an IANA time zone name ("Europe/London") or None; anything else is a validation error."""
     try:
         if value is not None:
             ZoneInfo(value)
@@ -56,15 +59,21 @@ def valid_timezone(value: str | None) -> str | None:
 
 
 class GoogleLogin(StrictModel):
+    """The request body of `POST /v1/auth/google`."""
+
     credential: str = Field(min_length=20, max_length=4096, description="The ID token from Google's button")
 
 
 class CaregiverInput(StrictModel):
+    """What a caregiver says about themselves: their name in the family and their role."""
+
     display_name: str = Field(min_length=1, max_length=40, description="How the family sees this caregiver")
     role: Role
 
 
 class FamilyCreate(CaregiverInput):
+    """The request body of `POST /v1/families`."""
+
     name: str = Field(min_length=1, max_length=60)
     timezone: str = "UTC"
     pin: Pin | None = None
@@ -73,6 +82,8 @@ class FamilyCreate(CaregiverInput):
 
 
 class FamilyUpdate(StrictModel):
+    """The request body of `PATCH /v1/families/{family_id}`."""
+
     name: str | None = Field(default=None, min_length=1, max_length=60)
     timezone: str | None = None
 
@@ -80,19 +91,27 @@ class FamilyUpdate(StrictModel):
 
 
 class JoinInput(CaregiverInput):
+    """The request body of `POST /v1/families/join`."""
+
     invite_code: str = Field(min_length=4, max_length=20)
 
 
 class CaregiverUpdate(StrictModel):
+    """The request body of `PATCH /v1/families/{family_id}/caregivers/me`."""
+
     display_name: str | None = Field(default=None, min_length=1, max_length=40)
     role: Role | None = None
 
 
 class PinInput(StrictModel):
+    """The request body of `PUT /v1/children/{child_id}/kid-pin`, `POST /v1/children/{child_id}/kid-session`."""
+
     pin: Pin
 
 
 class PinChange(StrictModel):
+    """The request body of `PUT /v1/families/{family_id}/pin`."""
+
     pin: Pin
     current_pin: Pin | None = Field(
         default=None, description="The PIN being replaced; required when there is one"
@@ -106,10 +125,13 @@ class FamilyPin(StrictModel):
 
 
 class KidLogin(PinInput):
+    """The request body of `POST /v1/kid-login/{code}`."""
+
     child_id: UUID
 
 
 def invite_code() -> str:
+    """A random 8-character grown-up invite code from an alphabet without look-alike characters."""
     return "".join(secrets.choice(INVITE_ALPHABET) for _ in range(8))
 
 
@@ -119,6 +141,7 @@ def clean_code(code: str) -> str:
 
 
 def family_view(conn, family_id: UUID) -> dict:
+    """A family as the API returns it: its details, whether it has a PIN (never the hash), and its caregivers."""
     family = one(
         conn,
         "SELECT id,name,timezone,invite_code,login_code,pin_hash IS NOT NULL AS has_pin,created_at"
@@ -133,6 +156,7 @@ def family_view(conn, family_id: UUID) -> dict:
 
 
 def token_response(token: str, minutes: int) -> dict:
+    """The OAuth2-style body for a newly issued token."""
     return {"access_token": token, "token_type": "bearer", "expires_in": minutes * 60}
 
 

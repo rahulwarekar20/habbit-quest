@@ -21,6 +21,8 @@ Limit = Annotated[int, Query(ge=1, le=200, description="How many entries, newest
 
 
 class CheckinInput(StrictModel):
+    """The request body of `POST /v1/kid/checkins`."""
+
     mood: Literal["great", "good", "okay", "hard"]
     hardest: str | None = None
     favorite: str | None = None
@@ -36,6 +38,8 @@ class CheckinInput(StrictModel):
 
 
 class SurpriseInput(StrictModel):
+    """The request body of `POST /v1/families/{family_id}/surprises`."""
+
     kind: Literal["note", "double"]
     child_id: UUID | None = Field(default=None, description="Leave out for every child")
     message: str = Field(default="", max_length=140)

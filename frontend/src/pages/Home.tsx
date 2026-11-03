@@ -20,6 +20,7 @@ const STEPS = [
   { title: "Sparkle!", text: "A Spark lands in their jar, and Sparks unlock new worlds." },
 ];
 
+/** The public home page (#/). */
 export default function Home() {
   return (
     <div className="page page--home">

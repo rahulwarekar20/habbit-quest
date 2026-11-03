@@ -152,6 +152,7 @@ def world_at(sparks: int) -> tuple[int, dict]:
 
 
 def next_landmark(sparks: int) -> dict | None:
+    """The next landmark a child reaches with more Sparks, with its world; None when all are reached."""
     for world in WORLDS:
         for mark in world["landmarks"]:
             if mark["sparks"] > sparks:
@@ -180,10 +181,12 @@ def progress(conn, child_id: UUID) -> dict:
 
 
 def star_targets(days_a_week: int) -> tuple[int, int, int]:
+    """Approvals needed for each of a quest's three stars; quests done on fewer days a week need fewer."""
     return RARE_STAR_APPROVALS if days_a_week < RARE_DAYS else STAR_APPROVALS
 
 
 def stars_for(approvals: int, targets: tuple[int, int, int] = STAR_APPROVALS) -> int:
+    """How many stars (0-3) a quest has earned with this many approvals."""
     return sum(approvals >= needed for needed in targets)
 
 
@@ -204,6 +207,7 @@ def quest_stars(conn, child_id: UUID) -> list[dict]:
 
 
 def journey_view(conn, child_id: UUID) -> dict:
+    """A child's journey as the API returns it: progress, the worlds, landmarks found, and stars per quest."""
     found = conn.execute("SELECT discoveries FROM hq.child_extras WHERE child_id=%s", (child_id,)).fetchone()[
         "discoveries"
     ]

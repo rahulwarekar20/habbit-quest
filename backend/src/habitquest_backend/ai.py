@@ -60,6 +60,8 @@ class Candidate:
 
 @dataclass
 class Mapping:
+    """The result of mapping a pain point to goals, and how it was made (ai, keywords or manual)."""
+
     mapped_by: str  # ai | keywords | manual
     goals: list[tuple[str, str]] = field(default_factory=list)  # (goal_id, reason), most relevant first
     recommended: dict[str, list[str]] = field(default_factory=dict)  # goal_id -> habit ids
@@ -67,12 +69,16 @@ class Mapping:
 
 
 class GoalPick(BaseModel):
+    """One goal the model picked, with its reason and recommended habits (checked against the catalog)."""
+
     goal_id: str
     reason: str = Field(default="", max_length=400)
     recommended_habits: list[str] = Field(default_factory=list, max_length=10)
 
 
 class Answer(BaseModel):
+    """The model's whole structured answer for a pain point."""
+
     at_risk: bool = False
     goals: list[GoalPick] = Field(default_factory=list, max_length=10)
 
@@ -134,6 +140,9 @@ def checked(answer: Answer, candidates: list[Candidate]) -> Mapping:
 
 
 def map_pain_point(settings: Settings, age: int, text: str, candidates: list[Candidate]) -> Mapping:
+    """Maps a parent's pain point to 1-3 catalog goals: the risk screen first, then the model (or the fake
+    stand-in), checked against `candidates`; keyword matching when the model fails, manual when nothing matches.
+    """
     if RISK.search(text):
         return Mapping("manual", safety=SAFETY_GUIDANCE)
     try:

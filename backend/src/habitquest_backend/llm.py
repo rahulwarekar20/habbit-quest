@@ -19,6 +19,7 @@ def shared_client(timeout: float) -> httpx.Client:
 
 
 def http_client(settings: Settings) -> httpx.Client:
+    """The shared HTTP client for model calls, with this configuration's timeout. Tests replace this function."""
     return shared_client(settings.ai_timeout_seconds)
 
 

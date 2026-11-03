@@ -75,6 +75,8 @@ BUDDY_FALLBACK = {
 
 
 class ProposedChange(BaseModel):
+    """One change the planner or reviewer proposes for a child (by label), checked before it is saved."""
+
     child: str = Field(description="The child's label, e.g. Child A")
     habit_id: str
     action: Literal["add", "retime", "pause", "resume", "remove"]
@@ -83,18 +85,24 @@ class ProposedChange(BaseModel):
 
 
 class PlanAnswer(BaseModel):
+    """The quest planner's structured answer."""
+
     summary: str = Field(description="2-3 warm sentences describing the plan")
     tips: list[str] = Field(default_factory=list, description="Up to 3 short, practical tips")
     changes: list[ProposedChange] = Field(default_factory=list, description="At most 4 changes")
 
 
 class ChildNote(BaseModel):
+    """The weekly review's note on one child."""
+
     child: str = Field(description="The child's label, e.g. Child A")
     wins: str = Field(description="One specific win from this week")
     watch: str = Field(description="One thing to keep an eye on, or 'Nothing to worry about'")
 
 
 class ReviewAnswer(BaseModel):
+    """The weekly review's structured answer."""
+
     headline: str = Field(description="One upbeat sentence summing up the week")
     children: list[ChildNote] = Field(default_factory=list)
     patterns: list[str] = Field(default_factory=list, description="Up to 3 patterns with evidence")
@@ -102,6 +110,8 @@ class ReviewAnswer(BaseModel):
 
 
 class BuddyRequest(StrictModel):
+    """The request body of `POST /v1/kid/buddy-line`."""
+
     event: Literal["greet", "submitted", "celebrate"]
 
 
@@ -138,6 +148,9 @@ class FamilyView:
 
 
 def weekly_counts(conn, child_id: UUID) -> dict:
+    """Approved completions per habit this week and the week before, for the AI helpers. Custom habits are named
+    only by their goal.
+    """
     rows = conn.execute(
         f"SELECT {AI_TITLE} AS title,count(*) FILTER (WHERE c.day>hq.child_today(%s)-7) AS this_week,"
         "count(*) FILTER (WHERE c.day<=hq.child_today(%s)-7) AS week_before"
@@ -149,6 +162,9 @@ def weekly_counts(conn, child_id: UUID) -> dict:
 
 
 def family_view(conn, family_id: UUID) -> FamilyView:
+    """The family as the AI helpers see it: children by label ("Child A"), each child's snapshot and weekly
+    counts, and how to put real names back. 409 when the family has no children yet.
+    """
     children = conn.execute(
         "SELECT id,family_id,name,age FROM hq.children WHERE family_id=%s ORDER BY created_at,id LIMIT %s",
         (family_id, len(LABELS)),
@@ -182,6 +198,7 @@ def checked_changes(view: FamilyView, changes: list[ProposedChange], limit: int)
 
 
 def save_changes(conn, view: FamilyView, changes: list[ProposedChange], source: str) -> None:
+    """Saves proposed changes as suggestions for a caregiver to accept, with real names put back in the reasons."""
     for change in changes:
         cue = change.cue_time if change.action == "retime" else None
         reason = (
@@ -204,12 +221,14 @@ def ask[Answer: BaseModel](settings: Settings, schema: type[Answer], prompt: str
 
 
 def plan_for(settings: Settings, view: FamilyView) -> PlanAnswer:
+    """The quest planner's answer for the family (a fixed one in fake mode)."""
     if settings.ai_mode == "fake":
         return PlanAnswer(summary="Your plans look sensible for now. Keep going with what is working.")
     return ask(settings, PlanAnswer, PLANNER_PROMPT, view.facts())
 
 
 def review_for(settings: Settings, view: FamilyView) -> ReviewAnswer:
+    """The weekly review for the family (built from the counts in fake mode)."""
     if settings.ai_mode == "fake":
         notes = [
             ChildNote(
@@ -233,6 +252,7 @@ def restored_text(view: FamilyView, value):
 
 
 def report_row(conn, family_id: UUID, user: UUID, kind: str, result: dict) -> dict:
+    """Saves an AI report (plan or review) and returns it as the API shows it."""
     return one(
         conn,
         "INSERT INTO hq.ai_reports(family_id,kind,result,created_by) VALUES(%s,%s,%s,%s)"

@@ -48,6 +48,8 @@ BRACKET = re.compile(r"\[([^\[\]]*)\]")
 
 @dataclass(frozen=True)
 class Role:
+    """Which model an agent uses (large, small or the safety model) and how hard it reasons."""
+
     size: Size
     effort: Literal["low", "medium", "high"]
 
@@ -133,6 +135,8 @@ PLAIN_QUESTION = "Could you tell me a bit more about when this happens and what 
 
 
 class Triage(BaseModel):
+    """Triage's structured answer: what the parent needs, the problem in one sentence, searches, and a question."""
+
     intent: Intent
     problem: str = Field(description="One sentence stating the problem with everything learned so far")
     queries: list[str] = Field(description="Short searches for parenting guidance; empty for clarify")
@@ -140,15 +144,21 @@ class Triage(BaseModel):
 
 
 class Patterns(BaseModel):
+    """The progress analyst's structured answer."""
+
     patterns: list[str] = Field(description="Short observations the numbers support")
 
 
 class SafetyVerdict(BaseModel):
+    """The safety reviewer's structured answer: whether the text keeps the coaching rules, and which it breaks."""
+
     safe: bool
     problems: list[str] = Field(description="Each broken rule as its number and a few words")
 
 
 class CrewState(TypedDict):
+    """What the crew's steps pass along. LangGraph merges each step's returned keys into it."""
+
     messages: Annotated[list[AnyMessage], add_messages]
     retried: bool
     triage: Triage | None
@@ -204,6 +214,7 @@ def conversation(messages: list[AnyMessage]) -> str:
 
 
 def parent_words(messages: list[AnyMessage]) -> str:
+    """Everything the parent wrote in the conversation, without the app's status notes."""
     return " ".join(
         m.text for m in messages if isinstance(m, HumanMessage) and not m.text.startswith("[App]")
     )
@@ -470,6 +481,7 @@ def build_crew(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
 
 
 def initial_state(messages: Sequence[AnyMessage]) -> CrewState:
+    """The crew's starting state for a conversation."""
     return {
         "messages": list(messages),
         "retried": False,

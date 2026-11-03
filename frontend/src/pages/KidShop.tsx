@@ -16,6 +16,7 @@ import { applyExtras } from "../lib/sync";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound } from "../components/KidChrome";
 
+/** The kid shop and buddy wardrobe (#/shop/:child). */
 export default function KidShop({ childId }: { childId: string }) {
   const { family, update } = useStore();
   const fam = family!;

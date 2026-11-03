@@ -16,6 +16,10 @@ import { applyExtras, applyToday } from "./sync";
 
 const POLL_MS = 30_000;
 
+/**
+ * Everything a kid screen needs for today: the quests, journey, surprises and extras, read with the kid token
+ * (starting a kid session first when needed). Returns `submit` for "I did it!", and `lapsed`/`resume` for an expired session.
+ */
 export function useKidDay(childId: string, poll = false) {
   const { update, askPin, enterKidMode } = useStore();
   const [today, setToday] = useState<Today | null>(null);
