@@ -1,5 +1,9 @@
 name: backend-checks
-on: [push, pull_request]
+on:
+  push:
+    paths: ["backend/**", ".github/workflows/test.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/test.yml"]
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -14,6 +18,9 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U hq_dev -d hq_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
     env:
       DATABASE_URL: postgresql://hq_dev:local-ci-only@127.0.0.1:55432/hq_test
       TEST_DATABASE_URL: postgresql://hq_dev:local-ci-only@127.0.0.1:55432/hq_test
@@ -33,5 +40,5 @@ jobs:
         with:
           name: coverage
           path: |
-            coverage.xml
-            htmlcov/
+            backend/coverage.xml
+            backend/htmlcov/

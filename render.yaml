@@ -3,6 +3,7 @@ services:
   - type: web
     name: habitquest-api
     runtime: python
+    rootDir: backend         # the API lives in backend/; frontend changes don't redeploy it
     region: virginia
     plan: free
     branch: main
