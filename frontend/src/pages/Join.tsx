@@ -11,7 +11,7 @@ import { ApiError, errorText, findLoginFamily, type LoginFamily } from "../lib/a
 import { go } from "../lib/router";
 import { getKidLogin } from "../lib/storage";
 import { useStore } from "../lib/store";
-import { AuthLayout, GrownUpSignIn, JoinFamily, SidePanel } from "./Auth";
+import { AuthLayout, DevLogin, GrownUpSignIn, JoinFamily } from "./Auth";
 
 type Who = null | "kid" | "grown-up";
 
@@ -31,24 +31,23 @@ export default function Join({ code }: { code?: string }) {
     };
   }, [code]);
 
-  const side = <SidePanel title="Little habits. Big adventures." art="wake" />;
   if (!code || error) {
     return (
-      <AuthLayout side={side}>
+      <AuthLayout corner={<DevLogin />}>
         <CodeForm error={error} />
       </AuthLayout>
     );
   }
   if (!found) {
     return (
-      <AuthLayout side={side}>
+      <AuthLayout corner={<DevLogin />}>
         <p className="muted" role="status">Finding your family…</p>
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout side={side}>
+    <AuthLayout corner={<DevLogin />}>
       <div className="auth__head">
         <p className="eyebrow">{found.family.name}</p>
         <h1>{who === "kid" ? "Who are you?" : who === "grown-up" ? "Join as a grown-up" : "How are you joining?"}</h1>

@@ -1,30 +1,26 @@
 /**
- * Account pages. Login: Google sign-in, plus a development login when VITE_DEV_LOGIN=true.
+ * Account pages. Login: Google sign-in for grown-ups, or the family code for kids.
  * Welcome: first-time setup, either create a family or join one with an invite code, then
- * add the first child. Both share a split layout with a friendly illustrated panel.
+ * add the first child. Each is one centred card; the development login sits in the corner.
  */
 import { useState, type FormEvent, type ReactNode } from "react";
-import Buddy, { BUDDIES } from "../components/Buddy";
+import Buddy from "../components/Buddy";
 import { ChildForm } from "../components/ChildForm";
 import GoogleButton from "../components/GoogleButton";
-import HabitArt from "../components/HabitArt";
 import Logo from "../components/Logo";
-import { SparkIcon } from "../components/Spark";
 import { addChild, createFamily, errorText, joinFamily, type ChildInput, type Role } from "../lib/api";
 import { isValidPin } from "../lib/auth";
 import { go } from "../lib/router";
 import { useStore } from "../lib/store";
 
-export function AuthLayout({ children, side }: { children: ReactNode; side: ReactNode }) {
+export function AuthLayout({ children, corner, wide = false }: { children: ReactNode; corner?: ReactNode; wide?: boolean }) {
   return (
     <div className="auth">
-      <div className="auth__form">
+      <header className="auth__bar">
         <Logo />
-        {children}
-      </div>
-      <aside className="auth__side" aria-hidden="true">
-        {side}
-      </aside>
+        {corner}
+      </header>
+      <main className={`auth__card ${wide ? "auth__card--wide" : ""}`}>{children}</main>
     </div>
   );
 }
@@ -34,74 +30,88 @@ export function AuthLayout({ children, side }: { children: ReactNode; side: Reac
 export function Login() {
   const { notice } = useStore();
   return (
-    <AuthLayout side={<SidePanel title="Welcome back, quest master" art="homework" />}>
+    <AuthLayout corner={<DevLogin />}>
       <div className="auth__head">
-        <p className="eyebrow">Sign in</p>
-        <h1>Good to see you</h1>
-        <p className="muted">Kids, use your family code. Grown-ups, sign in to set up your family or pick up where you left off.</p>
+        <h1>Welcome to HabbitQuest</h1>
+        <p className="muted">Sign in to set up your family or pick up where you left off.</p>
       </div>
       {notice && <p className="form-error">{notice}</p>}
-      <a className="kid-entry" href="#/join">
-        <span className="kid-entry__buddies" aria-hidden="true">
-          <Buddy buddy="fox" size={36} /><Buddy buddy="bunny" size={36} />
-        </span>
-        <span>
-          <b>I'm a kid</b>
-          <span className="muted">Sign in with your family code and your PIN</span>
-        </span>
-        <span className="kid-entry__go" aria-hidden="true">&rarr;</span>
-      </a>
-      <p className="eyebrow auth__or">Grown-ups</p>
-      <GrownUpSignIn />
+      <div className="auth__choices">
+        <GrownUpSignIn />
+        <div className="auth__divider" role="presentation"><span>or</span></div>
+        <a className="auth-choice" href="#/join">
+          <span className="auth-choice__buddies" aria-hidden="true"><Buddy buddy="fox" size={24} /><Buddy buddy="bunny" size={24} /></span>
+          I'm a kid
+        </a>
+      </div>
     </AuthLayout>
   );
 }
 
-/** Google sign-in, plus the development login when VITE_DEV_LOGIN=true. */
+/** Google sign-in for grown-ups. */
 export function GrownUpSignIn() {
-  const { signInGoogle, signInDev } = useStore();
+  const { signInGoogle } = useStore();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function signIn(credential: string) {
+    setBusy(true);
+    setError(null);
+    const err = await signInGoogle(credential);
+    setBusy(false);
+    if (err) setError(err);
+  }
+
+  return (
+    <>
+      <GoogleButton onCredential={(credential) => void signIn(credential)} />
+      {busy && <p className="muted" role="status">Signing you in…</p>}
+      {error && <p className="form-error">{error}</p>}
+    </>
+  );
+}
+
+/** The development login (VITE_DEV_LOGIN=true): a small button in the corner that opens a sign-in panel. */
+export function DevLogin() {
+  const { signInDev } = useStore();
+  const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("parent");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const devLogin = import.meta.env.VITE_DEV_LOGIN === "true";
+  if (import.meta.env.VITE_DEV_LOGIN !== "true") return null;
 
-  async function run(signIn: () => Promise<string | null>) {
+  async function submit(e: FormEvent) {
+    e.preventDefault();
     setBusy(true);
     setError(null);
-    const err = await signIn();
+    const err = await signInDev(username.trim(), password);
     setBusy(false);
     setPassword("");
     if (err) setError(err);
   }
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    void run(() => signInDev(username.trim(), password));
-  }
-
   return (
-    <>
-      <GoogleButton onCredential={(credential) => void run(() => signInGoogle(credential))} />
-      {busy && <p className="muted" role="status">Signing you in…</p>}
-      {error && <p className="form-error">{error}</p>}
-
-      {devLogin && (
-        <form className="form dev-login" onSubmit={submit}>
-          <p className="eyebrow">Development login</p>
+    <div className="dev-login">
+      <button type="button" className="dev-login__toggle" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        Developer login
+      </button>
+      {open && (
+        <form className="dev-login__panel" onSubmit={submit}>
           <label className="field">
             <span>Username</span>
-            <input required value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
+            <input id="dev-username" required value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
           </label>
           <label className="field">
             <span>Shared password</span>
-            <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+            <input id="dev-password" required autoFocus type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           </label>
-          <p className="hint">Use parent, or parent:anything for a separate test parent.</p>
-          <button className="btn btn--soft btn--block" disabled={busy}>Sign in for testing</button>
+          <p className="hint">parent, or parent:anything for a separate test parent.</p>
+          {error && <p className="form-error">{error}</p>}
+          <button className="btn btn--primary btn--sm btn--block" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         </form>
       )}
-    </>
+    </div>
   );
 }
 
@@ -124,7 +134,7 @@ export function Welcome() {
       go("/parent");
     }
     return (
-      <AuthLayout side={<SidePanel title="Calmer mornings start here" art="wake" />}>
+      <AuthLayout wide>
         <div className="auth__head">
           <p className="eyebrow">Step 2 of 2</p>
           <h1>Who's going on quests?</h1>
@@ -136,7 +146,7 @@ export function Welcome() {
   }
 
   return (
-    <AuthLayout side={<SidePanel title="Calmer mornings start here" art="wake" />}>
+    <AuthLayout wide>
       <div className="auth__head">
         <p className="eyebrow">Step 1 of 2</p>
         <h1>Set up your family</h1>
@@ -253,23 +263,5 @@ export function JoinFamily() {
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn--primary btn--lg btn--block" disabled={busy}>{busy ? "Joining…" : "Join family"}</button>
     </form>
-  );
-}
-
-export function SidePanel({ title, art }: { title: string; art: "wake" | "homework" }) {
-  return (
-    <div className="side-panel">
-      <div className="side-panel__card">
-        <HabitArt habit={art} />
-        <div className="side-panel__sparks">
-          <SparkIcon size={26} /> <SparkIcon size={18} /> <SparkIcon size={22} />
-        </div>
-      </div>
-      <h2>{title}</h2>
-      <p>Picture quests for kids. One-tap approvals for you. Sparks that unlock new worlds.</p>
-      <div className="side-panel__buddies">
-        {BUDDIES.map((b) => <Buddy key={b.id} buddy={b.id} size={48} />)}
-      </div>
-    </div>
   );
 }

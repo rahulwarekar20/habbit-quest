@@ -23,10 +23,7 @@ export function SiteHeader() {
           {family ? (
             <a className="btn btn--primary" href="#/parent">Open dashboard</a>
           ) : (
-            <>
-              <a className="btn btn--ghost" href="#/login">Sign in</a>
-              <a className="btn btn--primary" href="#/login">Get started</a>
-            </>
+            <a className="btn btn--primary" href="#/login">Get started</a>
           )}
         </div>
       </div>
