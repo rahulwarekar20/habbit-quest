@@ -1,8 +1,9 @@
 /**
- * Browse every habit by age group, and the family's own custom habits, from the Quest library.
- * Each habit says whether it can join this child's plan now (age, unlocked tier, six-quest limit),
- * and adding one keeps the rest of the plan as it is. Custom habits suit every age, open at tier 1,
- * and are never sent to the AI provider.
+ * "Add quests" in the Quest library: every catalog habit and the family's own, filtered by two
+ * dropdowns (goal, and who it suits: this child by default, or an age group). Each habit says
+ * whether it can join this child's plan now (age, unlocked tier, six-quest limit), and adding one
+ * keeps the rest of the plan as it is. Habits the coach recommended are tagged. Custom habits suit
+ * every age, open at tier 1, and are never sent to the AI provider.
  */
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
@@ -12,7 +13,8 @@ import {
 import { MAX_HABITS, savePlan, withHabit } from "../lib/plan";
 import HabitArt from "./HabitArt";
 
-const BANDS = [
+const AGES = [
+  { id: "all", label: "All ages", min: 3, max: 13 },
   { id: "3-5", label: "Ages 3–5", min: 3, max: 5 },
   { id: "6-8", label: "Ages 6–8", min: 6, max: 8 },
   { id: "9-13", label: "Ages 9–13", min: 9, max: 13 },
@@ -25,8 +27,18 @@ const PARTS: { id: RoutinePart; label: string }[] = [
   { id: "bedtime", label: "Bedtime" },
 ];
 const EMOJI = ["⭐", "🎹", "🐶", "🐱", "🪴", "🎨", "⚽", "🧩", "🧺", "🙏", "💧", "🚲"];
+const MINE = "mine";
 
 type Child = { id: string; name: string; age: number };
+
+/** Whether a habit passes the "Show" dropdown: ready for the child now ("ready": their age and unlocked
+ * tier), any habit for their age ("child"), or an age group. */
+export function suits(h: CatalogHabit, show: string, age: number, unlockedTier = 3): boolean {
+  if (show === "ready") return h.min_age <= age && age <= h.max_age && h.tier <= unlockedTier;
+  if (show === "child") return h.min_age <= age && age <= h.max_age;
+  const range = AGES.find((a) => a.id === show) ?? AGES[0];
+  return h.min_age <= range.max && h.max_age >= range.min;
+}
 
 export default function HabitCatalog({ child, familyId, plan, onPlan }: {
   child: Child;
@@ -37,7 +49,7 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
   const [catalog, setCatalog] = useState<CatalogHabit[] | null>(null);
   const [custom, setCustom] = useState<CatalogHabit[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [band, setBand] = useState(() => BANDS.find((b) => child.age <= b.max)!.id);
+  const [show, setShow] = useState("ready");
   const [goal, setGoal] = useState<string>("all");
   const [editing, setEditing] = useState<CatalogHabit | "new" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -59,16 +71,17 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
     };
   }, [familyId]);
 
-  useEffect(() => setBand(BANDS.find((b) => child.age <= b.max)!.id), [child.age]);
-
-  const range = BANDS.find((b) => b.id === band)!;
-  const inBand = useMemo(
-    () => (catalog ?? []).filter((h) => h.min_age <= range.max && h.max_age >= range.min),
-    [catalog, range],
-  );
-  const shown = inBand.filter((h) => goal === "all" || h.goal_id === goal);
-  const byGoal = groupBy(shown, (h) => h.goal_title);
-  const goalChoices = [...new Map(inBand.map((h) => [h.goal_id, h.goal_title])).entries()];
+  const recommended = useMemo(() => new Set(plan.goals.flatMap((g) => g.recommended_habit_ids)), [plan.goals]);
+  const groups = useMemo(() => {
+    const list: [string, CatalogHabit[]][] = [];
+    if ((goal === "all" || goal === MINE) && custom.length) list.push(["Your family's habits", custom]);
+    if (goal !== MINE) {
+      const kept = (catalog ?? []).filter((h) => (goal === "all" || h.goal_id === goal) && suits(h, show, child.age, plan.progress.unlocked_tier));
+      list.push(...groupBy(kept, (h) => h.goal_title).entries());
+    }
+    return list;
+  }, [catalog, custom, goal, show, child.age, plan.progress.unlocked_tier]);
+  const count = groups.reduce((n, [, habits]) => n + habits.length, 0);
 
   async function add(habit: CatalogHabit) {
     setBusy(habit.id);
@@ -110,101 +123,80 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
     else setNotice(wasNew ? `${habit.title} created.` : `${habit.title} saved.`);
   }
 
-  const status = (h: CatalogHabit) => standing(h, child, plan);
-
   return (
     <div className="catalog">
+      <div className="catalog__toolbar">
+        <label className="catalog__filter">
+          <span>Goal</span>
+          <select id="catalog-goal" value={goal} onChange={(e) => setGoal(e.target.value)}>
+            <option value="all">All goals</option>
+            {goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+            {custom.length > 0 && <option value={MINE}>Your family's habits</option>}
+          </select>
+        </label>
+        <label className="catalog__filter">
+          <span>Show</span>
+          <select id="catalog-show" value={show} onChange={(e) => setShow(e.target.value)} disabled={goal === MINE}>
+            <option value="ready">Ready for {child.name} now</option>
+            <option value="child">Everything for age {child.age}</option>
+            {AGES.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+          </select>
+        </label>
+        <span className="catalog__count muted">{catalog ? `${count} ${count === 1 ? "habit" : "habits"}` : "Loading…"}</span>
+        {editing === null && (
+          <button type="button" className="btn btn--soft btn--sm catalog__create" onClick={() => { setEditing("new"); setNotice(null); }}>
+            + Create your own
+          </button>
+        )}
+      </div>
+
       {error && <p className="form-error">{error}</p>}
       {notice && <p className="form-ok" role="status">{notice}</p>}
+      {editing !== null && (
+        <CustomHabitForm familyId={familyId} child={child} goals={goals} habit={editing === "new" ? null : editing}
+          canAdd={plan.habits.length < MAX_HABITS} onCancel={() => setEditing(null)} onSaved={saved} />
+      )}
 
-      <section className="catalog__block" aria-labelledby="family-habits">
-        <div className="catalog__head">
-          <div>
-            <h3 id="family-habits">Your family's habits</h3>
-            <p className="muted">Habits you make yourself, for any of your children. They stay private to your family and are never sent to the AI coach.</p>
-          </div>
-          {editing === null && (
-            <button type="button" className="btn btn--primary btn--sm" onClick={() => { setEditing("new"); setNotice(null); }}>
-              Create a habit
-            </button>
-          )}
-        </div>
-        {editing !== null && (
-          <CustomHabitForm familyId={familyId} child={child} goals={goals} habit={editing === "new" ? null : editing}
-            canAdd={plan.habits.length < MAX_HABITS} onCancel={() => setEditing(null)} onSaved={saved} />
-        )}
-        {custom.length === 0 && editing === null ? (
-          <p className="empty">No custom habits yet. Create one for something the catalog doesn't cover, like practising an instrument or feeding a pet.</p>
-        ) : (
+      {catalog && count === 0 && <p className="empty">Nothing matches. Try another goal or age.</p>}
+      {groups.map(([title, habits]) => (
+        <section key={title} className="catalog__goal" aria-label={title}>
+          <h4>{title}</h4>
           <div className="cat-grid">
-            {custom.map((h) => (
-              <HabitCard key={h.id} habit={h} status={status(h)} busy={busy === h.id} childName={child.name} onAdd={() => add(h)}>
-                <div className="lib-card__actions">
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setEditing(h); setNotice(null); }}>Edit</button>
-                  <ConfirmButton label="Delete" confirmLabel="Delete for good" disabled={busy === h.id} onConfirm={() => remove(h)} />
-                </div>
+            {habits.map((h) => (
+              <HabitCard key={h.id} habit={h} status={standing(h, child, plan)} busy={busy === h.id} childName={child.name}
+                recommended={recommended.has(h.id)} onAdd={() => add(h)}>
+                {h.id.startsWith("my-") && (
+                  <span className="cat-habit__more">
+                    <button type="button" className="link-button" onClick={() => { setEditing(h); setNotice(null); }}>Edit</button>
+                    <ConfirmButton label="Delete" confirmLabel="Delete for good" disabled={busy === h.id} onConfirm={() => remove(h)} />
+                  </span>
+                )}
               </HabitCard>
             ))}
           </div>
-        )}
-      </section>
-
-      <section className="catalog__block" aria-labelledby="all-habits">
-        <div className="catalog__head">
-          <div>
-            <h3 id="all-habits">All habits by age</h3>
-            <p className="muted">The pre-approved catalog. {child.name} is {child.age}, so {BANDS.find((b) => child.age <= b.max)!.label.toLowerCase()} opens first.</p>
-          </div>
-        </div>
-        <div className="about" role="tablist" aria-label="Age group">
-          {BANDS.map((b) => {
-            const count = (catalog ?? []).filter((h) => h.min_age <= b.max && h.max_age >= b.min).length;
-            return (
-              <button key={b.id} type="button" role="tab" aria-selected={b.id === band} className={`about__chip catalog__tab ${b.id === band ? "is-on" : ""}`}
-                onClick={() => { setBand(b.id); setGoal("all"); }}>
-                {b.label} <small>{catalog ? count : "…"}</small>
-              </button>
-            );
-          })}
-        </div>
-        <div className="catalog__filters" aria-label="Goal">
-          <button type="button" className={`chip chip--button ${goal === "all" ? "is-on" : ""}`} aria-pressed={goal === "all"} onClick={() => setGoal("all")}>All goals</button>
-          {goalChoices.map(([id, title]) => (
-            <button type="button" key={id} className={`chip chip--button ${goal === id ? "is-on" : ""}`} aria-pressed={goal === id} onClick={() => setGoal(id)}>{title}</button>
-          ))}
-        </div>
-        {!catalog && !error && <p className="empty">Loading the catalog…</p>}
-        {[...byGoal.entries()].map(([title, habits]) => (
-          <div key={title} className="catalog__goal">
-            <h4>{title} <span className="muted">{habits.length}</span></h4>
-            <div className="cat-grid">
-              {habits.map((h) => (
-                <HabitCard key={h.id} habit={h} status={status(h)} busy={busy === h.id} childName={child.name} onAdd={() => add(h)} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </section>
+        </section>
+      ))}
     </div>
   );
 }
 
 type Standing = { kind: "in" | "add" | "age" | "tier" | "full"; text: string };
 
-/** Whether this habit can join the child's plan now, and if not, why. */
+/** Whether this habit can join the child's plan now, and if not, why (short, for the row's right edge). */
 export function standing(h: CatalogHabit, child: Child, plan: Plan): Standing {
-  if (plan.habits.some((p) => p.habit_id === h.id)) return { kind: "in", text: `In ${child.name}'s quests` };
-  if (child.age < h.min_age || child.age > h.max_age) return { kind: "age", text: `For ages ${h.min_age}–${h.max_age}` };
+  if (plan.habits.some((p) => p.habit_id === h.id)) return { kind: "in", text: "Added" };
+  if (child.age < h.min_age || child.age > h.max_age) return { kind: "age", text: `Ages ${h.min_age}–${h.max_age}` };
   if (h.tier > plan.progress.unlocked_tier) return { kind: "tier", text: `Unlocks at tier ${h.tier}` };
-  if (plan.habits.length >= MAX_HABITS) return { kind: "full", text: `${child.name} has ${MAX_HABITS} quests` };
+  if (plan.habits.length >= MAX_HABITS) return { kind: "full", text: "Plan full" };
   return { kind: "add", text: "" };
 }
 
-function HabitCard({ habit, status, busy, childName, onAdd, children }: {
+function HabitCard({ habit, status, busy, childName, recommended = false, onAdd, children }: {
   habit: CatalogHabit;
   status: Standing;
   busy: boolean;
   childName: string;
+  recommended?: boolean;
   onAdd: () => void;
   children?: ReactNode;
 }) {
@@ -213,16 +205,20 @@ function HabitCard({ habit, status, busy, childName, onAdd, children }: {
       <HabitArt habit={habit.id} icon={habit.icon} className="cat-habit__art" />
       <div className="cat-habit__body">
         <b>{habit.title}</b>
-        <span className="muted">Tier {habit.tier} · {habit.points} pts · Ages {habit.min_age}–{habit.max_age}</span>
-        {habit.kid_title !== habit.title && <span className="cat-habit__kid">Kids see “{habit.kid_title}”</span>}
+        <span className="muted">
+          Tier {habit.tier} · {habit.points} pts{habit.min_age > 3 || habit.max_age < 13 ? ` · Ages ${habit.min_age}–${habit.max_age}` : ""}
+          {recommended && <span className="cat-habit__tag">Recommended</span>}
+        </span>
+        {children}
+      </div>
+      <div className="cat-habit__action">
         {status.kind === "add" ? (
-          <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={onAdd}>
-            {busy ? "Adding…" : `Add to ${childName}`}
+          <button type="button" className="btn btn--soft btn--sm" disabled={busy} onClick={onAdd} aria-label={`Add ${habit.title} to ${childName}`}>
+            {busy ? "Adding…" : "Add"}
           </button>
         ) : (
           <span className={`catalog__status catalog__status--${status.kind}`}>{status.text}</span>
         )}
-        {children}
       </div>
     </article>
   );
@@ -235,11 +231,11 @@ function ConfirmButton({ label, confirmLabel, disabled, onConfirm }: {
   onConfirm: () => void;
 }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <button type="button" className="btn btn--ghost btn--sm" disabled={disabled} onClick={() => setAsking(true)}>{label}</button>;
+  if (!asking) return <button type="button" className="link-button" disabled={disabled} onClick={() => setAsking(true)}>{label}</button>;
   return (
     <>
-      <button type="button" className="btn btn--danger btn--sm" disabled={disabled} onClick={onConfirm}>{confirmLabel}</button>
-      <button type="button" className="btn btn--ghost btn--sm" onClick={() => setAsking(false)}>Keep it</button>
+      <button type="button" className="link-button link-button--danger" disabled={disabled} onClick={onConfirm}>{confirmLabel}</button>
+      <button type="button" className="link-button" onClick={() => setAsking(false)}>Keep it</button>
     </>
   );
 }
@@ -281,7 +277,7 @@ function CustomHabitForm({ familyId, child, goals, habit, canAdd, onCancel, onSa
 
   return (
     <form className="form catalog__form" onSubmit={submit}>
-      <h4>{habit ? `Edit “${habit.title}”` : "Create a habit"}</h4>
+      <h4>{habit ? `Edit “${habit.title}”` : "Create your own habit"}</h4>
       <div className="field-row">
         <label className="field">
           <span>Habit</span>
@@ -330,7 +326,7 @@ function CustomHabitForm({ familyId, child, goals, habit, canAdd, onCancel, onSa
           <span>{canAdd ? `Add it to ${child.name}'s quests now` : `${child.name} already has ${MAX_HABITS} quests; remove one to add this`}</span>
         </label>
       )}
-      <p className="muted">Kids read this, so keep it kind and free of phone numbers, addresses or links. It suits every age and earns the points of a tier 1 quest.</p>
+      <p className="muted">Kids read this, so keep it kind and free of phone numbers, addresses or links. It suits every age and earns the points of a tier 1 quest. It stays private to your family and is never sent to the AI coach.</p>
       {error && <p className="form-error">{error}</p>}
       <div className="lib-card__actions">
         <button type="submit" className="btn btn--primary" disabled={busy || !form.title.trim() || !form.goal_id}>

@@ -1,15 +1,13 @@
 /**
- * Quest library (parent): a child's plan. The quests in it can be retimed, paused or removed one
- * at a time; goals and their options choose what's in the plan, up to six quests. Harder tiers
- * appear as the child levels up, and options already suit the child's age. Below, the whole catalog
- * by age group, and the family's own custom habits.
+ * Quest library (parent): a child's quests, up to six, each one row that can be retimed, rescheduled,
+ * paused or removed; below, "Add quests" filters the whole catalog and the family's own habits by
+ * goal and age. Harder tiers unlock as the child levels up.
  */
 import { useEffect, useState } from "react";
 import Buddy from "../components/Buddy";
 import HabitArt from "../components/HabitArt";
 import { Footer, ParentHeader } from "../components/Headers";
 import HabitCatalog from "../components/HabitCatalog";
-import PlanEditor from "../components/PlanEditor";
 import { errorText, getPlan, updateChildHabit, type DayName, type Plan, type PlanHabit } from "../lib/api";
 import { WORLDS } from "../lib/family";
 import { DAY_PRESETS, WEEK, presetFor, toggleDay } from "../lib/schedule";
@@ -23,14 +21,12 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
   const child = fam.children.find((c) => c.id === childId) ?? fam.children[0];
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const id = child?.id;
 
   useEffect(() => {
     if (!id) return;
     let live = true;
     setPlan(null);
-    setSaved(false);
     setError(null);
     getPlan(id).then((p) => live && setPlan(p)).catch((e) => live && setError(errorText(e)));
     return () => {
@@ -42,7 +38,6 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
 
   async function change(habit: PlanHabit, changes: Parameters<typeof updateChildHabit>[1]) {
     setError(null);
-    setSaved(false);
     try {
       setPlan(await updateChildHabit(habit.id, changes));
     } catch (e) {
@@ -59,7 +54,7 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
           <div>
             <h1>Quests for {child.name}</h1>
             <p className="lead">
-              Up to {MAX_HABITS} quests, chosen from goals. Harder tiers unlock as {child.name} levels up.
+              Up to {MAX_HABITS} quests. Harder tiers unlock as {child.name} levels up.
               Not sure where to start? <a href={`#/coach/${child.id}`}>Ask the habit coach</a>.
             </p>
           </div>
@@ -92,45 +87,36 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
                 )}
               </div>
               {plan.habits.length === 0 ? (
-                <p className="empty">No quests yet. Pick some below.</p>
+                <p className="empty">No quests yet. Add some below.</p>
               ) : (
-                <div className="lib-row">
+                <ul className="quest-rows">
                   {plan.habits.map((h) => (
-                    <article key={h.id} className={`lib-card is-added ${h.status === "paused" ? "is-paused" : ""}`}>
-                      <HabitArt habit={h.habit_id} icon={h.icon} />
-                      <div className="lib-card__body">
+                    <li key={h.id} className={`quest-row ${h.status === "paused" ? "is-paused" : ""}`}>
+                      <HabitArt habit={h.habit_id} icon={h.icon} className="quest-row__art" />
+                      <div className="quest-row__name">
                         <b>{h.title}</b>
                         <span className="muted">Tier {h.tier} · {h.points} pts{h.status === "paused" ? " · Paused" : ""}</span>
-                        <label className="setting">
-                          <span>Time</span>
-                          <input type="time" defaultValue={h.cue_time} key={h.cue_time} aria-label={`Time for ${h.title}`}
-                            onBlur={(e) => { if (e.target.value && e.target.value !== h.cue_time) void change(h, { cue_time: e.target.value }); }} />
-                        </label>
-                        <DayPicker title={h.title} days={h.days} onChange={(days) => change(h, { days })} />
-                        <div className="lib-card__actions">
-                          <button className="btn btn--ghost btn--sm" onClick={() => change(h, { status: h.status === "paused" ? "active" : "paused" })}>
-                            {h.status === "paused" ? "Resume" : "Pause"}
-                          </button>
-                          <button className="btn btn--ghost btn--sm" onClick={() => change(h, { status: "removed" })}>Remove</button>
-                        </div>
                       </div>
-                    </article>
+                      <input className="quest-row__time" type="time" defaultValue={h.cue_time} key={h.cue_time} aria-label={`Time for ${h.title}`}
+                        onBlur={(e) => { if (e.target.value && e.target.value !== h.cue_time) void change(h, { cue_time: e.target.value }); }} />
+                      <DayPicker title={h.title} days={h.days} onChange={(days) => change(h, { days })} />
+                      <span className="quest-row__actions">
+                        <button className="link-button" onClick={() => change(h, { status: h.status === "paused" ? "active" : "paused" })}>
+                          {h.status === "paused" ? "Resume" : "Pause"}
+                        </button>
+                        <button className="link-button" onClick={() => change(h, { status: "removed" })}>Remove</button>
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </section>
 
-            <section className="panel">
-              <div className="panel__head"><h2>Goals and quests</h2></div>
-              {saved && <p className="form-ok" role="status">Plan saved.</p>}
-              <PlanEditor child={child} plan={plan} showCatalog={plan.goals.length === 0}
-                onSaved={(p) => { setPlan(p); setSaved(true); }} />
-            </section>
 
             {server && (
               <section className="panel" id="catalog">
-                <div className="panel__head"><h2>Browse all habits</h2></div>
-                <HabitCatalog child={child} familyId={server.id} plan={plan} onPlan={(p) => { setPlan(p); setSaved(false); }} />
+                <div className="panel__head"><h2>Add quests</h2></div>
+                <HabitCatalog child={child} familyId={server.id} plan={plan} onPlan={setPlan} />
               </section>
             )}
           </>
@@ -143,24 +129,31 @@ export default function QuestLibrary({ childId }: { childId?: string }) {
   );
 }
 
-/** Which days a quest runs on: a quick choice, or any days the parent taps. */
+/** Which days a quest runs on: a quick choice, or "Custom days" to tap any days. */
 function DayPicker({ title, days, onChange }: { title: string; days: DayName[]; onChange: (days: DayName[]) => void }) {
   const preset = presetFor(days);
+  const [custom, setCustom] = useState(!preset);
   return (
     <div className="day-picker">
-      <select aria-label={`Days for ${title}`} value={preset ?? "custom"}
-        onChange={(e) => { const next = DAY_PRESETS.find((p) => p.label === e.target.value); if (next) onChange(next.days); }}>
+      <select aria-label={`Days for ${title}`} value={custom ? "custom" : preset ?? "custom"}
+        onChange={(e) => {
+          const next = DAY_PRESETS.find((p) => p.label === e.target.value);
+          setCustom(!next);
+          if (next) onChange(next.days);
+        }}>
         {DAY_PRESETS.map((p) => <option key={p.label}>{p.label}</option>)}
-        {!preset && <option value="custom">Custom days</option>}
+        <option value="custom">Custom days</option>
       </select>
-      <div className="day-picker__days">
-        {WEEK.map((d) => (
-          <button key={d.id} type="button" aria-pressed={days.includes(d.id)} aria-label={d.short}
-            className={days.includes(d.id) ? "is-on" : ""} onClick={() => onChange(toggleDay(days, d.id))}>
-            {d.short[0]}
-          </button>
-        ))}
-      </div>
+      {custom && (
+        <div className="day-picker__days">
+          {WEEK.map((d) => (
+            <button key={d.id} type="button" aria-pressed={days.includes(d.id)} aria-label={d.short}
+              className={days.includes(d.id) ? "is-on" : ""} onClick={() => onChange(toggleDay(days, d.id))}>
+              {d.short[0]}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
