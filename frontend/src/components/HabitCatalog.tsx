@@ -206,15 +206,16 @@ function HabitCard({ habit, status, busy, childName, recommended = false, onAdd,
       <div className="cat-habit__body">
         <b>{habit.title}</b>
         <span className="muted">
-          Tier {habit.tier} · {habit.points} pts{habit.min_age > 3 || habit.max_age < 13 ? ` · Ages ${habit.min_age}–${habit.max_age}` : ""}
+          {[`${habit.points} pts`, status.kind === "tier" && `Tier ${habit.tier}`, (habit.min_age > 3 || habit.max_age < 13) && `Ages ${habit.min_age}–${habit.max_age}`]
+            .filter(Boolean).join(" · ")}
           {recommended && <span className="cat-habit__tag">Recommended</span>}
         </span>
         {children}
       </div>
       <div className="cat-habit__action">
         {status.kind === "add" ? (
-          <button type="button" className="btn btn--soft btn--sm" disabled={busy} onClick={onAdd} aria-label={`Add ${habit.title} to ${childName}`}>
-            {busy ? "Adding…" : "Add"}
+          <button type="button" className="cat-habit__add" disabled={busy} onClick={onAdd} aria-label={`Add ${habit.title} to ${childName}`}>
+            {busy ? "Adding…" : "+ Add"}
           </button>
         ) : (
           <span className={`catalog__status catalog__status--${status.kind}`}>{status.text}</span>
