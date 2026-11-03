@@ -30,11 +30,11 @@ done and left to do ([status.md](backend/docs/status.md)).
 | When | What changed |
 |---|---|
 | 2026-11-02 | Frontend and backend moved into one repository. The habit coach became a crew of small agents ([coach-crew.md](backend/docs/coach-crew.md)). The Quest library shows the whole catalog by age group, and families can make their own habits. The parent PIN became optional, and kids can sign in on their own device with the family code. |
-| 2026-11-03 | Calmer, more compact pages: one type scale, a violet hero band on every parent page, Family settings on a page of its own. Coach safety: a model risk check on every parent message and a safety reviewer that fails closed (PR #2). Ten defects fixed after a full code review, and frontend checks added to CI (PR #3). The large files split into one module per area (PR #4). Comments in every file, and [ARCHITECTURE.md](ARCHITECTURE.md). |
+| 2026-11-03 | Calmer, more compact pages: one type scale, a violet hero band on every parent page, Family settings on a page of its own. Coach safety: a model risk check on every parent message and a safety reviewer that fails closed (PR #2). Ten defects fixed after a full code review, and frontend checks added to CI (PR #3). The large files split into one module per area (PR #4). Comments in every file, and [ARCHITECTURE.md](ARCHITECTURE.md) (PR #5). Screen tests and Playwright browser tests for the frontend, run in CI. |
 
 ## Run both locally
 
-From the repository root, `npm run dev`, `npm run build` and `npm test` run the frontend's scripts.
+From the repository root, `npm run dev`, `npm run build`, `npm test` and `npm run e2e` run the frontend's scripts.
 
 ```mermaid
 flowchart TD
@@ -52,7 +52,8 @@ flowchart TD
   ```mermaid
   flowchart LR
       PR["push or pull request"] -- "backend/ changed" --> B["backend-checks (test.yml)<br/>ruff, format, mypy,<br/>pytest at 100% coverage on PostgreSQL 17"]
-      PR -- "frontend/ changed" --> F["frontend-checks (frontend.yml)<br/>vitest, tsc, production build"]
+      PR -- "frontend/ changed" --> F["frontend-checks (frontend.yml)<br/>logic + screen tests, tsc, build"]
+      PR -- "either changed" --> E["e2e (e2e.yml)<br/>Playwright browser tests,<br/>real API + database"]
   ```
 
 - **Render**: [render.yaml](render.yaml) deploys the API from `backend/` (`rootDir: backend`).

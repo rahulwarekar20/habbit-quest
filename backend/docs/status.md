@@ -14,8 +14,7 @@ flowchart LR
     E --> F["#3 defect fixes,<br/>frontend CI"]
     F --> G["#4 modules"]
     G --> H["comments +<br/>ARCHITECTURE.md"]
-    H --> I["next: frontend<br/>component + browser tests"]
-    style I stroke-dasharray: 5 5
+    H --> I["frontend screen +<br/>browser tests"]
 ```
 
 ## Done
@@ -52,7 +51,8 @@ flowchart LR
 - **PR #3: ten defects fixed** after a full code review, and frontend checks (vitest, tsc, build) added to CI.
 - **PR #4: modules.** The frontend's stylesheet, API client, kid page and AI helpers split into one module per area.
 - **Comments and guides:** every file and export explained in the code, plus [../../ARCHITECTURE.md](../../ARCHITECTURE.md).
-- **Tests:** 383 backend tests at 100% coverage on PostgreSQL 17; frontend unit tests with vitest. Both run in CI.
+- **Tests:** 383 backend tests at 100% coverage on PostgreSQL 17. Frontend logic and screen tests (vitest, with a fake
+  API) and Playwright browser tests against the real API and database. All run in CI.
 
 ## Settings to finish
 
@@ -68,8 +68,6 @@ flowchart LR
 
 ## Left to do
 
-- **Frontend tests:** component tests for the main screens (sign-in, Quest library, approvals) and browser tests of
-  the main flows, run in CI.
 - **Host the frontend** (for example a Render static site), then add its address to `CORS_ORIGINS` and to the
   Google client's Authorized JavaScript origins.
 - **Account management:** removing another grown-up from a family, and signing out everywhere (kid and caregiver
