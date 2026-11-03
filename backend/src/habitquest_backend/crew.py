@@ -128,7 +128,8 @@ SAFE_REPLY = "Here are a few ideas that may help. Tell me if they feel too hard 
 UNCHECKED_REPLY = (
     "I couldn't double-check my advice just now, so I'm holding it back. Please try again in a minute."
 )
-UNCHECKED = "unchecked"  # the safety check could not run
+UNCHECKED = "unchecked"
+PLAIN_QUESTION = "Could you tell me a bit more about when this happens and what usually comes before it?"  # the safety check could not run
 
 
 class Triage(BaseModel):
@@ -272,10 +273,22 @@ def build_crew(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
             words = state["messages"][-1].text
             found = Triage(intent="new_problem", problem=words, queries=[words], question="")
         if found.intent == "clarify" and found.question.strip():
-            return {"triage": found, "messages": [AIMessage(content=found.question.strip())]}
+            return {
+                "triage": found,
+                "messages": [AIMessage(content=checked_question(found.question.strip()))],
+            }
         if found.intent == "clarify":
             found.intent = "new_problem"
         return {"triage": found}
+
+    def checked_question(question: str) -> str:
+        """Triage's clarifying question ends the turn, so it gets the same fail-closed safety check as a reply."""
+        try:
+            verdict = cast(SafetyVerdict, ask(settings, "safety", SafetyVerdict, SAFETY_PROMPT, question))
+        except (openai.OpenAIError, ValueError) as exc:
+            log.warning("Crew safety check of a question failed (%s); asking a plain one", type(exc).__name__)
+            return PLAIN_QUESTION
+        return question if verdict.safe else PLAIN_QUESTION
 
     def after_triage(state: CrewState) -> list[str]:
         triage = cast(Triage, state["triage"])

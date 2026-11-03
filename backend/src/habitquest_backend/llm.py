@@ -1,5 +1,7 @@
 """The chat model: any OpenAI-compatible endpoint (Nebius Token Factory) through LangChain."""
 
+from functools import lru_cache
+
 import httpx
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
@@ -10,8 +12,14 @@ from habitquest_backend.config import Settings
 MAX_TOKENS = 4000
 
 
+@lru_cache(maxsize=4)
+def shared_client(timeout: float) -> httpx.Client:
+    """httpx clients are thread-safe and pool connections, so one per timeout serves every model call."""
+    return httpx.Client(timeout=timeout)
+
+
 def http_client(settings: Settings) -> httpx.Client:
-    return httpx.Client(timeout=settings.ai_timeout_seconds)
+    return shared_client(settings.ai_timeout_seconds)
 
 
 def chat_model(

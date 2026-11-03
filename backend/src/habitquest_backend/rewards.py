@@ -4,6 +4,7 @@ import random
 from typing import Annotated, Literal
 from uuid import UUID
 
+import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field
 
@@ -203,7 +204,11 @@ def router(settings: Settings) -> APIRouter:
                 item = {"minutes": None, "jackpot": 0} | random.choices(
                     MYSTERY_PRIZES, weights=[p["weight"] for p in MYSTERY_PRIZES]
                 )[0]
-            conn.execute("SELECT hq.kid_ledger(%s,'spent',%s)", (-reward["cost"], reward["title"]))
+            try:
+                conn.execute("SELECT hq.kid_ledger(%s,'spent',%s)", (-reward["cost"], reward["title"]))
+            except psycopg.errors.CheckViolation as exc:
+                # Another request spent the points first; the trigger keeps the balance from going negative.
+                raise HTTPException(422, "You don't have enough points for this right now.") from exc
             if item["jackpot"]:
                 conn.execute("SELECT hq.kid_ledger(%s,'bonus','Mystery box jackpot')", (item["jackpot"],))
             request = one(

@@ -479,3 +479,37 @@ def test_the_last_caregiver_cannot_leave(client, settings, db, family):
     assert client.delete(url).status_code == 409
     db.execute("INSERT INTO hq.caregivers VALUES(%s,%s,'Lee','father')", (family, OTHER))
     assert client.delete(url).status_code == 204
+
+
+def test_the_client_address_comes_from_cloudflare_not_a_forged_header():
+    from starlette.requests import Request
+
+    from habitquest_backend.limits import client_address
+
+    def request(headers: dict) -> Request:
+        raw = [(k.encode(), v.encode()) for k, v in headers.items()]
+        return Request({"type": "http", "headers": raw, "client": ("10.0.0.1", 1)})
+
+    forged = {"x-forwarded-for": "1.2.3.4, 9.9.9.9"}
+    assert client_address(request(forged | {"cf-connecting-ip": "5.6.7.8"})) == "5.6.7.8"
+    assert client_address(request(forged)) == "1.2.3.4"
+    assert client_address(request({})) == "10.0.0.1"
+
+
+def test_the_rate_limiter_drops_idle_keys_once_there_are_many(monkeypatch):
+    from habitquest_backend import limits
+
+    monkeypatch.setattr(limits, "MAX_KEYS", 2)
+    limiter = limits.RateLimiter(5, seconds=0)
+    for key in "abc":
+        limiter.check(key)
+    limiter.check("d")
+    assert "a" not in limiter.hits and "d" in limiter.hits
+
+
+def test_a_reward_request_that_loses_a_race_for_the_points_gets_422(client, kid, monkeypatch):
+    reward = client.get("/v1/kid/rewards", headers=kid).json()[0]
+    # The balance check passes, as if another request had not spent the points yet; the ledger trigger refuses.
+    monkeypatch.setattr(rewards, "balance", lambda conn, child: 10_000)
+    response = client.post("/v1/kid/reward-requests", json={"reward_id": reward["id"]}, headers=kid)
+    assert response.status_code == 422 and "enough points" in response.text

@@ -66,7 +66,7 @@ VITE_DEV_LOGIN=true
 - `GET /v1/families/{id}`, `PATCH /v1/families/{id} {name?, timezone?}`,
   `PATCH /v1/families/{id}/caregivers/me {display_name?, role?}`,
   `POST /v1/families/{id}/invite-code` (new code) → Family.
-- `PUT /v1/families/{id}/pin {pin}` → 204 (sets, changes or turns on the PIN). `POST /v1/families/{id}/pin/verify
+- `PUT /v1/families/{id}/pin {pin, current_pin?}` → 204 (sets, changes or turns on the PIN; replacing a PIN needs `current_pin`, 403 if missing or wrong). `POST /v1/families/{id}/pin/verify
   {pin}` → `{valid: boolean}`. Use verify wherever the app asks for the parent PIN today (leaving kid mode,
   grown-up pages). The PIN is no longer hashed in the browser.
 - The parent PIN is optional. `POST /v1/families/{id}/pin/remove {pin}` → 204 turns it off (403 wrong PIN). While

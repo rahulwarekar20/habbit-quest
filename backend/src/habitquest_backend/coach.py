@@ -12,7 +12,7 @@ import re
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Annotated, Any, Literal, cast
 from uuid import UUID
 
@@ -126,11 +126,15 @@ class Reply:
     no_habit_match: bool = False
 
 
-def swap_names(text: str, replacements: dict[str, str]) -> str:
+def swap_names(text: str, replacements: dict[str, str], *, ignore_case: bool = True) -> str:
+    """Replaces each key with its value as a whole word. Names -> labels ignores case, since parents type names
+    any way; labels -> names (`ignore_case=False`) must not, or "your child a sticker" would read "your Mia sticker".
+    """
+    flags = re.IGNORECASE if ignore_case else 0
     for name, label in replacements.items():
         # Models often write spaces and hyphens in labels as their non-breaking forms.
         pattern = r"[\s\u00a0\u202f]+".join(re.escape(word) for word in name.split())
-        text = re.sub(rf"\b{pattern}\b", label, text, flags=re.IGNORECASE)
+        text = re.sub(rf"\b{pattern}\b", label, text, flags=flags)
     return text
 
 
@@ -250,6 +254,9 @@ def run_turn(
     private = [*names, *caregivers]
     collector = start_trace(settings)
     config: dict[str, Any] = {"recursion_limit": STEP_LIMIT, "callbacks": [collector] if collector else []}
+    # The fallback works on a copy: a turn past its deadline keeps running in its thread (Python cannot stop it)
+    # and may still change snapshot.shown. Its late model calls are wasted but harmless; nothing is saved from them.
+    before = replace(snapshot, shown=set(snapshot.shown))
     executor = ThreadPoolExecutor(max_workers=1)
     try:
         future = executor.submit(
@@ -270,7 +277,7 @@ def run_turn(
             True,
             {"outcome": "failed", "age_band": age_band(snapshot.age), "engine": settings.coach_engine},
         )
-        return fallback(snapshot, problem)
+        return fallback(before, problem)
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
     if not answer:
@@ -285,9 +292,11 @@ def run_turn(
         for ref in re.findall(r"G\d+", group)
     }
     turn.sources = {ref: title for ref, title in turn.sources.items() if ref in cited}
-    turn.recommendations = {h: swap_names(r, restore) for h, r in turn.recommendations.items()}
+    turn.recommendations = {
+        h: swap_names(r, restore, ignore_case=False) for h, r in turn.recommendations.items()
+    }
     for change in turn.changes:
-        change.reason = swap_names(change.reason, restore)
+        change.reason = swap_names(change.reason, restore, ignore_case=False)
     no_match = turn.researched and not turn.recommendations and not turn.changes
     has_outcome = turn.recommendations or turn.changes
     send_trace(
@@ -305,7 +314,7 @@ def run_turn(
             "engine": settings.coach_engine,
         },
     )
-    return Reply(swap_names(answer, restore)[:REPLY_LENGTH], turn, no_habit_match=no_match)
+    return Reply(swap_names(answer, restore, ignore_case=False)[:REPLY_LENGTH], turn, no_habit_match=no_match)
 
 
 def spend_ai_call(conn, family_id: UUID, settings: Settings) -> None:

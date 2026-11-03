@@ -196,6 +196,13 @@ describe("waking the server", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("never resends a write after a 504, which can arrive after the app acted", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("", { status: 504 }));
+    // It fails at once (no retry to wait for), so the expectation is attached before anything else runs.
+    await expect(request("POST", "/v1/children/c1/redemptions", { points: 5 })).rejects.toMatchObject({ status: 504 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("retries a connection failure on a cold call, but not on a warm one", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("failed")).mockResolvedValueOnce(json(200, {}));
     const cold = getMe();

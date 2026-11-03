@@ -145,6 +145,9 @@ PATTERNS = [
 ]
 
 
+SELF_HARM = dict(PATTERNS)["self-harm"]
+
+
 @dataclass
 class Screen:
     ok: bool  # safe to show or save as-is
@@ -167,8 +170,11 @@ def screen_text(text: str) -> Screen:
 
 
 def parent_at_risk(text: str) -> bool:
-    """True when a parent's message suggests a child may be at risk."""
-    return bool(RISK.search(text)) or screen_text(text).risk
+    """True when a parent's message suggests a child may be at risk: the parent risk list (ai.RISK) or a self-harm
+    phrase the parent quotes. The kid-note "abuse" patterns are left out on purpose: "he hits me when the TV goes off"
+    from a parent is a tantrum to coach, not a child at risk. Unusual wording is the safety model's job.
+    """
+    return bool(RISK.search(text)) or bool(SELF_HARM.search(text))
 
 
 PARENT_RISK_PROMPT = """You check one message a parent wrote to a habit coach in a family habit app for children aged

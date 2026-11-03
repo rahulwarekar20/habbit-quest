@@ -301,7 +301,10 @@ export const AI_TIMEOUT_MS = 75_000;
 const IDLE_AFTER_MS = 10 * 60_000; // Render sleeps after 15 idle minutes; assume cold a little before
 const WAKE_NOTICE_MS = 2_500;
 const WAKE_RETRY_MS = 3_000;
+/** Statuses a waking server returns. 502 and 503 mean the request never reached the app, so any call may retry;
+ * 504 can come after the app already acted, so only reads retry on it (a write is never sent twice). */
 const RETRY_STATUS = new Set([502, 503, 504]);
+const NOT_REACHED = new Set([502, 503]);
 
 let lastOk = 0;
 let slowCalls = 0;
@@ -388,7 +391,8 @@ export async function request<T>(method: string, path: string, body?: unknown, o
           ? "The server is taking too long to answer. Please try again."
           : "We couldn't reach the server. Check your connection and try again.");
       }
-      if (cold && RETRY_STATUS.has(response.status) && deadline - Date.now() > WAKE_RETRY_MS) {
+      const retryable = method === "GET" ? RETRY_STATUS : NOT_REACHED;
+      if (cold && retryable.has(response.status) && deadline - Date.now() > WAKE_RETRY_MS) {
         await sleep(WAKE_RETRY_MS);
         continue;
       }
@@ -439,7 +443,9 @@ export const updateFamily = (id: string, changes: { name?: string; timezone?: st
 export const updateCaregiver = (id: string, changes: { display_name?: string; role?: Role }) =>
   request<ApiFamily>("PATCH", `/v1/families/${id}/caregivers/me`, changes);
 export const newInviteCode = (id: string) => request<ApiFamily>("POST", `/v1/families/${id}/invite-code`);
-export const setPin = (id: string, pin: string) => request<void>("PUT", `/v1/families/${id}/pin`, { pin });
+/** `current` is the PIN being replaced; the server requires it when the family already has one. */
+export const setPin = (id: string, pin: string, current?: string) =>
+  request<void>("PUT", `/v1/families/${id}/pin`, current ? { pin, current_pin: current } : { pin });
 export const removePin = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/pin/remove`, withPin(pin));
 export const exportFamily = (id: string) => request<unknown>("GET", `/v1/families/${id}/export`);
 export const deleteFamily = (id: string, pin: string) => request<void>("POST", `/v1/families/${id}/delete`, withPin(pin));

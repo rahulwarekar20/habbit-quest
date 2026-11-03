@@ -1,3 +1,15 @@
+"""Who is calling, and how they proved it.
+
+- Our own short-lived HS256 tokens (`issue_token` / `verify_token`), with a `role` claim: caregiver tokens act for a
+  user (`sub` = hq.users.id), kid tokens act for one child (`sub` = the child's id) and are refused on grown-up
+  endpoints, and vice versa.
+- Google sign-in: the frontend sends Google's ID token, `verify_google` checks it against Google's public keys and
+  our client id; the caller then gets one of our tokens.
+- The family PIN and kid PINs are stored as salted scrypt hashes (`hash_pin`, `check_pin`).
+- The development login (`dev_login`) issues tokens for test parents when DEV_LOGIN is on.
+- `signed_in` is the FastAPI dependency every protected endpoint uses to get the caller's id.
+"""
+
 import hashlib
 import hmac
 import secrets

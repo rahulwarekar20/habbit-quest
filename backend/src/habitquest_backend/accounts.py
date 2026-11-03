@@ -92,6 +92,13 @@ class PinInput(StrictModel):
     pin: Pin
 
 
+class PinChange(StrictModel):
+    pin: Pin
+    current_pin: Pin | None = Field(
+        default=None, description="The PIN being replaced; required when there is one"
+    )
+
+
 class FamilyPin(StrictModel):
     """The family PIN, which a family without one leaves out."""
 
@@ -324,12 +331,17 @@ def router(settings: Settings) -> APIRouter:
         return {**token_response(token, SESSION_MINUTES), "child": child, "family": family}
 
     @api.put("/v1/families/{family_id}/pin", status_code=204, tags=["Families"], summary="Change the PIN")
-    def set_pin(family_id: UUID, body: PinInput, user: User) -> Response:
+    def set_pin(family_id: UUID, body: PinChange, user: User) -> Response:
         """Sets a new four-digit family PIN, or adds one to a family without one. Any caregiver of the family
-        may change it; it is stored only as a salted hash.
+        may change it, but replacing a PIN needs the current one in `current_pin` (403 if missing or wrong), so a
+        signed-in token alone cannot get past the PIN checks. It is stored only as a salted hash.
         """
         with transaction(settings, user) as conn:
-            one(conn, "SELECT id FROM hq.families WHERE id=%s", (family_id,))
+            stored = one(conn, "SELECT pin_hash FROM hq.families WHERE id=%s", (family_id,))["pin_hash"]
+            if stored:
+                settings.pin_attempts.check(str(user))
+                if not family_pin_ok(body.current_pin, stored):
+                    raise HTTPException(403, "Wrong PIN")
             conn.execute("UPDATE hq.families SET pin_hash=%s WHERE id=%s", (hash_pin(body.pin), family_id))
         return Response(status_code=204)
 
@@ -416,6 +428,8 @@ def router(settings: Settings) -> APIRouter:
         family instead.
         """
         with transaction(settings, user) as conn:
+            # Serialises leaves within one family, so two caregivers leaving at once cannot both see two left.
+            conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (str(family_id),))
             count = one(conn, "SELECT count(*) AS n FROM hq.caregivers WHERE family_id=%s", (family_id,))["n"]
             if count == 0:
                 raise HTTPException(404, "Record not found")

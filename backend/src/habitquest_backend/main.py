@@ -1,3 +1,8 @@
+"""The FastAPI application: `create_app` wires settings, CORS, health checks, the development login, the catalog
+endpoints and every feature router (accounts, onboarding, habits, journey, daily loop, rewards, coach, insights,
+check-ins, extras). `app` is the instance uvicorn serves: `uvicorn habitquest_backend.main:app`.
+"""
+
 from typing import Annotated
 from uuid import UUID
 

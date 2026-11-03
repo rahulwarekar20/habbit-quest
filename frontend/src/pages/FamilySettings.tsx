@@ -112,8 +112,9 @@ function ParentPin() {
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (fam.has_pin && (await askPinValue("Change the parent PIN.")) === null) return;
-    await run(() => setPin(fam.id, pin));
+    const current = fam.has_pin ? await askPinValue("Change the parent PIN.") : "";
+    if (current === null) return;
+    await run(() => setPin(fam.id, pin, current || undefined));
   }
 
   async function turnOff() {

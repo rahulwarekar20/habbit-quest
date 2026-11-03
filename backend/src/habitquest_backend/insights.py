@@ -184,7 +184,9 @@ def checked_changes(view: FamilyView, changes: list[ProposedChange], limit: int)
 def save_changes(conn, view: FamilyView, changes: list[ProposedChange], source: str) -> None:
     for change in changes:
         cue = change.cue_time if change.action == "retime" else None
-        reason = swap_names(change.reason, view.restore).strip()[:400] or "This could help."
+        reason = (
+            swap_names(change.reason, view.restore, ignore_case=False).strip()[:400] or "This could help."
+        )
         save_suggestion(
             conn, view.children[change.child]["id"], source, change.action, change.habit_id, cue, reason
         )
@@ -224,7 +226,7 @@ def review_for(settings: Settings, view: FamilyView) -> ReviewAnswer:
 def restored_text(view: FamilyView, value):
     """Puts the children's names back into every string of a report."""
     if isinstance(value, str):
-        return swap_names(value, view.restore)
+        return swap_names(value, view.restore, ignore_case=False)
     if isinstance(value, list):
         return [restored_text(view, item) for item in value]
     return {key: restored_text(view, item) for key, item in value.items()}
