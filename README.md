@@ -19,7 +19,7 @@ flowchart LR
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the parts fit together, with diagrams | start here |
 | [frontend/](frontend/) | The web app families use | [frontend/README.md](frontend/README.md) (pages, game rules, code layout, tests) |
 | [backend/](backend/) | The API, database and AI coach | [backend/README.md](backend/README.md), [backend/docs/localsetup.md](backend/docs/localsetup.md) |
-| [docs/product/](docs/product/) | Executive brief and the five product and architecture documents, as PDFs | [docs/product/README.md](docs/product/README.md) |
+| [docs/product/](docs/product/) | Executive brief, product tour with screenshots, AI deep dive, engineering & quality | [docs/product/PRODUCT-TOUR.md](docs/product/PRODUCT-TOUR.md), [docs/product/README.md](docs/product/README.md) |
 
 The backend's [docs/](backend/docs/) folder also holds the API contract for the frontend
 ([frontend-integration.md](backend/docs/frontend-integration.md)), the database tables
