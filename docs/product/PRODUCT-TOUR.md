@@ -62,7 +62,7 @@ Picture-first, so a 3-year-old can use it without reading.
 | **After "I did it!"** | **When a grown-up approves** |
 | ![Waiting for a grown-up](screenshots/13-kid-waiting.jpg) | ![Celebration](screenshots/14-celebration.jpg) |
 
-<img src="screenshots/18-kid-phone.jpg" alt="Kid mode on a phone" width="260">
+<img src="screenshots/18-kid-phone.jpg" alt="Kid mode on a phone" width="480">
 
 ## 6. Worlds, shop and journal
 
