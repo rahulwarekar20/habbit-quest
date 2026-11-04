@@ -1,26 +1,25 @@
-# Product and architecture documents
+# Product documents
 
-Six documents describe HabbitQuest from the business case down to the code, each with its diagrams. They were
-brought up to date on 3 November 2026 and match the code on `main`. The PDFs here are snapshots; the live,
-editable versions are on claude.ai (links below, private to the owner unless shared).
+Four short, visual documents, each for a different reader. Start with the one that fits you.
 
 ```mermaid
 flowchart LR
-    B["Executive brief<br/>CEO and CTO"] --> D1["Doc1<br/>Product vision and<br/>business requirements"]
-    D1 --> D2["Doc2<br/>Software requirements<br/>(FR, AI, SR, NFR)"]
-    D2 --> D3["Doc3<br/>Solution architecture<br/>and decisions"]
-    D3 --> D4["Doc4<br/>Technical design and<br/>developer guide"]
-    D3 --> D5["Doc5<br/>C4 model diagrams"]
+    B["Executive brief<br/>CEO, investors"] --> T["Product tour<br/>everyone"]
+    T --> A["AI deep dive<br/>CTO, AI engineers"]
+    T --> E["Engineering & quality<br/>engineers, QA"]
 ```
 
-| Document | For | What it covers | PDF | Live version |
-|---|---|---|---|---|
-| Executive brief | CEO, CTO | The pitch, market, product, AI and safety, competitors, pricing, cost, risks, roadmap and the ask | [PDF](00-executive-brief-ceo-cto.pdf) | [claude.ai](https://claude.ai/artifact/EVZC7ULwwvDQa5Bh2kdjCR) |
-| Doc1 Product vision and business requirements | Product, business | Problem, personas, KPIs, business requirements BR-01 to BR-15, scope, business model, compliance | [PDF](01-product-vision-and-business-requirements.pdf) | [claude.ai](https://claude.ai/artifact/ApBvvi3Y4w9NdNuUj9P7pr) |
-| Doc2 Software requirements specification | Product, engineering, QA | Functional, AI, safety and non-functional requirements, data rules, the API, and which tests verify each | [PDF](02-software-requirements-specification.pdf) | [claude.ai](https://claude.ai/artifact/Cz75SA7py6d9rtp1QyyiRv) |
-| Doc3 Solution architecture | Architects, CTO | Layers, the AI crew, data and row-level security, security gaps, deployment, decisions (ADRs), risks | [PDF](03-solution-architecture.pdf) | [claude.ai](https://claude.ai/artifact/BzTuiF3KBGsLui9QEafwxw) |
-| Doc4 Technical design and developer guide | Developers | Setup, repository map, data model, frontend state, the API and crew, testing, how-to recipes | [PDF](04-technical-design-and-developer-guide.pdf) | [claude.ai](https://claude.ai/artifact/5DRJvgD5AmkNusVUSq7zw7) |
-| Doc5 C4 model diagrams | Everyone | System context, containers, components, the crew graph, a coach request step by step, target deployment | [PDF](05-c4-model-diagrams.pdf) | [claude.ai](https://claude.ai/artifact/TZjeBJYEnqonWCMkFf2V9K) |
+| Document | For | What's inside | Read it |
+|---|---|---|---|
+| Executive brief | CEO, investors | Screenshots, why it wins, what's built in numbers, pricing and AI cost, roadmap and the ask | [PDF](01-executive-brief.pdf) · [live](https://claude.ai/artifact/Uu6rgrYDFwwbkcLq7VeFpN) |
+| Product tour | Everyone | Every screen with screenshots, the two user journeys, every feature | **[On GitHub](PRODUCT-TOUR.md)** · [PDF](02-product-tour.pdf) · [live](https://claude.ai/artifact/XQzSkZfssZQ1jSeQsP5m5o) |
+| AI deep dive | CTO, AI engineers | The agentic coach crew on LangGraph, six guardrail layers, evaluations (37 of 41 cases pass), LangSmith tracing | [PDF](03-ai-deep-dive.pdf) · [live](https://claude.ai/artifact/VxXpQUFQJ1MrSNYG2Dw2Qi) |
+| Engineering & quality | Engineers, QA | Architecture, row-level security, data model, 452 automated tests, CI, production checklist | [PDF](04-engineering-and-quality.pdf) · [live](https://claude.ai/artifact/1UBdJuaSMthgEchmcHgi3E) |
 
-For the code itself, start with [../../ARCHITECTURE.md](../../ARCHITECTURE.md); every file also explains itself in
-its comments. When the live documents change, export each one again as a PDF into this folder.
+The PDFs are snapshots from 3 November 2026; the live versions are on claude.ai (private to the owner unless
+shared). The product tour PDF leaves out 3 screenshots because of the export's image limit; the GitHub page above
+shows all of them. Screenshots are in [screenshots/](screenshots/).
+
+The earlier six longer documents (executive brief, product vision, requirements, solution architecture, developer
+guide, C4 diagrams) are kept in [archive/](archive/) for reference. For the code itself, start with
+[../../ARCHITECTURE.md](../../ARCHITECTURE.md).
