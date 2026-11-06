@@ -139,6 +139,14 @@ def test_only_citations_of_the_brief_are_kept():
     assert crew.keep_cited(text, {"G1", "G3"}) == "Try this [G1]. Also this. A [note] stays [G3]."
 
 
+def test_loose_citations_are_checked_against_the_brief(crew_settings, agents):
+    everything(agents, Plan=plan(reply=f"Try these: 1️⃣ A timer ({REF}). 2️⃣ A warning (G99)."))
+    reply = run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"])
+    assert reply.text == f"Try these:\n1. A timer [{REF}].\n2. A warning." and list(reply.turn.sources) == [
+        REF
+    ]
+
+
 def test_passages_take_each_query_in_turn_without_repeats():
     found = crew.passages(["bedtime stalling", "bedtime stalling", "screen time tantrum"], 8)
     refs = [c.ref for c in found]
@@ -332,6 +340,20 @@ def test_a_reply_unsafe_twice_is_replaced(crew_settings, agents):
     everything(agents, Plan=plan(cards=()), SafetyVerdict={"safe": False, "problems": ["1 diagnosis"]})
     reply = run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"])
     assert reply.text.startswith("Could you tell me") and "1 diagnosis" in json.dumps(agents.seen["Plan"][-1])
+
+
+def test_the_safety_reviewer_reads_the_reply_without_citations(crew_settings, agents):
+    everything(agents)
+    run_turn(crew_settings, snapshot(), [], TEXT, ["Alex"])
+    seen = json.dumps(agents.seen["SafetyVerdict"][0]["messages"])
+    assert "A routine helps. The cards can help." in seen and REF not in seen
+
+
+def test_tips_held_back_by_the_safety_check_are_not_called_covered(crew_settings, agents):
+    bedtime = {"bedtime": {"title": "Bed", "cue_time": "20:00", "status": "active"}}
+    everything(agents, Plan=plan(cards=()), SafetyVerdict={"safe": False, "problems": ["1 diagnosis"]})
+    reply = run_turn(crew_settings, snapshot(plan=PLAN | bedtime), [], TEXT, ["Alex"])
+    assert reply.text.startswith("Could you tell me") and reply.covered_by == [] and not reply.no_habit_match
 
 
 def test_a_failed_safety_check_holds_the_reply_back(crew_settings, agents):

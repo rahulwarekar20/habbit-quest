@@ -12,11 +12,22 @@ from pydantic import BaseModel, Field
 
 from habitquest_backend.ai import Candidate
 from habitquest_backend.guidance import search_guidance
+from habitquest_backend.onboarding import MAX_ACTIVE_HABITS
 
 MAX_RECOMMENDATIONS = 3
 REASON_LENGTH = 240
 Action = Literal["retime", "pause", "resume", "remove"]
 TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def tidy_marks(text: str) -> str:
+    """Normalises what models vary: citations as 【G9†…】 or (G9) become [G9], and keycap numbers (1️⃣) become
+    "1.", each numbered tip starting its own line.
+    """
+    text = re.sub(r"【\s*(G\d+)[^】]*】", r"[\1]", text)
+    text = re.sub(r"\((G\d+(?:\s*,\s*G\d+)*)\)", r"[\1]", text)
+    text = re.sub(r"([1-9])️?⃣", r"\1.", text)
+    return re.sub(r"(?<=[.!?:])[^\S\n]+(?=[1-9]\.\s)", "\n", text)
 
 
 @dataclass
@@ -117,6 +128,11 @@ def build_tools(snapshot: Snapshot, turn: Turn) -> list[BaseTool]:
         """Show the parent up to 3 habits as selectable cards, replacing earlier cards this turn. Use only habit
         ids from research. This is the only way habits appear as cards. The parent decides, with their PIN.
         """
+        if len(snapshot.plan) >= MAX_ACTIVE_HABITS:
+            return (
+                f"Error: the plan already has {MAX_ACTIVE_HABITS} habits, so no new habit can be added. "
+                "Give tips only, and don't mention cards."
+            )
         kept, errors = {}, []
         for pick in quests[:MAX_RECOMMENDATIONS]:
             if pick.habit_id not in titles:

@@ -23,6 +23,7 @@ HABITS = [
 GOALS = [Candidate("bedtime", "Calmer bedtimes", "Bed on time.", ["bedtime", "sleep"], HABITS)]
 BEDTIME = "Alex keeps stalling at bedtime"
 PLAN = {"homework": {"title": "Homework", "cue_time": "16:00", "status": "active"}}
+FULL_PLAN = {f"habit-{i}": {"title": "Habit", "cue_time": "16:00", "status": "active"} for i in range(6)}
 CHILD_HABIT = "44444444-4444-4444-4444-444444444444"
 REF = search_guidance("stalling at bedtime", 8)[0].ref
 
@@ -84,6 +85,14 @@ def test_recommendations_refuse_unknown_shown_and_planned_habits():
     )
     assert "Skipped: flying" in result
     assert turn.recommendations == {"bedtime": "Early nights.", "wash-hands": "This could help."}
+
+
+def test_a_full_plan_gets_no_cards():
+    turn = Turn()
+    result = tools_of(snapshot(plan=FULL_PLAN), turn)["recommend_habits"].invoke(
+        {"quests": [pick("bedtime")]}
+    )
+    assert result.startswith("Error: the plan already has 6 habits") and turn.recommendations == {}
 
 
 def test_recommending_without_errors_mentions_nothing_skipped():
@@ -200,6 +209,30 @@ def test_a_failed_fit_check_drops_the_picks(remote, llm_reply):
     assert reply.turn.recommendations == {} and reply.no_habit_match and reply.text == "Keep it calm."
 
 
+def test_fallback_offers_no_cards_for_a_full_plan():
+    reply = fallback(snapshot(plan=FULL_PLAN), BEDTIME)
+    assert (reply.mapped_by, reply.turn.recommendations) == ("manual", {})
+
+
+def test_tips_for_a_full_plan_are_not_flagged_as_no_match(remote, llm_reply):
+    llm_reply(call("research", problem="stalling at bedtime"), f"Keep a calm routine [{REF}].")
+    reply = run_turn(remote, snapshot(plan=FULL_PLAN), [], BEDTIME, ["Alex"])
+    assert not reply.no_habit_match and reply.turn.recommendations == {} and reply.turn.sources
+
+
+def test_habits_in_the_plan_that_suit_the_problem_are_found():
+    plan = PLAN | {"bedtime": {"title": "Bed", "cue_time": "20:00", "status": "active"}}
+    assert coach.covering_habits(snapshot(plan=plan), BEDTIME) == ["bedtime"]
+    assert coach.covering_habits(snapshot(), BEDTIME) == []
+
+
+def test_tips_when_the_plan_already_covers_the_problem_name_those_habits(remote, llm_reply):
+    llm_reply(call("research", problem="stalling at bedtime"), f"Keep a calm routine [{REF}].")
+    plan = PLAN | {"bedtime": {"title": "Bed", "cue_time": "20:00", "status": "active"}}
+    reply = run_turn(remote, snapshot(plan=plan), [], BEDTIME, ["Alex"])
+    assert reply.covered_by == ["bedtime"] and not reply.no_habit_match and reply.turn.recommendations == {}
+
+
 def test_researching_and_choosing_no_habit_is_flagged(remote, llm_reply):
     llm_reply(call("research", problem="lying"), "Stay calm and praise honesty.")
     reply = run_turn(remote, snapshot(), [], "He lies to us", ["Alex"])
@@ -211,6 +244,10 @@ def test_replies_are_tidied():
     text = "A routine helps. I have shown three habit cards below! Tell me more."
     assert coach.tidy_reply(text, False) == "A routine helps. Tell me more."
     assert coach.tidy_reply(text, True) == text
+    loose = "Try these: 1️⃣ A tiny bite (G19). 2️⃣ Eat together (G20, G45). Kids aged 3. 4 is fine."
+    assert coach.tidy_reply(loose, True) == (
+        "Try these:\n1. A tiny bite [G19].\n2. Eat together [G20, G45]. Kids aged 3. 4 is fine."
+    )
 
 
 def test_several_citations_in_one_bracket_are_kept(remote, llm_reply):
@@ -333,6 +370,15 @@ def test_a_reply_with_no_matching_habit_clears_earlier_cards(client, alex, db, m
     assert [s["id"] for s in body["suggestions"]] == [str(planner)] and body["messages"][-1]["no_habit_match"]
 
 
+def test_a_reply_stores_the_titles_of_the_habits_that_cover_it(client, alex, db, monkeypatch):
+    monkeypatch.setattr(
+        coach, "run_turn", lambda *args: coach.Reply("Tips.", covered_by=["homework", "gone"])
+    )
+    title = db.execute("SELECT title FROM hq.habits WHERE id='homework'").fetchone()[0]
+    message = say(client, alex).json()["messages"][-1]
+    assert message["covered_by"] == [title] and not message["no_habit_match"]
+
+
 def test_risky_text_is_never_stored(client, alex, db):
     body = say(client, alex, "He said he wants to die").json()
     assert body["safety"]["guidance"] == SAFETY_GUIDANCE and body["messages"] == []
@@ -364,7 +410,17 @@ def test_a_turn_uses_the_snapshot_and_saves_changes(settings, remote, db, alex, 
 def test_new_chat_clears_the_thread(client, alex):
     say(client, alex)
     assert client.delete(f"/v1/children/{alex}/coach/messages").status_code == 204
-    assert client.get(f"/v1/children/{alex}/coach/messages").json() == {"messages": [], "suggestions": []}
+    empty = {"plan_full": False, "messages": [], "suggestions": []}
+    assert client.get(f"/v1/children/{alex}/coach/messages").json() == empty
+
+
+def test_the_thread_says_when_the_plan_is_full(client, alex, db):
+    for habit in ["homework", "screen", "bedtime", "outdoor-play", "day-chat", "tidy-space"]:
+        db.execute(
+            "INSERT INTO hq.child_habits(child_id,habit_id,cue_time,days) VALUES(%s,%s,'16:00','{mon}')",
+            (alex, habit),
+        )
+    assert client.get(f"/v1/children/{alex}/coach/messages").json()["plan_full"]
 
 
 def test_the_daily_limit_stops_more_requests(settings, db, alex):

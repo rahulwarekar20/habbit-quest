@@ -245,9 +245,12 @@ export interface CoachMessage {
   content: string;
   sources: { ref: string; title: string }[];
   no_habit_match: boolean;
+  /** Titles of quests already in the plan that suit this problem, when the reply offered no new one. */
+  covered_by: string[];
   created_at: string;
 }
-export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[] }
+/** `plan_full`: the child already has the most quests allowed, so the coach gives tips without quest cards. */
+export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[]; plan_full?: boolean }
 export interface CoachReply extends CoachThread {
   reply: string;
   safety: { guidance: string } | null;

@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field
 from habitquest_backend.accounts import StrictModel
 from habitquest_backend.ai import SAFETY_GUIDANCE, keyword_goals
 from habitquest_backend.auth import family_pin_ok, signed_in
-from habitquest_backend.coach_tools import MAX_RECOMMENDATIONS, Snapshot, Turn, build_tools
+from habitquest_backend.coach_tools import MAX_RECOMMENDATIONS, Snapshot, Turn, build_tools, tidy_marks
 from habitquest_backend.config import Settings
 from habitquest_backend.crew import build_crew, initial_state
 from habitquest_backend.db import one, transaction
@@ -128,7 +128,8 @@ class CoachState(MessagesState):
 @dataclass
 class Reply:
     """One coach answer: the text, the cards it suggests (`turn`), crisis guidance when the message raised a
-    risk (`safety`), how it was made (`mapped_by`) and whether no approved habit fitted.
+    risk (`safety`), how it was made (`mapped_by`), whether no approved habit fitted, and the plan's habits that
+    already suit the problem when it offered none (`covered_by`).
     """
 
     text: str
@@ -136,6 +137,7 @@ class Reply:
     safety: str | None = None
     mapped_by: Literal["ai", "keywords", "manual"] = "ai"
     no_habit_match: bool = False
+    covered_by: list[str] = field(default_factory=list)
 
 
 def swap_names(text: str, replacements: dict[str, str], *, ignore_case: bool = True) -> str:
@@ -151,8 +153,8 @@ def swap_names(text: str, replacements: dict[str, str], *, ignore_case: bool = T
 
 
 def tidy_reply(text: str, has_cards: bool) -> str:
-    """Normalises the citation marks models vary, and drops any claim about cards when none were made."""
-    text = re.sub(r"【\s*(G\d+)[^】]*】", r"[\1]", text)
+    """Normalises the marks models vary, and drops any claim about cards when none were made."""
+    text = tidy_marks(text)
     if not has_cards:
         text = re.sub(r"[^\S\n]*[^.!?\n]*\bcards?\b[^.!?\n]*[.!?]?", "", text)
     return text.strip()
@@ -215,12 +217,28 @@ def age_band(age: int) -> str:
     return "3-5" if age < 6 else "6-8" if age < 9 else "9-13"
 
 
+def plan_full(snapshot: Snapshot) -> bool:
+    """True when the plan has no room for another habit (paused habits count), so no habit cards are offered."""
+    return len(snapshot.plan) >= MAX_ACTIVE_HABITS
+
+
+def covering_habits(snapshot: Snapshot, text: str) -> list[str]:
+    """Habits already in the plan whose goal the parent's words match, in catalog order: the reason a reply may
+    offer no new habit even though approved ones exist for the problem.
+    """
+    matched = {goal_id for goal_id, _ in keyword_goals(text, snapshot.goals)}
+    return [
+        h["id"] for g in snapshot.goals if g.goal_id in matched for h in g.habits if h["id"] in snapshot.plan
+    ]
+
+
 def fallback(snapshot: Snapshot, text: str) -> Reply:
     """Keyword matching, used in `fake` mode and whenever the model fails."""
     turn = Turn()
     taken = snapshot.shown | snapshot.plan.keys()
     goals = {g.goal_id: g for g in snapshot.goals}
-    for goal_id, reason in keyword_goals(text, snapshot.goals)[:MAX_RECOMMENDATIONS]:
+    matches = [] if plan_full(snapshot) else keyword_goals(text, snapshot.goals)[:MAX_RECOMMENDATIONS]
+    for goal_id, reason in matches:
         habit = next((h["id"] for h in goals[goal_id].habits if h["id"] not in taken), None)
         if habit:
             turn.recommendations[habit] = reason
@@ -296,6 +314,7 @@ def run_turn(
         return fallback(before, problem)
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
+    advised = bool(answer)  # empty when the crew held its tips back after failing the safety check
     if not answer:
         answer = (
             "I've put my suggestions on the cards. Tell me if they feel too hard or too easy."
@@ -313,15 +332,27 @@ def run_turn(
     }
     for change in turn.changes:
         change.reason = swap_names(change.reason, restore, ignore_case=False)
-    no_match = turn.researched and not turn.recommendations and not turn.changes
+    full = plan_full(snapshot)
     has_outcome = turn.recommendations or turn.changes
+    tips_only = turn.researched and not has_outcome and advised
+    covered = covering_habits(snapshot, problem) if tips_only else []
+    # Tips without cards are "no approved habit fits" only when the plan has room and no quest in it suits the problem.
+    no_match = tips_only and not full and not covered
+    if no_match:
+        outcome = "no_habit_match"
+    elif has_outcome:
+        outcome = "cards"
+    elif covered:
+        outcome = "covered"
+    else:
+        outcome = "plan_full" if tips_only else "question"
     send_trace(
         settings,
         collector,
         private,
         keeps_text(settings, wanted=no_match or final["retried"]),
         {
-            "outcome": "no_habit_match" if no_match else "cards" if has_outcome else "question",
+            "outcome": outcome,
             "age_band": age_band(snapshot.age),
             "habits": list(turn.recommendations),
             "changes": [change.kind for change in turn.changes],
@@ -330,7 +361,8 @@ def run_turn(
             "engine": settings.coach_engine,
         },
     )
-    return Reply(swap_names(answer, restore, ignore_case=False)[:REPLY_LENGTH], turn, no_habit_match=no_match)
+    text = swap_names(answer, restore, ignore_case=False)[:REPLY_LENGTH]
+    return Reply(text, turn, no_habit_match=no_match, covered_by=covered)
 
 
 def spend_ai_call(conn, family_id: UUID, settings: Settings) -> None:
@@ -409,10 +441,16 @@ def save_suggestion(
 
 
 def thread_view(conn, child_id: UUID) -> dict:
-    """A child's coach conversation (without app notes) and the suggestions waiting for that child."""
+    """A child's coach conversation (without app notes), the suggestions waiting for that child, and whether
+    the plan is full (`plan_full`), so the app can say why no quest is suggested.
+    """
+    count = conn.execute(
+        "SELECT count(*) AS n FROM hq.child_habits WHERE child_id=%s AND status<>'removed'", (child_id,)
+    ).fetchone()["n"]
     return {
+        "plan_full": count >= MAX_ACTIVE_HABITS,
         "messages": conn.execute(
-            "SELECT id,role,content,sources,no_habit_match,created_at FROM hq.coach_messages WHERE child_id=%s"
+            "SELECT id,role,content,sources,no_habit_match,covered_by,created_at FROM hq.coach_messages WHERE child_id=%s"
             " AND role<>'note' ORDER BY id",
             (child_id,),
         ).fetchall(),
@@ -481,7 +519,9 @@ def router(settings: Settings) -> APIRouter:
         """Sends a parent's message to the habit coach. The reply cites guidance, and habit suggestions are saved
         as cards the parent accepts with the PIN. Refining never repeats a habit shown in this conversation, and
         messages are kept for 90 days. A reply has `no_habit_match` true when no approved habit suits the problem:
-        it carries tips only, and the app should say so.
+        it carries tips only, and the app should say so. When the plan already has the most habits allowed,
+        `plan_full` is true and the reply carries tips only, with no new-habit cards. When habits already in the
+        plan suit the problem and no new one is offered, the reply's `covered_by` names them.
         Children's names are not sent to the AI provider. `mapped_by` is `ai`, or `keywords` or `manual` when the
         AI was unavailable. If the text suggests a child may be at risk, nothing is saved or sent, and `safety`
         carries guidance. 429 when the family reaches its daily AI limit.
@@ -514,19 +554,26 @@ def router(settings: Settings) -> APIRouter:
         with transaction(settings, user) as conn:
             if reply.safety is None:
                 sources = [{"ref": ref, "title": title} for ref, title in reply.turn.sources.items()]
+                titles = {
+                    row["id"]: row["title"]
+                    for row in conn.execute(
+                        "SELECT id,title FROM hq.habits WHERE id=ANY(%s)", (reply.covered_by,)
+                    ).fetchall()
+                }
                 conn.execute(
                     "INSERT INTO hq.coach_messages(child_id,role,content) VALUES(%s,'parent',%s)",
                     (child_id, body.text),
                 )
                 conn.execute(
-                    "INSERT INTO hq.coach_messages(child_id,role,content,sources,shown_habits,no_habit_match)"
-                    " VALUES(%s,'coach',%s,%s,%s,%s)",
+                    "INSERT INTO hq.coach_messages(child_id,role,content,sources,shown_habits,no_habit_match,covered_by)"
+                    " VALUES(%s,'coach',%s,%s,%s,%s,%s)",
                     (
                         child_id,
                         reply.text,
                         Jsonb(sources),
                         list(reply.turn.recommendations),
                         reply.no_habit_match,
+                        [titles[h] for h in reply.covered_by if h in titles],
                     ),
                 )
                 if reply.turn.recommendations or reply.no_habit_match:

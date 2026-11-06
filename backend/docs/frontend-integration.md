@@ -155,7 +155,11 @@ VITE_DEV_LOGIN=true
 `/docs` and `/openapi.json` have every shape. In short:
 
 - Coach: `GET`, `POST`, `DELETE /v1/children/{id}/coach/messages`. Suggestions: `GET /v1/families/{id}/suggestions`,
-  `POST /v1/suggestions/{id}/accept` with `{pin}`, `POST /v1/suggestions/{id}/dismiss`.
+  `POST /v1/suggestions/{id}/accept` with `{pin}`, `POST /v1/suggestions/{id}/dismiss`. The thread carries
+  `plan_full`: when the child already has 6 habits, the coach gives tips without new-habit cards, so show
+  "already has 6 quests" rather than the `no_habit_match` warning. A coach message's `covered_by` lists the titles
+  of quests already in the plan that suit the problem, when the reply offered no new one; show "already has quests
+  for this" instead of the warning.
 - `POST /v1/families/{id}/plan-suggestions`, `POST /v1/families/{id}/reviews`, `GET /v1/families/{id}/reports`,
   `POST /v1/kid/buddy-line`.
 - Rewards: `/v1/families/{id}/rewards`, `/v1/rewards/{id}`, `/v1/kid/rewards`, `/v1/kid/reward-requests`,

@@ -221,6 +221,8 @@ psql "postgresql://<user>@<host>:<port>/<new database>" -v ON_ERROR_STOP=1 -f do
 | 8 | `202611020001_world_journey.sql` | Six worlds, `tier_override`, `journey_bonus` (no child moves backwards), `kid_set_buddy()`, and the `mastery` suggestion source |
 | 9 | `202611020002_coach_no_habit_match.sql` | `coach_messages.no_habit_match`, used for the "no approved habit fits" warning |
 | 10 | `202611030001_kid_login.sql` | Kid login: `families.login_code` (the family QR code), `children.kid_pin_hash`, `login_family()` and `login_child_pin()` |
+| 11 | `202611030002_custom_habits.sql` | Habits a family makes for itself, kept in `habits` beside the catalog |
+| 12 | `202611050001_coach_covered_by.sql` | `coach_messages.covered_by`: quests already in the plan that suit the problem, used for the "already has quests for this" note |
 
 ## Tables
 
@@ -237,7 +239,7 @@ psql "postgresql://<user>@<host>:<port>/<new database>" -v ON_ERROR_STOP=1 -f do
 | `child_habits` | quest in a child's plan | `child_id`, `habit_id`, `cue_time`, `days`, `status` |
 | `completions` | quest done on a day | `child_habit_id`, `day`, `status` (submitted, approved, rejected) |
 | `points_ledger` | change to a child's points | `amount`, `reason` (earned, redeemed, adjusted, bonus, spent, refund) |
-| `coach_messages` | line in a child's coach chat | `role`, `content`, `sources`, `shown_habits`, `no_habit_match` |
+| `coach_messages` | line in a child's coach chat | `role`, `content`, `sources`, `shown_habits`, `no_habit_match`, `covered_by` |
 | `ai_suggestions` | proposed plan change | `kind` (add, retime, pause, resume, remove), `habit_id`, `status` |
 | `ai_usage` | family per day | `calls` |
 | `ai_reports` | quest plan or weekly review | `kind`, `result` |
@@ -989,6 +991,14 @@ $$;
 
 REVOKE ALL ON FUNCTION hq.login_family(text), hq.login_child_pin(text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION hq.login_family(text), hq.login_child_pin(text, uuid) TO hq_api;
+```
+
+### `db/migrations/202611050001_coach_covered_by.sql`
+
+```sql
+-- The titles of quests already in the child's plan that suit a reply's problem, when the reply offered no new
+-- quest because of them, so the app can say "already has the quests for this" instead of "no approved habit".
+ALTER TABLE hq.coach_messages ADD COLUMN covered_by text[] NOT NULL DEFAULT '{}';
 ```
 
 ### `db/seed.sql`

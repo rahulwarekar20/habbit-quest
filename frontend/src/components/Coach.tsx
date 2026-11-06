@@ -4,8 +4,9 @@
  * add with the PIN. Shown on the Habit coach page.
  */
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { acceptSuggestion, dismissSuggestion, getCoachThread, resetCoachThread, sendCoachMessage, type CoachMessage, type Suggestion } from "../lib/api";
+import { acceptSuggestion, dismissSuggestion, getCoachThread, resetCoachThread, sendCoachMessage, type CoachMessage, type CoachThread, type Suggestion } from "../lib/api";
 import type { Family } from "../lib/family";
+import { MAX_HABITS } from "../lib/plan";
 import { coachFreshThisSignIn, markCoachFresh } from "../lib/storage";
 import { useStore } from "../lib/store";
 import Buddy from "./Buddy";
@@ -14,6 +15,9 @@ import { useHelperCall, Thinking } from "./AiParts";
 
 /** Citation markers the coach writes inline, e.g. "[G12]" or "[G3, G7]". */
 const CITE = /\s?\[(G\d+(?:\s*,\s*G\d+)*)\]/g;
+
+/** "A", "A and B", "A, B and C". */
+const listJoin = (items: string[]) => (items.length < 2 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`);
 
 /** The chat shows plain text, so citation marks and any markdown the model adds are stripped. */
 const plainText = (text: string) => text.replace(CITE, "").replace(/\*\*|__/g, "").replace(/^#{1,6}\s+/gm, "").trim();
@@ -33,16 +37,20 @@ export function Coach({ family, childId: start, onChange }: { family: Family; ch
   const [picked, setPicked] = useState<string[]>([]);
   const [safety, setSafety] = useState<string | null>(null);
   const [fallback, setFallback] = useState(false);
+  const [planFull, setPlanFull] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const clearing = useRef<Promise<void>>(Promise.resolve()); // a first message waits for the fresh start
   const child = family.children.find((c) => c.id === about) ?? family.children[0];
   const childId = child?.id;
-  const addCards = cards.filter((c) => c.kind === "add" && c.source === "coach");
+  // A full plan can't take another quest, so its chat shows tips only.
+  const addCards = planFull ? [] : cards.filter((c) => c.kind === "add" && c.source === "coach");
+  const lastReply = [...messages].reverse().find((m) => m.role !== "parent")?.id;
 
-  function adopt(thread: { messages: CoachMessage[]; suggestions: Suggestion[] }) {
+  function adopt(thread: CoachThread) {
     setMessages(thread.messages);
     setCards(thread.suggestions);
     setPicked(thread.suggestions.map((s) => s.id));
+    setPlanFull(thread.plan_full ?? false);
   }
 
   // Each sign-in starts the coach fresh: the first time a child's chat opens, the old one is cleared.
@@ -156,7 +164,13 @@ export function Coach({ family, childId: start, onChange }: { family: Family; ch
             <div key={m.id} className={`bubble-wrap bubble-wrap--${from}`}>
               <p className={`bubble bubble--${from}`}>{from === "parent" ? m.content : plainText(m.content)}</p>
               {m.sources.length > 0 && <p className="bubble__sources">Sources: {m.sources.map((s) => s.title).join(" · ")}</p>}
-              {m.no_habit_match && <p className="bubble__warning" role="note">⚠️ We don't have an approved habit for this problem yet, so none is suggested.</p>}
+              {m.covered_by?.length > 0 && (
+                <p className="bubble__note" role="note">✓ {name} already has {m.covered_by.length === 1 ? "a quest" : "quests"} for this: {listJoin(m.covered_by)}. The tips above can help {m.covered_by.length === 1 ? "it" : "them"} work better.</p>
+              )}
+              {!m.covered_by?.length && planFull && m.id === lastReply && (
+                <p className="bubble__warning" role="note">⚠️ {name} already has {MAX_HABITS} quests, so no new quest is suggested. To add one, remove a quest in the Quest library first.</p>
+              )}
+              {!planFull && m.no_habit_match && <p className="bubble__warning" role="note">⚠️ We don't have an approved habit for this problem yet, so none is suggested.</p>}
             </div>
           );
         })}

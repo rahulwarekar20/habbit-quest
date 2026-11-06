@@ -50,6 +50,12 @@ flowchart LR
   reviewer fails closed.
 - **PR #3: ten defects fixed** after a full code review, and frontend checks (vitest, tsc, build) added to CI.
 - **PR #4: modules.** The frontend's stylesheet, API client, kid page and AI helpers split into one module per area.
+- **Coach on a full plan:** a child with 6 habits gets tips only, no new-habit cards from either engine or the
+  keyword fallback; the thread's `plan_full` lets the app say so instead of "no approved habit fits". When the
+  quests that suit a problem are already in the plan, the reply's `covered_by` names them (migration
+  `202611050001_coach_covered_by.sql`), and "no approved habit fits" is kept for problems with none. Replies are
+  normalised (`tidy_marks`): (G9) citations become [G9] and are checked against the brief, and keycap numbers
+  become numbered lines.
 - **Comments and guides:** every file and export explained in the code, plus [../../ARCHITECTURE.md](../../ARCHITECTURE.md).
 - **Tests:** 383 backend tests at 100% coverage on PostgreSQL 17. Frontend logic and screen tests (vitest, with a fake
   API) and Playwright browser tests against the real API and database. All run in CI.

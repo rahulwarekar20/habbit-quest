@@ -28,7 +28,15 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field, create_model
 
-from habitquest_backend.coach_tools import MAX_RECOMMENDATIONS, REASON_LENGTH, TIME, Change, Snapshot, Turn
+from habitquest_backend.coach_tools import (
+    MAX_RECOMMENDATIONS,
+    REASON_LENGTH,
+    TIME,
+    Change,
+    Snapshot,
+    Turn,
+    tidy_marks,
+)
 from habitquest_backend.config import Settings
 from habitquest_backend.guidance import Chunk, search_guidance
 from habitquest_backend.llm import chat_model
@@ -408,7 +416,8 @@ def build_crew(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
             turn.changes.append(
                 Change(change.habit_id, change.action, cue, change.reason.strip()[:REASON_LENGTH])
             )
-        draft = keep_cited(plan.reply, {b["ref"] for b in state["brief"]}).strip()
+        # Normalised first, so a citation written as (G9) is checked against the brief like [G9].
+        draft = keep_cited(tidy_marks(plan.reply), {b["ref"] for b in state["brief"]}).strip()
         return {"draft": draft, "poor_fit": [], "unsafe": []}
 
     def fit(state: CrewState) -> dict:
@@ -433,10 +442,10 @@ def build_crew(settings: Settings, snapshot: Snapshot, turn: Turn, label: str):
         return {"poor_fit": poor}
 
     def safety(state: CrewState) -> dict:
+        # The reviewer reads the reply as the parent will: without citation marks, which it would take for ids.
+        shown = keep_cited(state["draft"], set())
         try:
-            verdict = cast(
-                SafetyVerdict, ask(settings, "safety", SafetyVerdict, SAFETY_PROMPT, state["draft"])
-            )
+            verdict = cast(SafetyVerdict, ask(settings, "safety", SafetyVerdict, SAFETY_PROMPT, shown))
         except (openai.OpenAIError, ValueError) as exc:
             # Fails closed: an unchecked reply is never shown. Its cards were fit-checked and come from the catalog.
             log.warning("Crew safety check failed (%s); holding the reply back", type(exc).__name__)
