@@ -81,8 +81,11 @@
 @media (max-width: 480px) {
   .logo__text { font-size: var(--text-xl); }
   .logo__badge { width: 34px; height: 34px; }
-  .kidbar__lock { padding: 8px 12px; }
-  .kidbar__lock .lock-label { display: none; }
+  /* The way out keeps its words ("Sign out", "Grown-ups"); the logo gives up its name to make room. */
+  .kidbar__inner { flex-wrap: nowrap; gap: 8px; align-items: flex-start; }
+  .kidbar .logo__text { display: none; }
+  .kidbar__right { gap: 6px; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .kidbar__lock { padding: 8px 12px; white-space: nowrap; }
   .topbar__actions .btn { padding: 8px 14px; }
   .topbar:not(.topbar--app) .topbar__actions .btn--ghost { display: none; }
   .approval__art { width: 64px; }
