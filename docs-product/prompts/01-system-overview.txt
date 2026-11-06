@@ -1,0 +1,44 @@
+Create a friendly, publication-quality hand-drawn technical explainer of the IMPLEMENTED HabitQuest system. Use supplied images as STYLE REFERENCES ONLY; their proposed Deep Agents architecture is obsolete for this figure. Adapt the paper-and-marker visual language, not their component layout or facts.
+
+Landscape 16:9. White paper, expressive slightly irregular dark navy pen outlines, large readable handwritten indigo/blue headings, restrained purple emphasis, soft lavender/light-blue washes. Recognizable semantic objects, generous whitespace, crisp text, restrained tiny yellow/green details. Avoid a generic wall of rectangular service boxes. Do not draw brand logos. Make this attractive as a demonstration slide and readable as a standalone architecture figure.
+
+VIEWER QUESTION: How does a parent's concern become researched suggestions, a human-approved child plan and daily rewards, and which software owns the state?
+
+TITLE AND STATUS, exact:
+HabitQuest system architecture
+Implemented design
+
+Do not put implementation dates anywhere in the illustration; keep dates only in external provenance records.
+
+COMPOSITION:
+Dominant left-to-right story. Left: an illustrated browser tablet with parent/child tabs and a small Google identity key badge. Center: a FastAPI workbench with a small bounded AI robot holding structured sheets plus a review clipboard. Above the workbench is a research bookshelf feeding two distinct artifacts: a Pinecone semantic-index cylinder and a pinned canonical evidence folder. Below the workbench is a PostgreSQL filing cabinet, clearly connected only to FastAPI. Right: one attractive goal card with exactly three smaller habit-choice cards, then a human parent checking an approval clipboard, then a child's scheduled quest board with tiny progress/reward objects. Show the draft-to-approval transition, not automatic model control of a child.
+
+Put two small standalone helper booklets beside the central workbench, visibly separate from the main Coach progression: Quest Planner + Weekly Review, Explicit requests. Put a compact artwork palette beside the browser, and a separate operator accounting receipt beside the backend. Preserve comfortable white space and avoid intersecting connectors. The two supporting lower objects should not compete with the main journey.
+
+EXACT LABELS (use only these visible labels; line breaks are flexible):
+Browser: React + Vite / Parent & child experiences
+Identity badge: Google sign-in / API verifies identity
+Browser-to-API connection: HTTPS requests + stage updates
+Backend: FastAPI / Identity • family rules • validation
+Research: Research & catalog authoring / Offline publication
+Source folder: Canonical cards + evidence
+Index: Pinecone semantic index
+Snapshot: Pinned catalog snapshot
+AI: Bounded AI workflows / LangGraph + LangChain / Retrieve → generate → check / OpenAI + Nebius
+Helper booklets: Quest Planner + Weekly Review / Explicit requests
+Draft cards: Researched goal / 3 habit choices
+Human gate: Parent chooses & approves
+Quest board: Child's scheduled quests / Submit → parent approval / Sparks, points & rewards
+Database cabinet: PostgreSQL / Families • plans • progress • accounting
+Artwork palette: Bundled goal art + icons / S3 buddy images / Buddy selection: local rules
+Operator receipt: /admin · Tokenomics / Usage • latency • cost • credits
+Footer: AI proposes. Parents decide. PostgreSQL preserves the accepted plan.
+
+CONNECTIONS AND AUTHORITY:
+Browser and FastAPI communicate directly with a clear bidirectional arrow. Google sign-in badge describes API verification, not database login. Research authoring creates canonical cards; OFFLINE publication branches to Pinecone and the pinned snapshot. Both feed the bounded AI workbench within FastAPI. Do not depict live internet research. FastAPI sends goal/habit drafts through a human acceptance gate to the child's quest board. The board illustrates browser-visible outcomes of backend operations, not a separate service. FastAPI reads/writes PostgreSQL through one explicit vertical bidirectional connector. No browser-to-database or model-to-database connector. Keep the separate explicit Planner/Review booklets adjacent to the backend, not serial steps on the Coach arrow. Artwork supplies the browser: public S3 buddy images plus bundled goal art/icons; buddy selection runs local rules. An admin receipt records usage, time and costs behind a separate operator context.
+
+SEMANTIC LIMITS:
+AI proposes; only parent acceptance adds a habit to a child's scheduled plan. A second parent approval follows child completion before rewards. Coaching credits are separate from child reward points. Do not draw a bulk Pinecone-to-plan import. Do not draw an autonomous tool loop, ten-agent crew, Deep Agents harness, live web research or a five-second performance claim. No model-based buddy selection. The AI check refers to deterministic validation and eligible generated-prose Safety, not remote safety checks of the researched catalog. Do not add exact model names or call counts to this high-level overview; the detailed AI companion provides them. Do not add family-specific data, credentials, prices or cloud identifiers. Preserve the status as current implemented design, not proposed architecture.
+
+FINAL QUALITY CHECK:
+Every exact label legible at final viewing size, no missing/garbled words, no crossing arrows that imply unintended data access. Visually prioritize recognizable artifacts, human decisions and state ownership. The result should match the supplied reference's friendly white-paper, blue-purple technical illustration style while presenting this new and accurate architecture.

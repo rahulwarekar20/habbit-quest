@@ -43,7 +43,7 @@ import { useStore } from "./lib/store";
 
 /** The app shell: picks the page for the current route and applies the access rules described above. */
 export default function App() {
-  const [page, a, b] = useRoute();
+  const [page, a, b, c] = useRoute();
   const { family, phase, loadError, retry } = useStore();
 
   if (!page) return getKidLogin() ? <Redirect to="/kid" /> : <Home />;
@@ -79,7 +79,7 @@ export default function App() {
     if (getKidMode()) return <ParentLock />;
     if (page === "setup") return <HabitSetup childId={a} />;
     if (page === "coach") return <CoachPage childId={a} />;
-    if (page === "quests") return <QuestLibrary childId={a} />;
+    if (page === "quests") return <QuestLibrary key={a} childId={a} goalId={b === "goal" ? c : undefined} />;
     if (page === "rewards") return <RewardsPage />;
     if (page === "family") return <FamilySettings />;
     return <ParentDashboard />;

@@ -10,9 +10,10 @@
  */
 import { vi } from "vitest";
 import type {
-  ApiChild, ApiFamily, Approval, CatalogHabit, Decision, Extras, Goal, HabitStatus, Journey, Me, Plan, PlanHabit,
+  ApiChild, ApiFamily, Approval, CatalogHabit, ChildInput, DayName, Decision, Extras, Goal, HabitStatus, Journey, Me, Plan, PlanGoal, PlanHabit,
   Progress, Today, TokenResponse,
 } from "../lib/api";
+import { getCatalogBuddy } from "../lib/buddyCatalog";
 
 /** One request the app sent. `body` is the parsed JSON, or the form fields for the dev login. */
 export interface Call { method: string; path: string; body: unknown }
@@ -60,6 +61,7 @@ export interface FakeState {
   pin: string | null;
   children: ApiChild[];
   plans: Record<string, PlanHabit[]>; // child id -> current quests
+  savedGoals?: Record<string, PlanGoal[]>; // independently saved goals may have no assignments yet
   status: Record<string, HabitStatus>; // child-habit id -> today's status
   sparks: Record<string, number>;
   points: Record<string, number>;
@@ -125,13 +127,41 @@ export function startFakeServer(state: FakeState = defaultState()): FakeServer {
   const s = state;
   const child = (id: string) => s.children.find((c) => c.id === id);
   const kidChild = (token: string | null) => token?.startsWith("kid:") ? token.slice(4) : null;
+  const savedExtras: Record<string, Extras> = {};
+  const selection = (c: ApiChild) => ({ buddy: c.buddy, buddy_selection_mode: c.buddy_selection_mode ?? "legacy" as const,
+    catalog_buddy_id: c.catalog_buddy_id ?? null, buddy_catalog_version: c.buddy_catalog_version ?? null,
+    buddy_selection_revision: c.buddy_selection_revision ?? 0 });
+  const kidExtras = (id: string) => ({ ...(savedExtras[id] ?? extras()), ...selection(child(id)!) });
+  const setChoice = (c: ApiChild, input: ChildInput["buddy_selection"], creating = false): Reply | null => {
+    if (!input) return null;
+    const revision = c.buddy_selection_revision ?? 0;
+    if ((creating && (input.expected_revision ?? 0) !== 0) || (!creating && input.expected_revision !== revision)) return refuse(409, "The buddy selection changed. Reload and try again.");
+    if (input.mode === "catalog") {
+      const record = getCatalogBuddy(input.catalog_buddy_id, input.buddy_catalog_version);
+      if (!record || c.age < record.supportedAgeMin || c.age > record.supportedAgeMax) return refuse(422, "Choose an available buddy for this age.");
+      c.buddy_selection_mode = "catalog"; c.catalog_buddy_id = record.id; c.buddy_catalog_version = input.buddy_catalog_version;
+    } else { c.buddy = input.buddy; c.buddy_selection_mode = "legacy"; c.catalog_buddy_id = null; c.buddy_catalog_version = null; }
+    c.buddy_selection_revision = revision + 1;
+    return null;
+  };
 
   const today = (childId: string): Today => {
     const c = child(childId)!;
+    const weekdays: DayName[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const weekday = new Date(`${DAY}T12:00:00Z`).getUTCDay();
+    const activeHabits = (s.plans[c.id] ?? []).filter((h) => h.status === "active");
+    const scheduled = activeHabits.filter((h) => h.days.includes(weekdays[weekday]));
+    const upcoming = activeHabits.filter((h) => !h.days.includes(weekdays[weekday]));
+    const nextOffset = [1, 2, 3, 4, 5, 6, 7].find((offset) => activeHabits.some((h) => h.days.includes(weekdays[(weekday + offset) % 7])));
+    const nextDate = new Date(`${DAY}T12:00:00Z`);
+    nextDate.setUTCDate(nextDate.getUTCDate() + (nextOffset ?? 0));
     return {
-      child: { id: c.id, name: c.name, buddy: c.buddy, world: c.world }, day: DAY, welcome_back: false, rest_day: false,
-      next_quest_day: null, progress: progress(s.sparks[c.id] ?? 0), points: s.points[c.id] ?? 0, streak: 0, week: {},
-      habits: (s.plans[c.id] ?? []).filter((h) => h.status === "active").map((h) => ({
+      child: { id: c.id, name: c.name, ...selection(c), world: c.world }, day: DAY, welcome_back: false,
+      rest_day: activeHabits.length > 0 && scheduled.length === 0,
+      next_quest_day: nextOffset ? nextDate.toISOString().slice(0, 10) : null,
+      progress: progress(s.sparks[c.id] ?? 0), points: s.points[c.id] ?? 0, streak: 0, week: {},
+      upcoming_habits: upcoming.map(({ habit_id, kid_title, kid_hint, icon, cue_time, days }) => ({ habit_id, kid_title, kid_hint, icon, cue_time, days })),
+      habits: scheduled.map((h) => ({
         child_habit_id: h.id, habit_id: h.habit_id, kid_title: h.kid_title, kid_hint: h.kid_hint, icon: h.icon,
         anchor: h.anchor, tier: h.tier, points: h.points, cue_time: h.cue_time, status: s.status[h.id] ?? "todo",
         completion_id: s.status[h.id] ? `done-${h.id}` : null, boosts: [], multiplier: 1, stars: 0,
@@ -143,10 +173,10 @@ export function startFakeServer(state: FakeState = defaultState()): FakeServer {
     const goals = GOALS.filter((g) => habits.some((h) => h.goal_id === g.id));
     return {
       child_id: childId, progress: progress(s.sparks[childId] ?? 0), habits,
-      goals: goals.map((g) => ({
+      goals: [...(s.savedGoals?.[childId] ?? []).filter(g => !goals.some(derived => derived.id === g.goal_id)), ...goals.map((g) => ({
         goal_id: g.id, title: g.title, status: "active", reason: null, recommended_habit_ids: [],
         options: CATALOG.filter((h) => h.goal_id === g.id).map(({ goal_title: _t, min_age: _a, max_age: _b, ...o }) => o),
-      })),
+      } as PlanGoal))],
     };
   };
   const approvals = (): Approval[] => s.children.flatMap((c) => (s.plans[c.id] ?? [])
@@ -197,34 +227,68 @@ export function startFakeServer(state: FakeState = defaultState()): FakeServer {
       return created(s.family);
     }],
     ["GET", /^\/v1\/families\/(\w+)$/, () => s.family],
+    ["GET", /^\/v1\/families\/\w+\/coach-context$/, () => ({ children: {}, history_limit: 20 })],
+    ["GET", /^\/v1\/families\/\w+\/ai\/budget$/, () => ({ allowance: 100, used: 0, pending: 0, remaining: 100, overage: 0, reset_at: "2026-11-06T05:00:00Z", enforced: false, show_costs: false, activity_quotes: { coach: 2, habit_batch: 1, planner: 2, review: 2 }, policy_revision: 1 })],
     ["GET", /^\/v1\/families\/\w+\/children$/, () => s.children],
     ["POST", /^\/v1\/families\/\w+\/children$/, (_m, body) => {
-      const b = body as Pick<ApiChild, "name" | "age" | "buddy" | "routine_times">;
-      const kid: ApiChild = { ...b, id: `c${s.children.length + 1}`, family_id: "f1", world: "camp", tier_override: 0, has_pin: false, created_at: NOW };
+      const b = body as ChildInput;
+      const kid: ApiChild = { name: b.name, age: b.age, buddy: b.buddy ?? "fox", routine_times: b.routine_times,
+        id: `c${s.children.length + 1}`, family_id: "f1", world: "camp", tier_override: 0, has_pin: false, created_at: NOW };
+      const error = setChoice(kid, b.buddy_selection, true); if (error) return error;
       s.children.push(kid);
       s.plans[kid.id] = [];
       return created(kid);
+    }],
+    ["GET", /^\/v1\/children\/(\w+)$/, (m) => child(m[1]) ?? refuse(404, "Child not found")],
+    ["PATCH", /^\/v1\/children\/(\w+)$/, (m, body) => {
+      const c = child(m[1]); if (!c) return refuse(404, "Child not found");
+      const b = body as Partial<ChildInput>;
+      if (b.buddy !== undefined && b.buddy_selection) return refuse(422, "Choose one buddy update format.");
+      const next = { ...c, ...(b.name !== undefined ? { name: b.name } : {}), ...(b.age !== undefined ? { age: b.age } : {}),
+        ...(b.routine_times ? { routine_times: b.routine_times } : {}), ...(b.tier_override !== undefined ? { tier_override: b.tier_override } : {}) };
+      if (b.buddy && !(c.buddy_selection_revision ?? 0)) next.buddy = b.buddy;
+      const error = setChoice(next, b.buddy_selection); if (error) return error;
+      Object.assign(c, next); return c;
     }],
     ["POST", /^\/v1\/families\/\w+\/pin\/verify$/, (_m, body) => ({ valid: (body as { pin: string }).pin === s.pin })],
     ["GET", /^\/v1\/families\/\w+\/approvals$/, () => approvals()],
     ["POST", /^\/v1\/completions\/([\w-]+)\/approve$/, (m) => decide(m[1], "approved")],
     ["POST", /^\/v1\/completions\/([\w-]+)\/reject$/, (m) => decide(m[1], "rejected")],
     ["GET", /^\/v1\/children\/(\w+)\/today$/, (m) => today(m[1])],
-    ["GET", /^\/v1\/children\/(\w+)\/extras$/, () => extras()],
+    ["GET", /^\/v1\/children\/(\w+)\/extras$/, (m) => kidExtras(m[1])],
     ["GET", /^\/v1\/children\/(\w+)\/plan$/, (m) => plan(m[1])],
+    ["POST", /^\/v1\/children\/(\w+)\/habits$/, (m, body) => {
+      const b = body as { habit_id: string; cue_time?: string; days?: PlanHabit["days"]; pin?: string };
+      if (s.pin && b.pin !== s.pin) return refuse(403, "Incorrect grown-ups PIN");
+      const habit = CATALOG.find(h => h.id === b.habit_id);
+      if (!habit) return refuse(404, "Habit not found");
+      const existing = (s.plans[m[1]] ?? []).find(h => h.habit_id === b.habit_id);
+      if (!existing && (s.plans[m[1]] ?? []).length >= 6) return refuse(409, "This plan already has 6 habits. Remove a habit first.");
+      if (existing) {
+        existing.status = "active";
+        if (b.cue_time) existing.cue_time = b.cue_time;
+        if (b.days) existing.days = b.days;
+      } else {
+        const added = planHabit(m[1], b.habit_id, b.cue_time ?? child(m[1])?.routine_times[habit.anchor] ?? "07:00");
+        if (b.days) added.days = b.days;
+        s.plans[m[1]] = [...(s.plans[m[1]] ?? []), added];
+      }
+      return plan(m[1]);
+    }],
     ["PUT", /^\/v1\/children\/(\w+)\/plan$/, (m, body) => {
-      const b = body as { habits: { habit_id: string; cue_time?: string }[] };
+      const b = body as { goals: string[]; habits: { habit_id: string; cue_time?: string }[] };
+      if (s.savedGoals?.[m[1]]) s.savedGoals[m[1]] = s.savedGoals[m[1]].filter(g => b.goals.includes(g.goal_id));
       const before = new Map((s.plans[m[1]] ?? []).map((h) => [h.habit_id, h]));
       s.plans[m[1]] = b.habits.map((h) => before.get(h.habit_id) ?? planHabit(m[1], h.habit_id, h.cue_time ?? "07:00"));
       return plan(m[1]);
     }],
     ["PATCH", /^\/v1\/child-habits\/([\w-]+)$/, (m, body) => {
-      const b = body as { status?: "active" | "paused" | "removed" };
+      const b = body as { status?: "active" | "paused" | "removed"; cue_time?: string; days?: DayName[] };
       const c = s.children.find((k) => (s.plans[k.id] ?? []).some((h) => h.id === m[1]))!;
-      const status = b.status;
+      const { status, ...schedule } = b;
       s.plans[c.id] = status === "removed"
         ? s.plans[c.id].filter((h) => h.id !== m[1])
-        : s.plans[c.id].map((h) => h.id === m[1] && status ? { ...h, status } : h);
+        : s.plans[c.id].map((h) => h.id === m[1] ? { ...h, ...schedule, status: status ?? h.status } : h);
       return plan(c.id);
     }],
     ["GET", /^\/v1\/catalog$/, () => CATALOG],
@@ -236,9 +300,19 @@ export function startFakeServer(state: FakeState = defaultState()): FakeServer {
       s.status[(body as { child_habit_id: string }).child_habit_id] = "submitted";
       return created(today(kidChild(t)!));
     }],
-    ["GET", /^\/v1\/kid\/extras$/, () => extras()],
-    ["PATCH", /^\/v1\/kid\/extras$/, () => extras()],
-    ["POST", /^\/v1\/kid\/app-time$/, () => extras()],
+    ["GET", /^\/v1\/kid\/extras$/, (_m, _b, t) => kidExtras(kidChild(t)!)],
+    ["PATCH", /^\/v1\/kid\/extras$/, (_m, body, t) => {
+      const id = kidChild(t)!; const c = child(id)!;
+      const b = body as { buddy?: ApiChild["buddy"]; buddy_selection?: ChildInput["buddy_selection"]; wearing?: string; level_seen?: number };
+      if (b.buddy !== undefined && b.buddy_selection) return refuse(422, "Choose one buddy update format.");
+      const next = { ...c }; if (b.buddy && !(c.buddy_selection_revision ?? 0)) next.buddy = b.buddy;
+      const error = setChoice(next, b.buddy_selection); if (error) return error;
+      Object.assign(c, next);
+      savedExtras[id] = { ...kidExtras(id), ...(b.wearing !== undefined ? { wearing: b.wearing || null } : {}),
+        ...(b.level_seen !== undefined ? { level_seen: b.level_seen } : {}) };
+      return kidExtras(id);
+    }],
+    ["POST", /^\/v1\/kid\/app-time$/, (_m, _b, t) => kidExtras(kidChild(t)!)],
     ["GET", /^\/v1\/kid\/journey$/, (_m, _b, t) => journey(kidChild(t)!)],
     ["GET", /^\/v1\/kid\/checkins\/today$/, () => null],
     ["POST", /^\/v1\/kid\/buddy-line$/, () => ({ line: "You've got this!" })],

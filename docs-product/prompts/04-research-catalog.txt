@@ -1,0 +1,50 @@
+Use case: infographic-diagram. Create a friendly publication-quality illustrated architecture slide that matches the supplied HabitQuest figures in STYLE ONLY. Clean white paper, slightly irregular dark navy ink, indigo/blue handwritten title, readable short body lettering, soft lavender/pale-blue washes, restrained purple emphasis. Use recognizable papers/books, editorial card desk, review clipboard, validation sieve, search-text booklet, vector dots, locked frozen archive, Pinecone cylinder, canonical folder, parent approval clipboard. Do not make a generic wall of boxes.
+
+Landscape 16:9. Main title large and readable. NO DATES anywhere in the artwork. Date-free subtitle: "AI pipeline · 1 of 2". This slide explains the recorded initial offline catalog-creation/publication process and its small runtime handoff; do not reuse the prior runtime diagram's node layout.
+
+COMPOSITION: A spacious five-step mechanism story. Label the principal area "Offline catalog creation". First show original evidence papers/books. They feed an editorial desk with age-band practice cards, which feeds cross-review/local validation. The resulting canonical cards feed prepared search text and embedding. Crucially, vectors and full records enter a frozen archive BEFORE upload. Branch the archived release into TWO distinct artifacts: Pinecone vector database and a pinned canonical JSON guidance folder. Label this pair "Reusable RAG knowledge base". Both feed the small final "Runtime reuse" area. The runtime handoff is a masked query using search and canonical checks, then a reviewed source card becoming a goal, generated action becoming a habit, then human parent acceptance before the child's plan. PostgreSQL receives only selected goals; it is not a bulk copy of Pinecone.
+
+If needed, put three numbered scenes in the top row, then publication and runtime reuse in the bottom row with an unmistakable continuation arrow. Keep generous whitespace, legible labels and minimal crossings. No detached important object. Show source records and decisions as artifacts, not speculative model robots performing unverified authoring work. The frozen archive must visibly precede the split into Pinecone and pinned canonical guidance. Runtime is clearly distinct from initial creation.
+
+EXACT VISIBLE COPY (print only these labels; line breaks flexible):
+
+From research to a reusable habit catalog
+AI pipeline · 1 of 2
+
+Offline catalog creation
+1  Research foundation
+89 evidence / guidance records
+6 framework books
+Sources · populations · limits
+
+2  Editorial authoring
+96 concepts · 24 categories
+Ages 3–5 / 6–8 / 9–10 / 11–13
+Practice templates + caregiver support
+Adaptations · exclusions · research links
+
+3  Cross-review + local validation
+Schema · age/context · sources · hashes
+381 canonical age-specific cards
+
+4  Publish a versioned release
+Prepared search text
+OpenAI embeddings
+text-embedding-3-small · 512 dimensions
+Freeze full snapshot before upload
+Pinecone vector database: 381 records
+Pinned canonical JSON: full guidance
+Reusable RAG knowledge base
+Verify every published record
+
+5  Runtime reuse
+Masked query → search + canonical checks
+Reviewed source card → goal
+Generated action → habit
+Parent accepts → child plan
+Only selected goals enter PostgreSQL
+
+Create once; reuse across Coach requests.
+Research informs design; it does not prove app effectiveness.
+
+FACTUAL GUARDRAILS: 89 means evidence/guidance records, not independent trials; six books are separate frameworks. 96 concepts across 24 categories expand into 381 age-specific cards. Age bands are editorial. Prepared card search text is embedded; do not draw paper/PDF chunking. Pinecone is a public source index, not family state. Canonical JSON supplies authoritative full guidance. Existing practice templates are not personalized child assignments. Source card maps to goal; later generated action maps to habit. Parent acceptance is required. Initial creation is reusable versioned publication, not live research during each chat. Do not draw a model safety review of every trusted catalog record or a clinical certification. No invented authoring-model name, score, cost, date, performance promise or automatic assignment. Keep final qualification readable rather than tiny footnote text.

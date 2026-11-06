@@ -13,15 +13,20 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from habitquest_backend import (
     accounts,
+    admin,
     checkins,
     coach,
     daily,
     extras,
+    generated_habits,
+    generation_settings,
     habits,
     insights,
     journey,
     onboarding,
+    planning_catalog,
     rewards,
+    tokenomics_routes,
 )
 from habitquest_backend.auth import TOKEN_URL, dev_login, issue_token, signed_in
 from habitquest_backend.config import Settings
@@ -48,6 +53,7 @@ code (`POST /v1/families/{id}/login-code`, shared as a QR code) and their own PI
 (`PUT /v1/children/{id}/kid-pin`), a child signs in on their own device (`POST /v1/kid-login/{code}`).
 """
 TAGS = [
+    {"name": "Admin", "description": "Separate operator access to Tokenomics policy and sanitized metrics."},
     {"name": "Health", "description": "Liveness and readiness probes for hosting."},
     {"name": "Auth", "description": "Google sign-in, and the development login when `DEV_LOGIN=true`."},
     {
@@ -174,6 +180,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(daily.router(settings))
     application.include_router(rewards.router(settings))
     application.include_router(coach.router(settings))
+    application.include_router(planning_catalog.routes(settings))
+    application.include_router(generated_habits.router(settings))
+    application.include_router(generation_settings.router(settings))
+    application.include_router(admin.router(settings))
+    application.include_router(tokenomics_routes.router(settings))
     application.include_router(insights.router(settings))
     application.include_router(checkins.router(settings))
     application.include_router(extras.router(settings))

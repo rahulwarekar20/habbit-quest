@@ -1,12 +1,15 @@
 """The quest planner, weekly review and buddy lines: checks on the answers, names, and who can call them."""
 
 import json
+from decimal import Decimal
+from uuid import uuid4
 
 import httpx
 import pytest
 from conftest import OTHER, PARENT, token
 from fastapi.testclient import TestClient
 
+from habitquest_backend import tokenomics
 from habitquest_backend.insights import BUDDY_FALLBACK
 from habitquest_backend.main import create_app
 
@@ -127,6 +130,77 @@ def test_an_unavailable_model_saves_nothing(live, family, llm_reply, db):
     assert db.execute("SELECT count(*) FROM hq.ai_reports").fetchone()[0] == 0
 
 
+@pytest.mark.parametrize("path,answer", [("plan-suggestions", PLAN), ("reviews", REVIEW)])
+def test_report_truncation_is_terminal_and_new_request_can_succeed(
+    live, family, llm_reply, db, path, answer, caplog
+):
+    truncated = httpx.Response(
+        200,
+        json={
+            "id": "synthetic-truncated",
+            "object": "chat.completion",
+            "created": 0,
+            "model": "m",
+            "choices": [
+                {
+                    "index": 0,
+                    "finish_reason": "length",
+                    "message": {
+                        "role": "assistant",
+                        "content": "private partial report",
+                        "reasoning_content": "private reasoning",
+                    },
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 1200,
+                "completion_tokens": 4000,
+                "total_tokens": 5200,
+                "completion_tokens_details": {"reasoning_tokens": 4000},
+            },
+        },
+    )
+    llm_reply(truncated, json.dumps(answer))
+    url = f"/v1/families/{family}/{path}"
+    request = f"?request_id={uuid4()}"
+    failed = live.post(url + request)
+    assert failed.status_code == 502 and "cut short" in failed.json()["detail"]
+    assert "busy" not in failed.text and "private" not in caplog.text
+    assert db.execute("SELECT count(*) FROM hq.ai_reports").fetchone()[0] == 0
+    assert db.execute(
+        "SELECT status,credits,pending_credits FROM hq.ai_operations WHERE family_id=%s", (family,)
+    ).fetchone() == ("failed", 0, 0)
+    assert live.post(url + request).status_code == 409
+    assert len(llm_reply.seen) == 1
+    successful = live.post(url + f"?request_id={uuid4()}")
+    assert successful.status_code == 200 and successful.json()["tokenomics"]["credits"] == 2
+    assert len(llm_reply.seen) == 2
+    assert db.execute("SELECT count(*) FROM hq.ai_reports").fetchone()[0] == 1
+
+
+@pytest.mark.parametrize(
+    "path,answer,role", [("plan-suggestions", PLAN, "planner"), ("reviews", REVIEW, "review")]
+)
+def test_nebius_reports_disable_unbounded_reasoning_and_keep_model(
+    settings, remote, family, alex, llm_reply, path, answer, role
+):
+    from habitquest_backend import llm
+
+    remote.openai_base_url = "https://api.tokenfactory.us-north1.nebius.com/v1/"
+    remote.openai_model = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
+    llm_reply(json.dumps(answer))
+    with TestClient(create_app(remote)) as client:
+        client.headers["Authorization"] = "Bearer " + token(settings)
+        response = client.post(f"/v1/families/{family}/{path}")
+    assert response.status_code == 200
+    assert len(llm_reply.seen) == 1
+    assert llm_reply.seen[0]["reasoning_effort"] == "none"
+    assert llm_reply.seen[0]["model"] == remote.openai_model
+    assert llm_reply.seen[0]["max_completion_tokens"] == 4000
+    configured = next(item for item in llm.effective_models(remote) if item["role"] == role)
+    assert configured["reasoning_effort"] == "none"
+
+
 def test_fake_mode_writes_plain_reports(client, family, alex):
     assert client.post(f"/v1/families/{family}/plan-suggestions").json()["result"]["tips"] == []
     body = client.post(f"/v1/families/{family}/reviews").json()
@@ -173,15 +247,85 @@ def test_an_unusable_line_is_replaced(live, alex, llm_reply, replies):
     assert response.json() == {"line": BUDDY_FALLBACK["celebrate"]}
 
 
-def test_the_daily_limit_gives_the_built_in_line(settings, remote, alex, llm_reply):
+def test_tracking_only_mode_bypasses_the_old_daily_limit_and_keeps_child_costs(
+    settings, remote, db, alex, llm_reply
+):
     limited = remote.model_copy(update={"ai_daily_limit": 1})
-    llm_reply("A nice line.", '{"safe": true, "category": "none", "risk": false}')
-    with TestClient(create_app(limited)) as c:
-        c.headers["Authorization"] = "Bearer " + token(settings)
-        headers = kid_headers(c, alex)
+    policy = tokenomics.get_policy(settings)
+    tokenomics.update_policy(settings, policy["revision"], {"enforce_budgets": False})
+    safe = '{"safe": true, "category": "none", "risk": false}'
+    llm_reply("A nice line.", safe, "Another nice line.", safe)
+    try:
+        with TestClient(create_app(limited)) as c:
+            c.headers["Authorization"] = "Bearer " + token(settings)
+            headers = kid_headers(c, alex)
+            first = c.post("/v1/kid/buddy-line", json={"event": "greet"}, headers=headers)
+            second = c.post("/v1/kid/buddy-line", json={"event": "greet"}, headers=headers)
+        assert first.json() == {"line": "A nice line."}
+        assert second.json() == {"line": "Another nice line."}
+        assert len(llm_reply.seen) == 4
+        assert db.execute(
+            "SELECT count(*),sum(credits) FROM hq.ai_operations WHERE activity='buddy' AND child_id=%s",
+            (alex,),
+        ).fetchone() == (2, 0)
         assert (
-            c.post("/v1/kid/buddy-line", json={"event": "greet"}, headers=headers).json()["line"]
-            == "A nice line."
+            db.execute(
+                "SELECT count(*) FROM hq.ai_provider_attempts a JOIN hq.ai_operations o ON o.id=a.operation_id WHERE o.activity='buddy' AND o.child_id=%s",
+                (alex,),
+            ).fetchone()[0]
+            == 4
         )
-        second = c.post("/v1/kid/buddy-line", json={"event": "greet"}, headers=headers).json()
-    assert second["line"] == BUDDY_FALLBACK["greet"]
+    finally:
+        tokenomics.update_policy(
+            settings,
+            tokenomics.get_policy(settings)["revision"],
+            {"enforce_budgets": policy["enforce_budgets"]},
+        )
+
+
+def test_strict_operator_cap_preserves_safe_buddy_fallback_without_dispatch(
+    settings, remote, db, alex, llm_reply
+):
+    # Use a seeded, priced model so this exercises cap rejection, not unknown-pricing rejection.
+    limited = remote.model_copy(
+        update={
+            "openai_base_url": "https://api.openai.com/v1",
+            "openai_model": "gpt-6-luna",
+            "openai_small_model": "gpt-6-luna",
+        }
+    )
+    policy = tokenomics.get_policy(settings)
+    exposure = db.execute(
+        "SELECT legacy_initialized,legacy_carryover_usd FROM hq.tokenomics_exposure"
+    ).fetchone()
+    db.execute("UPDATE hq.tokenomics_exposure SET legacy_initialized=true,legacy_carryover_usd=0")
+    tokenomics.update_policy(
+        settings, policy["revision"], {"enforce_budgets": True, "operator_cap_usd": Decimal("0.000000001")}
+    )
+    llm_reply("This provider response must never be requested.")
+    try:
+        with TestClient(create_app(limited)) as c:
+            c.headers["Authorization"] = "Bearer " + token(settings)
+            response = c.post("/v1/kid/buddy-line", json={"event": "greet"}, headers=kid_headers(c, alex))
+        assert response.status_code == 200
+        assert response.json() == {"line": BUDDY_FALLBACK["greet"]}
+        assert llm_reply.seen == []
+        assert db.execute(
+            "SELECT status,credits FROM hq.ai_operations WHERE activity='buddy' AND child_id=%s", (alex,)
+        ).fetchone() == ("failed", 0)
+        assert (
+            db.execute(
+                "SELECT count(*) FROM hq.ai_provider_attempts a JOIN hq.ai_operations o ON o.id=a.operation_id WHERE o.activity='buddy' AND o.child_id=%s",
+                (alex,),
+            ).fetchone()[0]
+            == 0
+        )
+    finally:
+        tokenomics.update_policy(
+            settings,
+            tokenomics.get_policy(settings)["revision"],
+            {"enforce_budgets": policy["enforce_budgets"], "operator_cap_usd": policy["operator_cap_usd"]},
+        )
+        db.execute(
+            "UPDATE hq.tokenomics_exposure SET legacy_initialized=%s,legacy_carryover_usd=%s", exposure
+        )

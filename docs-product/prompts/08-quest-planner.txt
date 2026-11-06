@@ -1,0 +1,44 @@
+Use case: infographic-diagram. Create one publication-quality HabitQuest illustration slide in the supplied reference's friendly paper-and-ink style. White paper, navy hand-drawn outlines, large indigo/blue handwritten headings, restrained lavender/pale-blue washes, clean readable body lettering. Landscape 16:9. NO DATES. This is a dedicated full-size explanation of Quest Planner, equal in visual prominence to the Coach and Weekly Review slides.
+
+COMPOSITION: A roomy left-to-right five-stage journey, with a clearly connected second row if required. Show a parent clicking a dashboard button, a SQL filing cabinet with an organized family snapshot and a name-label privacy screen, one model robot returning a structured plan report, a local validation clipboard, then saved proposal cards with a human accept/dismiss decision. A final locked plan board receives an arrow ONLY from acceptance; dismiss ends without a plan update. The model never directly writes the plan. A compact separate failure note terminates before saving the report; it must not feed the parent acceptance path. Put the configured model and observed status/accounting in a short bottom rail. Keep the lower half spacious and readable, no instruction paragraphs.
+
+EXACT VISIBLE COPY:
+
+Quest Planner agent
+Independent one-call role · outside the Coach LangGraph
+
+1  Parent initiates planning
+Dashboard: Run Quest Planner
+Authorize family + reserve allowance
+
+2  Read scoped family facts
+SQL: ages · plans · recent approvals · check-ins
+Available habit choices
+Child A / Child B replace names
+Custom titles represented by goals
+
+3  Generate a structured proposal
+LangChain · 1 model call
+Summary + ordered tips + proposed changes
+Prompt: small, practical adjustments
+Add · retime · pause · resume · remove
+
+4  Validate in code
+Child + habit references
+Current plan membership · time format
+Drop duplicates · keep up to 4 changes
+
+5  Save report + suggestions
+Restore names for display
+Parent accepts or dismisses
+Accept → fresh eligibility + capacity checks → plan update
+Dismiss → no plan change
+
+Provider failure → no partial report
+Stage updates · seconds · usage · cost · credits
+Nebius: deepseek-ai/DeepSeek-V4.1-Flash-1017
+Local proposal checks; no Pinecone lookup or Coach Safety pass
+
+END OF VISIBLE COPY. The remaining instructions must not be printed.
+
+Preserve actual architecture: this is a separate endpoint/function, not another LangGraph or an autonomous agent. Agent is the product-role name. SQL computes facts, not the LLM. The provider call runs outside a database transaction; report/proposal persistence follows local validation. Up to four proposals is a code limit, but prompt preferences are not exhaustive semantic validation. Accepted changes recheck current authorization and domain rules. Report Safety consists of prompt constraints, local proposal checks and acceptance; it does not call the Coach prose-Safety model. There is no live retrieval, embedding or hidden action-writer call here, and no background scheduler. Existing reports can be read without generating. A fresh parent request is required for a new run after confirmed failure. No invented metrics, dates, safety score, direct model-to-database write, or unsupported guarantee. Keep all labels and arrows legible with generous margins.

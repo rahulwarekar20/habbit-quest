@@ -1,5 +1,13 @@
 # How HabitQuest works
 
+The consolidated November 6 design is in [docs-design](docs-design/README.md),
+including current AI, database and AWS deployment diagrams. This file retains
+the earlier repository-level walkthrough; prefer the current design where they differ.
+
+For the dated implementation review, verified local configuration and known coach limitations, see
+[earlier system design](docs-detailed/system-design.md) and the
+[HabitCoach investigation](docs-detailed/habitcoach-investigation.md).
+
 A guide for someone new to the code: what the parts are, how a request travels, and where to look for what.
 Every file also opens with a comment saying what it is for, and every exported function, component and class has
 one too, so once this page points you at a file, the file explains itself.
@@ -23,7 +31,7 @@ flowchart LR
         AI["crew.py / coach.py<br/>the AI coach"]
     end
     PG[("PostgreSQL<br/>schema hq,<br/>row-level security")]
-    LLM["OpenAI-compatible<br/>models (Groq)"]
+    LLM["OpenAI-compatible<br/>provider (locally Nebius)"]
     P --> UI
     K --> UI
     UI --> ST --> API
@@ -103,14 +111,16 @@ The points ledger is append-only and a database trigger keeps every balance from
 
 | Feature | Code | Notes |
 |---|---|---|
-| Habit coach | `crew.py` (default) or `coach.py` | A parent describes a problem; the coach cites guidance and suggests catalog habits as cards. See `backend/docs/coach-crew.md` for the crew's diagram. |
+| Habit coach | `crew.py` (selected locally) or `coach.py` | A parent describes a problem; the coach cites guidance and suggests catalog habits as cards. `Settings` defaults to the agent; `COACH_ENGINE=crew` selects the crew. See `backend/docs/coach-crew.md` for its diagram. |
 | Pain point → goals | `ai.py` | Used in onboarding; keyword matching when the model is unavailable. |
 | Weekly review, quest planner | `insights.py` | Proposed changes become suggestion cards. |
 | Buddy lines in kid mode | `insights.py` | Safety-checked before a child sees them; a built-in line otherwise. |
-| Safety | `safety.py` | Word lists first, then a model. Parent messages showing a child at risk get crisis guidance and are never stored or sent on. |
+| Safety | `safety.py` | Word lists first, then a model. Risk-guidance replies do not save the submitted conversation message. The model-backed risk check sees redacted text before deciding whether it is risky. |
 
-Every AI suggestion waits for a grown-up to accept it. Children's names are replaced with labels ("Child A") before
-any text reaches a model, and a family's custom habits are never sent at all.
+Every AI suggestion waits for a grown-up to accept it. Known children's names are replaced with labels
+("Child A"), and custom habit titles are masked in the plan snapshot. The review found an accepted-suggestion
+note path that can reintroduce a custom title into later model history; see
+[the investigation](docs-detailed/habitcoach-investigation.md#additional-findings).
 
 ## Checks that run on every change
 

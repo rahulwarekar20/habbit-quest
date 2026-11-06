@@ -18,6 +18,7 @@ from habitquest_backend.auth import (
     signed_in,
     verify_google,
 )
+from habitquest_backend.buddies import BUDDY_COLUMNS, BUDDY_FIELDS
 from habitquest_backend.config import Settings
 from habitquest_backend.db import one, transaction
 from habitquest_backend.limits import client_address
@@ -38,6 +39,12 @@ CHILD_EXPORT = {
     "checkins": "SELECT day,mood,hardest,favorite,stickers,note,flagged FROM hq.checkins WHERE child_id=%s ORDER BY day",
     "coach_messages": "SELECT role,content,created_at FROM hq.coach_messages WHERE child_id=%s ORDER BY id",
     "ai_suggestions": "SELECT source,kind,habit_id,reason,status,created_at FROM hq.ai_suggestions WHERE child_id=%s",
+    "goal_recommendations": "SELECT goal_id,title,description,reason,source_ref,setting,status,selection_order,created_at"
+    " FROM hq.coach_goal_suggestions WHERE child_id=%s ORDER BY coach_message_id,selection_order,created_at,id",
+    "habit_drafts": "SELECT id,goal_id,source,status,outcome,items,created_at,expires_at"
+    " FROM hq.habit_draft_batches WHERE child_id=%s ORDER BY created_at,id",
+    "generated_habit_details": "SELECT habit_id,goal_id,source,draft,created_at"
+    " FROM hq.generated_habit_details WHERE child_id=%s ORDER BY created_at,habit_id",
     "reward_requests": "SELECT title,cost,status,day FROM hq.reward_requests WHERE child_id=%s ORDER BY created_at",
 }
 
@@ -173,7 +180,7 @@ def router(settings: Settings) -> APIRouter:
         Google sign-in is not configured (`GOOGLE_CLIENT_ID`) or Google's keys cannot be fetched, 429 after
         too many attempts in a minute.
         """
-        settings.sign_in_attempts.check(client_address(request))
+        settings.sign_in_attempts.check(client_address(request, settings.alb_trusted_proxy_cidrs))
         claims = verify_google(body.credential, settings)
         name = (claims.get("name") or claims["email"].split("@")[0])[:80]
         with transaction(settings) as conn:
@@ -318,13 +325,18 @@ def router(settings: Settings) -> APIRouter:
         """Without signing in: the family for a login code (`id`, `name`) and its children's first names,
         buddies and whether each has a PIN (`has_pin`). 404 for an unknown code, 429 after too many tries.
         """
-        settings.sign_in_attempts.check(client_address(request))
+        settings.sign_in_attempts.check(client_address(request, settings.alb_trusted_proxy_cidrs))
         with transaction(settings) as conn:
             rows = conn.execute("SELECT * FROM hq.login_family(%s)", (clean_code(code),)).fetchall()
         if not rows:
             raise HTTPException(404, "Unknown login code")
         children = [
-            {"id": r["child_id"], "name": r["child_name"], "buddy": r["buddy"], "has_pin": r["has_pin"]}
+            {
+                "id": r["child_id"],
+                "name": r["child_name"],
+                **{key: r[key] for key in BUDDY_FIELDS},
+                "has_pin": r["has_pin"],
+            }
             for r in rows
             if r["child_id"]
         ]
@@ -336,7 +348,7 @@ def router(settings: Settings) -> APIRouter:
         valid for 8 hours, with the `child` and the `family` (`id`, `name`). 404 when the code or child is
         unknown, 409 when the child has no PIN yet, 403 for a wrong PIN, 429 after too many tries.
         """
-        settings.sign_in_attempts.check(client_address(request))
+        settings.sign_in_attempts.check(client_address(request, settings.alb_trusted_proxy_cidrs))
         settings.pin_attempts.check(f"kid:{body.child_id}")
         with transaction(settings) as conn:
             row = one(conn, "SELECT * FROM hq.login_child_pin(%s,%s)", (clean_code(code), body.child_id))
@@ -350,7 +362,11 @@ def router(settings: Settings) -> APIRouter:
         if not check_pin(body.pin, row["pin_hash"]):
             raise HTTPException(403, "Wrong PIN")
         with transaction(settings, kid=body.child_id) as conn:
-            child = one(conn, "SELECT id,name,age,buddy,world FROM hq.children WHERE id=%s", (body.child_id,))
+            child = one(
+                conn,
+                f"SELECT id,name,age,{BUDDY_COLUMNS},world FROM hq.children WHERE id=%s",
+                (body.child_id,),
+            )
         token = issue_token(settings, body.child_id, minutes=SESSION_MINUTES, role=KID)
         return {**token_response(token, SESSION_MINUTES), "child": child, "family": family}
 
@@ -403,7 +419,7 @@ def router(settings: Settings) -> APIRouter:
         with transaction(settings, user) as conn:
             family = family_view(conn, family_id)
             children = conn.execute(
-                "SELECT id,name,age,buddy,world,tier_override,routine_times,created_at FROM hq.children"
+                f"SELECT id,name,age,{BUDDY_COLUMNS},world,tier_override,routine_times,created_at FROM hq.children"
                 " WHERE family_id=%s ORDER BY created_at,id",
                 (family_id,),
             ).fetchall()
@@ -470,7 +486,9 @@ def router(settings: Settings) -> APIRouter:
         quests: 403 when it is missing or wrong. 404 unless the caller cares for the child.
         """
         with transaction(settings, user) as conn:
-            child = one(conn, "SELECT id,name,kid_pin_hash FROM hq.children WHERE id=%s", (child_id,))
+            child = one(
+                conn, f"SELECT id,name,{BUDDY_COLUMNS},kid_pin_hash FROM hq.children WHERE id=%s", (child_id,)
+            )
         pin_hash = child.pop("kid_pin_hash")
         if pin_hash is not None:
             settings.pin_attempts.check(f"kid:{child_id}")
@@ -487,6 +505,6 @@ def router(settings: Settings) -> APIRouter:
         screens' greeting and theme.
         """
         with transaction(settings, kid=kid) as conn:
-            return one(conn, "SELECT id,name,age,buddy,world FROM hq.children WHERE id=%s", (kid,))
+            return one(conn, f"SELECT id,name,age,{BUDDY_COLUMNS},world FROM hq.children WHERE id=%s", (kid,))
 
     return api

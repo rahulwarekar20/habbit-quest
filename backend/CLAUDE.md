@@ -25,6 +25,12 @@ completions, caregivers approving them, Sparks (progress, never spent) and point
 | `llm.py` | The chat model through LangChain (any OpenAI-compatible endpoint, e.g. Nebius) |
 | `coach.py`, `coach_tools.py` | The habit coach agent, its tools, suggestions accepted with the PIN |
 | `crew.py` | The coach crew (`COACH_ENGINE=crew`): triage, research and progress side by side, planner, fit and safety review. See [docs/coach-crew.md](docs/coach-crew.md) |
+| `refined.py`, `coach_context.py` | Active local Coach (`COACH_ENGINE=refined`): shared context, one central generation, generated-text Safety and one bounded revision. See [operations](../docs-detailed/sys-design-update/refined-ai-operations.md). |
+| `planning_catalog.py`, `retrieval.py` | Pinned canonical source cards, Pinecone similarity search and source-to-goal mapping. |
+| `generated_habits.py`, `action_quality.py`, `generation_validation.py` | Explicit child-bound draft generation, review, parent acceptance and safe diagnostics. |
+| `tokenomics.py`, `tokenomics_usage.py`, `generation_metering.py` | Durable operation/attempt costs, embedding/search accounting, family credits and generation admission. |
+| `admin.py`, `tokenomics_routes.py` | Separate operator authentication/configuration/metrics and family-safe accounting projections. See [operations](../docs-detailed/design-update/tokenomics/06-operations.md). |
+| `planning_budget.py` | Historical imported-provider reservation utilities; retired as app admission authority by Tokenomics. |
 | `evals/`, `scripts/eval_coach.py` | Realistic parent messages and a script scoring both coach engines with real models |
 | `insights.py` | Quest planner, weekly review, buddy lines |
 | `guidance.py`, `guidance.json` | Parenting guidance and BM25 search |
@@ -88,6 +94,12 @@ CI (`.github/workflows/test.yml`) runs the same checks on PostgreSQL 17.
   and `http://localhost:5180`.
 
 ## Decisions already made (don't reopen without the owner)
+
+The owner-approved November 4 [refinement and integration plan](../docs-detailed/sys-design-update/pinecone-planner-integration-plan.md)
+adds source-backed goals and explicitly generated, reviewed private habits to the original MVP below.
+Existing catalog habits, scoring and approvals remain. Generated drafts are persisted and child-bound;
+the canonical source release is pinned. See the [execution record](../docs-detailed/sys-design-update/implementation-progress.md)
+for live verification and outstanding performance limits.
 
 - **Lean MVP schema:** no version columns, no background jobs, no proposal or plan snapshots, a flat catalog
   edited through `db/seed.sql`. The earlier versioned design was removed on purpose (PR #9) to keep the MVP simple.

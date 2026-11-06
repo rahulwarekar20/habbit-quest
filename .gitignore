@@ -5,3 +5,11 @@
 # Playwright output
 test-results/
 playwright-report/
+# Local environments and generated files
+.DS_Store
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+docs-detailed

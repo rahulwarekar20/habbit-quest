@@ -1,0 +1,76 @@
+Use case: infographic-diagram. Create a friendly publication-quality hand-drawn HabitQuest architecture slide. Supplied figure is a STYLE REFERENCE, not a mandatory layout. White paper, slightly irregular navy ink, large readable blue/indigo handwritten headings, restrained purple, soft lavender and pale-blue washes. Use semantic artifacts and small model robots, with legible text and generous margins. Landscape 16:9. NO dates anywhere.
+
+Viewer question: How do RAG, LangChain and LangGraph produce reviewed Coach suggestions, and how are the Planner and Weekly Review separate agent roles?
+
+COMPOSITION: Left two-thirds is the primary Coach journey, right third contains TWO independent, equally prominent helper-agent scenes stacked vertically. Neither helper is a node in the Coach graph. Do not connect these scenes in series. Separate all roles by headings and light boundaries, not an undifferentiated robot crew.
+
+LEFT TOP: parent request and authorized SQL facts enter local urgent routing, with a branch ending at fixed support. The normal path passes through a code masking eraser then a miniature RAG path: vector beads (embedding) → Pinecone vector cylinder → pinned canonical evidence book. All retrieval occurs BEFORE the five-node graph. Show an explicit arrow from canonical evidence into prepare.
+
+LEFT MIDDLE: a lightly framed boundary titled 'Habit Coach agent · LangGraph orchestration' contains exactly five small nodes in order: prepare → generate → safety → decide → finalize. Only generate and safety have small model robots. A single purple revision arrow from decide returns to generate, labeled 'One rejected-prose revision'. Finalize visibly branches into 'Reviewed output' and 'Fixed failure · stop'. ONLY reviewed output connects to saved goals and the habit writer; the failure branch ends. No sixth graph node or unbounded loop. Local validation is not another model.
+
+LEFT BOTTOM: a reviewed goal feeds the separate habit writer, local checks, then a human parent acceptance clipboard and child plan. Show three small habit cards, not an automatically assigned plan. Limit/concurrency text appears beside the batch; one correction is bounded. Make the path from saved goals to habit writing unmistakable.
+
+RIGHT TOP: 'Quest Planner agent' is its own illustrated scheduling desk with calendar, structured report robot and parent approval. Its own explicit parent trigger, SQL plan/progress inputs, child labels, one structured call, local checked proposals and parent decision. No connection to the Coach graph, no Pinecone search and no separate Coach Safety stage here.
+
+RIGHT BOTTOM: 'Weekly Review agent' is its own illustrated progress-review desk with two seven-day tally sheets, report robot and parent approval. Its own explicit trigger, SQL comparison, child labels, one structured call, wins/watch points/patterns and up to two locally checked changes. No scheduler or automatic daily trigger. No Coach Safety stage.
+
+EXACT VISIBLE COPY (only these labels, line breaks flexible):
+
+HabitQuest AI: retrieval, generation & agent roles
+AI pipeline · 2 of 2
+
+Parent request + scoped SQL facts
+Local urgent route → fixed support
+Code masks known names + contacts
+RAG: retrieve verified context
+Embedding → Pinecone vector search → canonical evidence
+
+Habit Coach agent · LangGraph orchestration
+prepare
+Evidence + facts
+generate
+Structured advice + goals
+safety
+New prose only
+decide
+Code decision
+finalize
+Reviewed output
+Fixed failure · stop
+One rejected-prose revision
+2 chat calls normally · 4 with revision
+Save selected reviewed goals
+
+Separate habit writer
+3 choices per goal · up to 4 goals
+2 batches in flight
+1 call → local checks → parent acceptance
+At most one correction
+Exact goal-linked child plan
+
+Independent helpers · outside Coach graph
+Quest Planner agent
+Explicit parent request
+Current plan + SQL progress
+Child labels replace names
+1 structured call
+Local checks · up to 4 changes
+Parent decides
+
+Weekly Review agent
+Explicit parent request
+SQL: 7 days vs previous 7
+Child labels replace names
+1 structured call
+Wins · watch points · patterns
+Local checks · up to 2 changes
+Parent decides
+
+LangChain: typed provider calls
+OpenAI Luna: Coach + habits
+Nebius DeepSeek: Safety + reports
+Helpers use local checks, not the Coach Safety pass
+
+END OF VISIBLE COPY. The remaining text is instruction only and MUST NOT be printed in the illustration.
+
+ Agent names describe product roles. Only the Coach is the five-node LangGraph; Planner and Weekly Review are independent one-call functions, not graph members, autonomous tools or hidden stages. LangChain supplies typed/provider calls. RAG retrieval uses embedding and vector search plus authoritative canonical hydration; it is not web research. The graph's normal two calls exclude retrieval and subsequent habit batches. Source catalog cards are trusted context; only newly generated Coach prose receives separate model Safety. Habits use local checks. No model controls assignments. Do not omit the masking or canonical step. Preserve explicit parent decisions, two independent helper scenes and distinct SQL inputs. Do not add dates, model benchmark scores or latency promises. Keep the technical companion's long exact model IDs out of the drawing for readability.

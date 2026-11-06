@@ -1,3 +1,4 @@
+import { setGenerationOwner } from "./generationPreferences";
 /**
  * App state provider: the signed-in caregiver, their family and children from the backend, the
  * browser-only extras for that family, and the parent-PIN prompt.
@@ -8,8 +9,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import PinDialog from "../components/PinDialog";
 import * as api from "./api";
+import { clearCoachContext, preloadCoachContext, setCoachContextOwner } from "./coachContext";
 import { childDefaults, defaultHabits, type Family } from "./family";
 import { normalizeFamily } from "./migrate";
+import { mergeBuddySelection } from "./buddyIdentity";
 import { go } from "./router";
 import {
   clearCaregiverToken, clearKidLogin, getCaregiverToken, getKidLogin, getKidMode, getKidSession, loadSaved, persist,
@@ -62,7 +65,7 @@ export function reconcile(saved: Family | undefined, { me, server, children }: S
     ...base,
     email: me.email ?? "",
     parentName: link?.display_name ?? server.caregivers.find((c) => c.user_id === me.id)?.display_name ?? me.name ?? "there",
-    children: children.map((c) => ({ ...childDefaults(), ...known.get(c.id), id: c.id, name: c.name, age: c.age, buddy: c.buddy, hasPin: c.has_pin })),
+    children: children.map((c) => ({ ...mergeBuddySelection({ ...childDefaults(), ...known.get(c.id), buddy: known.get(c.id)?.buddy ?? c.buddy }, c), id: c.id, name: c.name, age: c.age, hasPin: c.has_pin })),
   };
 }
 
@@ -72,6 +75,7 @@ export function reconcile(saved: Family | undefined, { me, server, children }: S
  */
 export function StoreProvider({ children }: { children: ReactNode }) {
   const saved = useRef<Saved>(loadSaved());
+  const adoptedFamilyId = useRef<string | null>(null);
   const [phase, setPhase] = useState<Phase>("booting");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [waking, setWaking] = useState(false);
@@ -84,10 +88,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const familyId = snapshot?.server.id;
 
   const adopt = useCallback((next: Snapshot) => {
+    const sameFamily = adoptedFamilyId.current === next.server.id;
+    adoptedFamilyId.current = next.server.id;
     saved.current = { ...saved.current, snapshot: next };
     persist(saved.current);
     setSnapshot(next);
-    setFamily((prev) => reconcile(saved.current.families[next.server.id] ?? prev ?? undefined, next));
+    setFamily((prev) => {
+      const latest = sameFamily ? prev ?? saved.current.families[next.server.id] : saved.current.families[next.server.id];
+      const merged = reconcile(latest, next);
+      saved.current = { ...saved.current, families: { ...saved.current.families, [next.server.id]: merged } };
+      persist(saved.current);
+      return merged;
+    });
     setPhase("ready");
   }, []);
 
@@ -106,6 +118,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     const me = await api.getMe();
+    setCoachContextOwner(me.id);
+    setGenerationOwner(me.id);
     const link = me.families[0];
     if (!link) {
       setSnapshot(null);
@@ -115,6 +129,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     const [server, kids] = await Promise.all([api.getFamily(link.id), api.listChildren(link.id)]);
     adopt({ me, server, children: kids });
+    // Chat context is optional for app boot; a failed preload is retried on chat open.
+    void preloadCoachContext(link.id).catch(() => {});
   }, [adopt]);
 
   const boot = useCallback(async () => {
@@ -138,6 +154,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [adopt, load]);
 
   const endSession = useCallback(() => {
+    adoptedFamilyId.current = null;
+    clearCoachContext();
+    setGenerationOwner("signed-out");
     clearCaregiverToken();
     clearKidLogin();
     setKidMode(false);
@@ -202,6 +221,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async (code: string, childId: string, pin: string) => {
       try {
         const { access_token, expires_in, child, family: fam } = await api.kidLogin(code, childId, pin);
+        clearCoachContext();
+        setGenerationOwner("signed-out");
         // Just enough family for the kid screens: the child is all a kid token can see.
         const snapshot: Snapshot = {
           me: { id: "", name: null, email: null, families: [] },

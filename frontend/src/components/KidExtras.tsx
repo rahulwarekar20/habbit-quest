@@ -6,12 +6,13 @@
  *   CheckIn                  "how did today go?", sent to the grown-ups (notes are safety-checked)
  *   LevelBadge, PointsPill   progress at a glance
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ApiError, errorText, extendAppTime, getTodayCheckin, openChest, openSurprise, reportAppTime, sendCheckin, updateKidExtras,
   type ChestPrize, type Mood, type Surprise, type Today,
 } from "../lib/api";
 import { WORLDS, updateChild, type Child, type Family } from "../lib/family";
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 import { MOODS, STICKERS } from "../lib/feedback";
 import { appSecondsLeft, WARN_SECONDS } from "../lib/playtime";
 import { ACCESSORIES } from "../lib/rewards";
@@ -67,7 +68,7 @@ export function BreakTime({ child, family }: { child: Child; family: Family }) {
   return (
     <div className="kid-overlay" role="dialog" aria-modal="true" aria-label="Break time">
       <div className="kid-overlay__card">
-        <Buddy buddy={child.buddy} accessory={child.wearing} size={110} />
+        <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={110} />
         <h2>Time for a break, {child.name}!</h2>
         <p>You've used your {family.settings.appLimit + (child.appExtraMinutes[day] ?? 0)} minutes of quest time today. Go play, read a story or help at home. Your quests will wait for you!</p>
         <div className="kid-overlay__grown">
@@ -180,7 +181,7 @@ export function ChestCard({ child, today }: { child: Child; today: Today }) {
             <div className="gift__burst" aria-hidden="true">✨🧰✨</div>
             {prize.kind === "accessory" ? (
               <>
-                <Buddy buddy={child.buddy} accessory={prize.id} size={120} />
+                <Buddy {...buddyDisplayProps(child)} accessory={prize.id} size={120} />
                 <h2>You found a {prize.name}!</h2>
                 <p>Your buddy is wearing it now. Change it any time in the shop.</p>
               </>
@@ -246,7 +247,7 @@ export function CheckIn({ child, quests, onClose }: { child: Child; quests: { id
   if (done) {
     body = (
       <>
-        <Buddy buddy={child.buddy} accessory={child.wearing} size={96} />
+        <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={96} />
         <h2>{done.safety ? "Thank you for telling us" : "Sent to your grown-ups! 💌"}</h2>
         <p>{done.safety ?? "Thanks for sharing how today went."}</p>
         <button className="btn btn--gold btn--lg" onClick={onClose} autoFocus>OK</button>
@@ -356,22 +357,35 @@ export function PointsPill({ points }: { points: number }) {
 /** Collected accessories, with the ones still to find shown as mystery slots. */
 export function Wardrobe({ child }: { child: Child }) {
   const { update } = useStore();
-  const wear = (id: string | null) => {
-    update((f) => updateChild(f, child.id, (c) => ({ ...c, wearing: id })));
-    updateKidExtras({ wearing: id ?? "" }).catch(() => {}); // the next refresh shows the saved outfit
-  };
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [failedItem, setFailedItem] = useState<string | null | undefined>(undefined);
+  async function wear(id: string | null) {
+    if (saving.current) return;
+    saving.current = true; setBusy(true); setError(null);
+    try {
+      const extras = await updateKidExtras({ wearing: id ?? "" });
+      update(family => applyExtras(family, child.id, extras));
+      setFailedItem(undefined);
+    } catch (err) {
+      setFailedItem(id);
+      setError(`Your accessory could not be saved. ${errorText(err)}`);
+    } finally { saving.current = false; setBusy(false); }
+  }
   return (
+    <div>
     <div className="wardrobe">
-      <button className={`wardrobe__item ${!child.wearing ? "is-on" : ""}`} onClick={() => wear(null)}>
-        <Buddy buddy={child.buddy} size={64} />
-        <span>Nothing</span>
+      <button className={`wardrobe__item ${!child.wearing ? "is-on" : ""}`} disabled={busy} aria-pressed={!child.wearing} onClick={() => wear(null)}>
+        <Buddy {...buddyDisplayProps(child)} size={64} />
+        <span>No accessory</span>
       </button>
       {ACCESSORIES.map((a) => {
         const owned = child.accessories.includes(a.id);
         return owned ? (
           <button key={a.id} className={`wardrobe__item ${child.wearing === a.id ? "is-on" : ""}`}
-            onClick={() => wear(a.id)}>
-            <Buddy buddy={child.buddy} accessory={a.id} size={64} />
+            disabled={busy} aria-pressed={child.wearing === a.id} onClick={() => wear(a.id)}>
+            <Buddy {...buddyDisplayProps(child)} accessory={a.id} size={64} />
             <span>{a.name}</span>
           </button>
         ) : (
@@ -381,6 +395,9 @@ export function Wardrobe({ child }: { child: Child }) {
           </div>
         );
       })}
+    </div>
+    {busy && <p className="hint" role="status">Saving your accessory…</p>}
+    {error && <div className="buddy-save-error" role="alert"><p>{error}</p><button type="button" className="btn btn--soft btn--sm" disabled={busy} onClick={() => failedItem !== undefined && wear(failedItem)}>Try again</button></div>}
     </div>
   );
 }

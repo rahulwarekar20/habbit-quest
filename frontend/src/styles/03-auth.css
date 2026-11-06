@@ -36,7 +36,13 @@
 .auth-choice__buddies { display: flex; margin-left: -6px; }
 .auth-choice__buddies > * + * { margin-left: -6px; }
 
+.auth__utilities { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.auth__admin-link { padding: 4px 8px; border-radius: 999px; font: 600 var(--text-xs)/1.4 var(--font-body); color: var(--ink-soft); text-decoration: none; }
+.auth__admin-link:hover { color: var(--violet-deep); background: var(--violet-soft); }
+.auth__admin-link:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
 .dev-login { position: relative; }
+/* Anchor the open panel below both links, so it cannot cover Admin login. */
+.auth__utilities .dev-login { position: static; }
 .dev-login__toggle {
   border: 1px dashed #cfc6ee; background: transparent; color: var(--muted); border-radius: 999px;
   padding: 6px 12px; font: 700 var(--text-xs) var(--font-body);

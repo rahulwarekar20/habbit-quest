@@ -5,12 +5,14 @@
  * (ids starting "my-") show the `icon` they were given. Pure SVG, no image files.
  */
 import { QUEST_BY_ID, isHabitId, type Category, type HabitId } from "../lib/habits";
+import { HabitIcon } from "./HabitIcon";
 
 /**
  * The picture for a quest: a hand-drawn scene for the six routine habits, otherwise the quest's emoji (or the
  * custom habit's `icon`) on a soft background.
  */
-export default function HabitArt({ habit, icon, className = "" }: { habit: string; icon?: string; className?: string }) {
+export default function HabitArt({ habit, icon, text = "", className = "" }: { habit: string; icon?: string; text?: string; className?: string }) {
+  if (habit.startsWith("my-ai-")) return <div className={`habit-art generated-habit-art ${className}`}><HabitIcon text={text} iconKey={icon?.replace(/^fluent:/, "")} /></div>;
   if (!isHabitId(habit)) return <BonusArt quest={habit} icon={icon} className={className} />;
   return (
     <svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" className={`habit-art ${className}`} role="img" aria-label={LABELS[habit]}>

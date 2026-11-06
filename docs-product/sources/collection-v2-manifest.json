@@ -1,0 +1,669 @@
+{
+  "collection": "HabitQuest architecture illustrations",
+  "review_date": "2026-11-06",
+  "dates_in_final_artwork": false,
+  "main_slide_count": 7,
+  "generation": {
+    "tool": "built-in image_gen.imagegen",
+    "mode": "style-reference generation and targeted image edits",
+    "original_collection_calls": 10,
+    "expanded_collection_calls": 12,
+    "python_image_editing": false,
+    "note": "Original figures and drafts retained; prompts and individual review records explain corrections."
+  },
+  "skills": [
+    "Illustrated Explainers",
+    "imagegen",
+    "ML Best Practices (recorded evaluation interpretation only)"
+  ],
+  "slides": [
+    {
+      "number": 1,
+      "id": "system",
+      "title": "Application components",
+      "image": "illustrations/01b-system-components.png",
+      "contract": "sources/01b-system-components-contract.md",
+      "alt": "A React/Vite browser serves parent, child and operator experiences. One FastAPI application contains identity, RAG, Coach, habit writer, separate Planner and Review helpers, domain rules and Tokenomics; only the API accesses PostgreSQL.",
+      "caption": "The frontend presents parent, child and operator experiences. One modular FastAPI backend owns authorization, retrieval, bounded AI calls, exact goal links, plans, approval rules and accounting. LangGraph belongs to the Coach module; these responsibilities are not separate microservices.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 2,
+      "id": "catalog",
+      "title": "AI pipeline \u00b7 1 of 2: research and catalog",
+      "image": "illustrations/04-research-catalog.png",
+      "contract": "sources/04-research-catalog-contract.md",
+      "alt": "Evidence and framework books feed editorial age-specific practice cards. Cross-review and local validation produce a versioned catalog. Search-text embeddings are archived before Pinecone publication, alongside pinned canonical guidance for runtime reuse.",
+      "caption": "Offline research, editorial authoring and cross-review create reusable age-specific practice cards. Prepared search text is embedded, frozen and published to Pinecone; full guidance remains in pinned canonical JSON. Live requests reuse the release. Reviewed source cards become goals, while personalized habit choices are generated later.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 3,
+      "id": "runtime",
+      "title": "AI pipeline \u00b7 2 of 2: runtime and agents",
+      "image": "illustrations/02b-ai-runtime-agents.png",
+      "contract": "sources/02b-ai-runtime-agents-contract.md",
+      "alt": "Scoped context and masked retrieval feed the five-node Coach LangGraph, followed by separate habit generation and parent acceptance. Quest Planner and Weekly Review appear as independent explicit helper roles, each using one structured call plus local checks.",
+      "caption": "RAG supplies verified context to the five-node Coach graph. New prose receives model Safety; separate writer batches prepare habit choices. Quest Planner and Weekly Review are independent, explicitly triggered agent roles outside that graph. Each helper is a structured model call plus local checks, not an autonomous multi-agent loop.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 4,
+      "id": "safety",
+      "title": "Safety guardrails",
+      "image": "illustrations/07-safety-guardrails.png",
+      "contract": "sources/07-safety-guardrails-contract.md",
+      "alt": "Research authority and scoped Coach input feed verified retrieval and structured output checks. Generated Coach prose receives Safety review; locally checked habit drafts proceed to parent acceptance. Six controls are not six model calls.",
+      "caption": "Six complementary controls cover researched source authority, scoped Coach input, verified retrieval, structured output checks, Coach prose review and parent authority. They are not six LLM calls. Trusted catalog lookup and bounded habit checks do not receive an extra whole-content Safety pass.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 5,
+      "id": "tokenomics",
+      "title": "Tokenomics and monitoring",
+      "image": "illustrations/05-tokenomics.png",
+      "contract": "sources/05-tokenomics-contract.md",
+      "alt": "An explicit operation reserves allowance, meters chat, embedding and Pinecone attempts, records usage and tariff-based cost in PostgreSQL, then settles useful credits or releases failed holds. Admin policy and metrics remain separate from the family credit meter.",
+      "caption": "Every provider attempt retains usage, timing and estimated cost, including embeddings, search, retries and failures. Useful results settle family credits once; failed work releases credit holds without erasing provider cost. Admin can enforce allowance and exposure gates or track demo overage. Enforcement requires verified tariffs and bounded exposure.",
+      "width": 1671,
+      "height": 941
+    },
+    {
+      "number": 6,
+      "id": "evaluations",
+      "title": "Evaluation evidence",
+      "image": "illustrations/06-evaluations.png",
+      "contract": "sources/06-evaluations-contract.md",
+      "alt": "Four separate workbenches show source audits, a frozen synthetic retrieval-model study, mocked guardrail regression tests and recorded application/live-provider checks. The evidence types do not form an extra runtime pipeline.",
+      "caption": "Recorded source audits, a synthetic embedding study, mocked guardrail regressions and small live-provider samples answer different questions. They support content, model and control-flow decisions. They do not establish a zero-harm guarantee, clinical effectiveness or a new production latency benchmark.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 7,
+      "id": "aws",
+      "title": "AWS deployment",
+      "image": "illustrations/03-aws-deployment.png",
+      "contract": "sources/03-deployment-contract.md",
+      "alt": "Independent browser HTTPS paths reach app and API ALBs and Fargate tasks. API connects to private RDS and external AI providers; shared DNS and certificate configuration, ECR images, backend secrets and CloudWatch support deployment.",
+      "caption": "The browser independently reaches the app and API through two public ALBs. Public-subnet Fargate tasks use restricted ALB-only ingress and internet-gateway egress; RDS stays private. ECR supplies both services, API secrets arrive at startup and CloudWatch retains logs. This always-on demo uses no NAT and is not production HA.",
+      "width": 1672,
+      "height": 941
+    }
+  ],
+  "assets": [
+    {
+      "path": "illustrations/01-system-overview.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1972767,
+      "sha256": "5b0c78ffd90f84125264da814560f823b148b2a2b14a7ded44ffc16450ef7926",
+      "role": "supplemental reference"
+    },
+    {
+      "path": "illustrations/01b-system-components.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1998012,
+      "sha256": "d57e58863dd4b0d11c0defb197b678802f08d72670af8198c3d00dc56514b202",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/02-ai-pipeline.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2017702,
+      "sha256": "6422d74a73817a129eeaaeea5e06448cc34ce0dc95f851437dc3bc1f6389b6c3",
+      "role": "supplemental reference"
+    },
+    {
+      "path": "illustrations/02b-ai-runtime-agents.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2143871,
+      "sha256": "6dab5dfc6031d9c90bfac21edf8d669d2b47b2a8871819ec6b4af00ffbd802ca",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/03-aws-deployment.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1942050,
+      "sha256": "24806f1a4280e1809e369551fbf267b7a256e4e82ff56122e976d2fad362189d",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/04-research-catalog.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2084462,
+      "sha256": "d71ba0994123293b215baee65ee7aa8d1e9b1df1b95ee44cb600109770dbef61",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/05-tokenomics.png",
+      "width": 1671,
+      "height": 941,
+      "bytes": 1914116,
+      "sha256": "f85727a3a674dadfc8cc987cbea14a4db26dba3fe27067561c99ad9775a550fe",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/06-evaluations.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2089555,
+      "sha256": "73470fc7f71f7d85c40bdb23cf3a7b711b80ff035df013d151bbd53c90fbaccb",
+      "role": "main slide"
+    },
+    {
+      "path": "illustrations/07-safety-guardrails.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2099828,
+      "sha256": "e6bcde65e80935e912bbd52a6f8bc67750784b93e5f819bc7985bdd47a6908d2",
+      "role": "main slide"
+    }
+  ],
+  "source_documents": [
+    {
+      "path": "habbit-quest/backend/evals/coach_cases.json",
+      "sha256": "d8b529d88ca428d27fc6c11d33c6f589e0df0ac6ab15a31ec0672ad671823095"
+    },
+    {
+      "path": "habbit-quest/backend/scripts/eval_coach.py",
+      "sha256": "794770475e8e61c042416e3f8827417457eee6bfb5859a01aa3d87e066555b06"
+    },
+    {
+      "path": "habbit-quest/backend/scripts/package_planning_catalog.py",
+      "sha256": "fcd9bbfbb8885a09d4fdc297694bcd530f031bb3d0545162d50c309ffef1fa48"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/admin.py",
+      "sha256": "c23e89aa1586cb72abe5e4bf3de538e58b126c1611b7323748bba05d6a4ecd90"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/coach.py",
+      "sha256": "b37925c48c6677d976330c9fb2b1204bc9dcd1debc3efd1825c9fe239704398b"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/generated_habits.py",
+      "sha256": "4ed6ec7235df93fd48834e32793beb22667039b8c77a14698cc547a0fc2dab48"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/generation_metering.py",
+      "sha256": "bc853149c281ae0ba10f70cb5da2e7968d552cb28e0085865e73325404dc4cd0"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/generation_progress.py",
+      "sha256": "0186437d902581bb59659909d37ec6bdacd19e5f7317996cd2ce282d3675dcdd"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/insights.py",
+      "sha256": "95c081df9c0c0495313f0c5da21be0b634c57f052380d89dbe4cfad515d27a78"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/refined.py",
+      "sha256": "19782c425da21a3ebb2e223f8fd9be3a7e7af01fcdb959b8458eef075c63e7f0"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/retrieval.py",
+      "sha256": "75c2a2159f69beb82c5cf7f62bbf425e1c9b501c10997833fd70af8593a4fcdd"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/safety.py",
+      "sha256": "39c5141a49248c3f11512d37f04bbc48c59e58bbd734c620407cb30507d9924f"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/tokenomics.py",
+      "sha256": "1e5474341599e261cb69a55d02c96d49972edf4324649be596d478bd595fe386"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/tokenomics_routes.py",
+      "sha256": "ad7fba72bf9bcd044b54f18adf24698f1bca021e4dc48637f45e6191c1a53bd0"
+    },
+    {
+      "path": "habbit-quest/backend/src/habitquest_backend/tokenomics_usage.py",
+      "sha256": "cb635a4961af20c46de3f935589fcf934ef2b2a0e4650e6130e415479d3aa6f4"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_action_quality.py",
+      "sha256": "24e6b2b0e0584d2a3c065b851b8ec709c505f1c040ade4943dc133bf997c0429"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_coach_context.py",
+      "sha256": "b685464e386e70ccf0fad98b4615662c5dbf22ae4fcde282249f07942cc80ac5"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_coach_goals.py",
+      "sha256": "6f1b9eea8453cbd88b331bcc2eca571db766832e4a2fdb63d7361cdf963dd641"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_generated_habits.py",
+      "sha256": "a4ccebe60e5f8e46907259c4f8e3d4ce0d76f9914d80cdbc3ddfa1f6c4dbf3ed"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_refined.py",
+      "sha256": "c2a23b21abfed9b768898c42bb7451a7cd9abb7311403c9b1938d6f83b4ad6dc"
+    },
+    {
+      "path": "habbit-quest/backend/tests/test_retrieval.py",
+      "sha256": "1d87410a532562aa799ae83544f467e60f7bd4aefc88545361650f2f04c5b0a2"
+    },
+    {
+      "path": "habbit-quest/docs-design/00-documentation-plan.md",
+      "sha256": "b3c02381de45e07bfe697cd23a118502a3e85e4795898dd9f81123577486a9a3"
+    },
+    {
+      "path": "habbit-quest/docs-design/01-system-overview.md",
+      "sha256": "c3f45fc07b864e44a9bcdc4022996b0feeada2eaf5abbcf3976e771cbc85d919"
+    },
+    {
+      "path": "habbit-quest/docs-design/02-frontend-experience.md",
+      "sha256": "67c9c9b737b71f2a8ac64ddd8ddd2125ce3f5404514a916efbe6928776989630"
+    },
+    {
+      "path": "habbit-quest/docs-design/03-backend-api-and-security.md",
+      "sha256": "391a106776f0adb1d225ebf2fafba758bc55976fb48ba73d565a59645a23e48a"
+    },
+    {
+      "path": "habbit-quest/docs-design/04-database-and-domain-model.md",
+      "sha256": "a145a5f6bcb3901b533df1362d53b45c04a9e54adb11ecb940e894a9ff5f1306"
+    },
+    {
+      "path": "habbit-quest/docs-design/05-ai-orchestration.md",
+      "sha256": "b622ae0b74c4d2c8b155b5682d9f5d575470db666154e10e27c761d5f86be3b1"
+    },
+    {
+      "path": "habbit-quest/docs-design/06-habit-coach-and-habit-generation.md",
+      "sha256": "d8ca6f2907f1fcab738cc265dd867988cb355058cb077e4f8b6c8f393c08f3eb"
+    },
+    {
+      "path": "habbit-quest/docs-design/07-planner-review-and-other-ai.md",
+      "sha256": "29afad48144d168b01e648b5339f18fee91e9cb7e1a3ff6a08a93a58f659466e"
+    },
+    {
+      "path": "habbit-quest/docs-design/08-model-selection-and-runtime-routing.md",
+      "sha256": "a9cbb79e1ff7711719ad4eba48eabf70934631072b37f093768608d5b5d19727"
+    },
+    {
+      "path": "habbit-quest/docs-design/09-embedding-model-selection.md",
+      "sha256": "e2ce78db7c5e67da63d58bc87336d43eb21b3724eca18e35f6c6242d7fe83d19"
+    },
+    {
+      "path": "habbit-quest/docs-design/10-habit-research-and-pinecone-catalog.md",
+      "sha256": "9daafbe3d9bdad13592040ccacdd5b785905674a0659f43bc31b917c6340386e"
+    },
+    {
+      "path": "habbit-quest/docs-design/11-tokenomics-latency-and-observability.md",
+      "sha256": "1cb4d0b6ce048e25f24729344af2f4ad43a63661929426d65add1aefb5afb6fb"
+    },
+    {
+      "path": "habbit-quest/docs-design/12-buddies-artwork-and-assets.md",
+      "sha256": "de94e0b787ebe0b00c70acddc4f7a6923eb3f5152a1ad756c5769073dba07631"
+    },
+    {
+      "path": "habbit-quest/docs-design/13-aws-deployment.md",
+      "sha256": "3a0d381d77c9300655bcbfd97133ea478deb2c01da78975c2ef88f6df9b6d071"
+    },
+    {
+      "path": "habbit-quest/docs-design/14-validation-and-design-decisions.md",
+      "sha256": "2cfb592dde894a309093ecfa4cb85e7ae07a09bf5fc501cc6325aac1aa2735f1"
+    },
+    {
+      "path": "habbit-quest/docs-design/README.md",
+      "sha256": "1d9e3b18c925dc83372007be23918492b0aa86ce89f5bdd20d4135f87a564bd0"
+    },
+    {
+      "path": "habbit-quest/docs-detailed/evidence/2026-11-04/refinement-latency-benchmark.json",
+      "sha256": "4274417ba1fcbdc1c478668375f5038901b4eca51f96f8243aedb8b6020ee9ba"
+    },
+    {
+      "path": "habbit-quest/docs-detailed/evidence/2026-11-04/refinement-live-recheck.json",
+      "sha256": "c3f51ca9507b8533679b18ae2d67a4568629858b4beda6aaeb9e516ae79499b9"
+    },
+    {
+      "path": "habbit-quest/docs-detailed/model-selection.md",
+      "sha256": "7a471095d4d8abc5ba3c87af2f72bce77490e3a7bd337fce0d5f999cb0c41813"
+    },
+    {
+      "path": "habbit-quest/frontend/src/components/CoachingBudget.tsx",
+      "sha256": "cf0e291f9ee59f737b796a9959a70f8e20df1116b9fbeb84f6d563d09fe25617"
+    },
+    {
+      "path": "habbit-quest/frontend/src/lib/generationPreferences.ts",
+      "sha256": "d280188531ef988dfce77d6c2db92474d9b0a265ffd56944dcae75aa6cea71b7"
+    },
+    {
+      "path": "habbit-quest/frontend/src/pages/Admin.tsx",
+      "sha256": "a62973799104e5420e6b6764b1aeea3fb28df4ca525f844def120e4b049770cd"
+    },
+    {
+      "path": "hq-ai-services/docs/planning-agent/illustrations/01-service-architecture.png",
+      "sha256": "4e0b9717b21413f414b5affe05d8657293d1d861fde997c1a7c8473aaa7c80fb"
+    },
+    {
+      "path": "hq-ai-services/docs/planning-agent/illustrations/README.md",
+      "sha256": "477b4bddf6b8d245187629a9bb4a827151c9b44ee7f9f40758b6d94efecd01ae"
+    },
+    {
+      "path": "hq-deployment/cloudformation/https-coach-credits-api.json",
+      "sha256": "6ed3df864a2a6969c241f52ee6b1b009e7797c108bed65e602cfb64534158e5b"
+    },
+    {
+      "path": "hq-deployment/cloudformation/https-coach-credits-frontend.json",
+      "sha256": "6a9c936a5268cd7ca287bc46ca5350fdb3ff1c6b5d01391b57696cfc321fd042"
+    },
+    {
+      "path": "hq-deployment/docs/28-domain-https.md",
+      "sha256": "323065967639457745f398e4544cbc54f2631c92ec3fb48108542756e1ad4cc2"
+    },
+    {
+      "path": "hq-deployment/docs/29-google-oauth.md",
+      "sha256": "cfd75d04c1d7354201b8425ef9408d3d3e13678b860abfc090ad3027e2547665"
+    },
+    {
+      "path": "hq-deployment/docs/30-coach-credits-and-automatic-habits.md",
+      "sha256": "f3eb32801f2d1d7df982fecdf3656573ed301884641e61d8758af3f006b4e8f9"
+    },
+    {
+      "path": "hq-deployment/environments/dev-application-oauth-configuration.json",
+      "sha256": "bbb04a44b6dfa0f14a7ab2c17771c2aa8b05d886f0f173983b4c70c883aaff32"
+    },
+    {
+      "path": "hq-deployment/evidence/application-coach-credits-regressions.json",
+      "sha256": "081bec0d4201fcaf450d7377c6902058a8744b1708ad761f38f4b9c7e6f592ed"
+    },
+    {
+      "path": "hq-deployment/evidence/https-coach-credits-verification.json",
+      "sha256": "fb298596e823babc2d547ed54de1b4bd38d5478e2346647cee7599d23ada1e29"
+    },
+    {
+      "path": "hq-habits-catalog/docs/evidence-and-methodology.md",
+      "sha256": "7327359a9cb8b5df9a808802f83abd0f8074cc388c53c0ae0b7a602da1f3f478"
+    },
+    {
+      "path": "hq-habits-catalog/research/cross-review-resolution.md",
+      "sha256": "be66d53d282a4c61797981305f6255ccf4b45e1dc59d061dfa54fe1c463ac9f5"
+    },
+    {
+      "path": "hq-habits-catalog/scripts/rebuild.py",
+      "sha256": "b014906928d5e39839f8321afb752aab8f7d84b39805a0d8aa30e91fab3da30a"
+    },
+    {
+      "path": "hq-habits-catalog/scripts/validate_catalog.py",
+      "sha256": "b624ddebfd2d8290361c38088ebe3497ac2ba54d497b8584ee886dcbc4652d57"
+    },
+    {
+      "path": "hq-habits-catalog/validation/REPORT.md",
+      "sha256": "658b662228ce3b06267e8e28ab0a9342505f2636cbfccd002d95a7dc8f54a346"
+    },
+    {
+      "path": "hq-habits-catalog/validation/report.json",
+      "sha256": "4dc6202c9e5c4087081f2b7c6a43eb7ffbae2bc595adcd14038eb5e0084f4e62"
+    },
+    {
+      "path": "hq-infra-setup/embedding-evaluation/case-methodology.md",
+      "sha256": "22ea618ab89e38f1025994d699b215adeea1e9ffbdd083bef13603069ddde0c3"
+    },
+    {
+      "path": "hq-infra-setup/embedding-evaluation/comparison-report.md",
+      "sha256": "e2d7c75815cf7e7d155fe0bb0fa67616abfcd501b40a8ad75f01813c5d82ef66"
+    },
+    {
+      "path": "hq-infra-setup/embedding-evaluation/failure-analysis.md",
+      "sha256": "664cc66d0ba0959123da3f7e284747d2aeee43be3341310f019a8afbdef37ce1"
+    },
+    {
+      "path": "hq-infra-setup/embedding-evaluation/model-decision.json",
+      "sha256": "4fcaab0b3d5ff8d00e9cd80799d2534f030bf1a4dfe91cd57bfb77395e1406f7"
+    },
+    {
+      "path": "hq-infra-setup/embedding-evaluation/results/comparison.json",
+      "sha256": "6489f9bc5a80f5e5e1320e37f524cf867956835de8248edbfa9ea8cee709fe6f"
+    },
+    {
+      "path": "hq-infra-setup/pinecone-data-updates/RESULTS.md",
+      "sha256": "e12542b6ebb5311ea1c8b72465f1a99b3d79a23ec21065f0a2a828c3406a2306"
+    },
+    {
+      "path": "hq-research/evidence-audit.md",
+      "sha256": "10134ad09a9bae6c185679db67d0c306aa13018ff6acbf3218d36ba02cbfa565"
+    },
+    {
+      "path": "hq-research/methodology.md",
+      "sha256": "d8bd17c26a782d1ecbb2e7428d340ff6a9f3ee2ebb6c90f70faff98b566f6c71"
+    },
+    {
+      "path": "hq-research/validation.md",
+      "sha256": "7ba7cee089db952028697cac9167ae92890c8d9171769a1300cbb66715fe3b12"
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompts/01-system-overview-revision.txt",
+      "sha256": "954030dc89fcab3dd6f63859deeb0cf760777f0a292721c77b4b8b0b54dfdc06"
+    },
+    {
+      "path": "prompts/01-system-overview-undated.txt",
+      "sha256": "76af458f3e9ce008b0e79fca475b21018d06be3b6624078098382741d1f51662"
+    },
+    {
+      "path": "prompts/01-system-overview.txt",
+      "sha256": "e56a312e3f630238de0ecc3b3f11c15bf5c0183dec24492efeb84b0d1d0d31de"
+    },
+    {
+      "path": "prompts/01b-system-components-revision.txt",
+      "sha256": "f17fec7700dacded9be9935ff9d1e2a0fe9978c6b6d51ce98ffbc305fcdacc2c"
+    },
+    {
+      "path": "prompts/01b-system-components.txt",
+      "sha256": "80afdcfed943d9a2f13c6073e548a98e23b1571156276747b7e5023fae845829"
+    },
+    {
+      "path": "prompts/02-ai-pipeline-revision.txt",
+      "sha256": "a4244039c8e74f1e8bdb3dd31673dc542afe1916d875fd3bb1f01e3021cbaa94"
+    },
+    {
+      "path": "prompts/02-ai-pipeline-undated.txt",
+      "sha256": "76af458f3e9ce008b0e79fca475b21018d06be3b6624078098382741d1f51662"
+    },
+    {
+      "path": "prompts/02-ai-pipeline.txt",
+      "sha256": "066b391bc4ce2ac1c053cfa3d40309e76854a312fa8cec5026f1cd031a6e93b7"
+    },
+    {
+      "path": "prompts/02b-ai-runtime-agents-revision.txt",
+      "sha256": "ce33283e42b1670a76617b582f54967f5d1ee3e48f3f6d9d8cbfc5f4810635ac"
+    },
+    {
+      "path": "prompts/02b-ai-runtime-agents.txt",
+      "sha256": "40df565fb163fc8c2647c0a476241f02a24fa11b57acd8918ecce16e91a712b3"
+    },
+    {
+      "path": "prompts/03-aws-deployment-ecr-branch.txt",
+      "sha256": "b0d40d1bd4fa41c598ef7ed256bdc96c5367c4ad887fd939f276770292ceb872"
+    },
+    {
+      "path": "prompts/03-aws-deployment-revision.txt",
+      "sha256": "9ffe0dbd0f5182481bef691d627fb7e9e102fcfc13b3dcfdb5118d6910535d92"
+    },
+    {
+      "path": "prompts/03-aws-deployment-undated.txt",
+      "sha256": "fd481b017b9888acfbdfa5bf4b7e798c6fca8826ad26ca719ac909acaefbdc0c"
+    },
+    {
+      "path": "prompts/03-aws-deployment.txt",
+      "sha256": "05e154feb558396d529c7c7761ac77f38866c93422ba86a91585bdfb50aa5f6b"
+    },
+    {
+      "path": "prompts/04-research-catalog-revision.txt",
+      "sha256": "79aec2c33786588c25e2cca437cfe37c7974c4302fb29ebc3e1a8ee6ba5ae1c5"
+    },
+    {
+      "path": "prompts/04-research-catalog.txt",
+      "sha256": "54266d1655c83dbb06e7b97bdab00c25d7b0e9c0f82ab69948f90318e16937c9"
+    },
+    {
+      "path": "prompts/05-tokenomics-revision.txt",
+      "sha256": "e73d8c30b32387cb451750fd300e957bcbb69402960fbfe3c8889ccc42caab49"
+    },
+    {
+      "path": "prompts/05-tokenomics.txt",
+      "sha256": "3e150f1eb2236e7141054be30a5bc7a7c7e6bc592f39faa2e27d03712cce6617"
+    },
+    {
+      "path": "prompts/06-evaluations-revision.txt",
+      "sha256": "6adbf15241c353534543a206359d97a8d9179c96637023352438263659dcf4d8"
+    },
+    {
+      "path": "prompts/06-evaluations.txt",
+      "sha256": "502f4c84672c9bdd740a8691364ae60884089b99d1137b88906a95a69cb3784b"
+    },
+    {
+      "path": "prompts/07-safety-guardrails-revision.txt",
+      "sha256": "edb04d27a5ce418912261849aecfa6b506e93fc3fb4c4624f61d1d7dac1c7249"
+    },
+    {
+      "path": "prompts/07-safety-guardrails.txt",
+      "sha256": "18480992cae88416698f34ef5f82ec869127f2ff2ec995dfcf7e6c2ecf9e352f"
+    }
+  ],
+  "contracts": [
+    {
+      "path": "sources/01-system-contract.md",
+      "sha256": "d2b45211229c3e8658b474fef986acab558731411894dcd958846110fd6bf5f0"
+    },
+    {
+      "path": "sources/01b-system-components-contract.md",
+      "sha256": "ab6709e650a29aeaef9e44432c0e5e4ff4081cabacf2ca0a3e82d07f7ca18efd"
+    },
+    {
+      "path": "sources/02-ai-pipeline-contract.md",
+      "sha256": "af9b95a6feee0936a6512a1d13527077a2d2b9b34b01c5d0677356b911e40e52"
+    },
+    {
+      "path": "sources/02b-ai-runtime-agents-contract.md",
+      "sha256": "a3c60d6b261343a32c475e3affd6530162c17bcd232e9c72cd0d5a749e1cd31b"
+    },
+    {
+      "path": "sources/03-deployment-contract.md",
+      "sha256": "1fd52aff8757ef87651545eabe4e01e8349242820974b8bae4ae43b45d76da38"
+    },
+    {
+      "path": "sources/04-research-catalog-contract.md",
+      "sha256": "8ba76d943ac29b5e7e6668a5f1ab34aecb2d7cd5a45114d006c1b3dc7f1578ed"
+    },
+    {
+      "path": "sources/05-tokenomics-contract.md",
+      "sha256": "24976291ce01071b21a2c008caa962edf34888ebb98359b416f42c732add4fa2"
+    },
+    {
+      "path": "sources/06-evaluations-contract.md",
+      "sha256": "bf04af1a073032de6084abf2f3c255adf1a2a418aaf21d545e43e50a0695846c"
+    },
+    {
+      "path": "sources/07-safety-guardrails-contract.md",
+      "sha256": "d723418feee00fb01201114fabb9689d806740ca65e3afac131b932f4312423b"
+    }
+  ],
+  "drafts": [
+    {
+      "path": "drafts/01-system-overview-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1978140,
+      "sha256": "66222c03883f69f3fdaf644e4b048a984e03128aaacba2789ff483ac09ddbdad"
+    },
+    {
+      "path": "drafts/01-system-overview-v2.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2023626,
+      "sha256": "25c8487abb9534b791394929b5e1c735fdf59f9bd3faa7780a86947936c4346c"
+    },
+    {
+      "path": "drafts/01b-system-components-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1999089,
+      "sha256": "2e684e24c415e42589795d57b391574bf1165cd0e41cb3fd1aca8127415d5a93"
+    },
+    {
+      "path": "drafts/02-ai-pipeline-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1860501,
+      "sha256": "ba6344096605c20d4631751ee534ad1da57be47e9affb5c29c09da9465c493eb"
+    },
+    {
+      "path": "drafts/02-ai-pipeline-v2.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2004176,
+      "sha256": "cf648ce80fa01c94a96d430e135ef93a869cf0b569182d54595308e9a44a1209"
+    },
+    {
+      "path": "drafts/02b-ai-runtime-agents-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2170626,
+      "sha256": "2e1a261d02d4dd46be3b5ea124ba895d9182b0c72a415be03814a84b3260863d"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1792650,
+      "sha256": "0638ace08508d8e7255c7588a1b09f0147a8140c7838e8627985bacbd041e9a7"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v2.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1908167,
+      "sha256": "3425fdace301bfef0fcaaa2107a428e2a6b59092fc8c32bcc64b98efbca3265b"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v3-undated.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1910444,
+      "sha256": "07f978ec7d4eeef9c277174644ddee4a206b29c7439682146c2db227db5f89fc"
+    },
+    {
+      "path": "drafts/04-research-catalog-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1944890,
+      "sha256": "97fb8b907b51530009c97c480ceb30f8ca4d50b1c15722d4ebfb138ad9b76095"
+    },
+    {
+      "path": "drafts/05-tokenomics-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2132401,
+      "sha256": "c2206588190648fac081e8b0eb7247d077f2fd792e2b42fa22aaaf63dc15369e"
+    },
+    {
+      "path": "drafts/06-evaluations-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2159621,
+      "sha256": "877d4c58ad98d565f2073f7c5d3f864284edc4220cb98394845c629d6ca8cb41"
+    },
+    {
+      "path": "drafts/07-safety-guardrails-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2105213,
+      "sha256": "1c211c1725cae9e9a7cc1afa2202965b1efab810543bb6b0900420216804f360"
+    }
+  ],
+  "previous_manifest": "sources/collection-v1-manifest.json",
+  "scope": "Local illustration artifacts only; no application, database or AWS changes."
+}

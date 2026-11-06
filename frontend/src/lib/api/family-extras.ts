@@ -1,5 +1,5 @@
 /** Check-ins, surprises, kid-mode extras and family settings. */
-import type { Buddy, Checkin, CheckinInput, ChestPrize, Extras, FamilySettings, Journey, OwnCheckin, Surprise } from "./types";
+import type { Buddy, BuddySelectionInput, Checkin, CheckinInput, ChestPrize, Extras, FamilySettings, Journey, OwnCheckin, Surprise } from "./types";
 import { AI_TIMEOUT_MS, KID, request, withPin } from "./client";
 
 // ── Check-ins and surprises ───────────────────────────────────────────────────
@@ -32,7 +32,7 @@ export const getKidExtras = () => request<Extras>("GET", "/v1/kid/extras", undef
 /** Kid mode (kid token): The world journey: `GET /v1/kid/journey`. */
 export const getKidJourney = () => request<Journey>("GET", "/v1/kid/journey", undefined, KID);
 /** Kid mode (kid token): Save a discovery or outfit: `PATCH /v1/kid/extras`. */
-export const updateKidExtras = (changes: { discover?: string; wearing?: string; goal?: string; clear_goal?: boolean; level_seen?: number; buddy?: Buddy }) =>
+export const updateKidExtras = (changes: { discover?: string; wearing?: string; goal?: string; clear_goal?: boolean; level_seen?: number; buddy?: Buddy; buddy_selection?: BuddySelectionInput }) =>
   request<Extras>("PATCH", "/v1/kid/extras", changes, KID);
 /** Kid mode (kid token): Open today's chest: `POST /v1/kid/chest`. */
 export const openChest = () =>

@@ -3,6 +3,7 @@
  * uses. Colours live in styles.css under `.page--kid[data-buddy]`. Parent screens are unaffected.
  */
 import type { BuddyId } from "./family";
+import { buddyDisplayProps, type BuddyIdentitySource } from "./buddyIdentity";
 
 interface BuddyTheme {
   confetti: string;
@@ -42,6 +43,21 @@ export const BUDDY_THEME: Record<BuddyId, BuddyTheme> = {
     waiting: "We made it to something new! Let's take a look.",
   },
 };
+
+/** Catalog creatures use neutral copy instead of an animal's den, paws or sounds. */
+export const CATALOG_BUDDY_THEME: BuddyTheme = {
+  confetti: "✨", print: "✦",
+  nudge: "There is a new find {n} Sparks ahead.",
+  welcomeBack: "Welcome back! Today's quests earn extra points.",
+  waiting: "You reached a new find. Take a look when you're ready.",
+};
+export function buddyThemeFor(source: BuddyIdentitySource): BuddyTheme {
+  const display = buddyDisplayProps(source);
+  return display.selectionMode === "catalog" ? CATALOG_BUDDY_THEME : BUDDY_THEME[display.buddy];
+}
+export function buddyNudgeFor(source: BuddyIdentitySource, sparksToGo: number): string {
+  return buddyThemeFor(source).nudge.replace("{n}", String(sparksToGo));
+}
 
 /** The buddy's nudge with the number of Sparks still to go filled in. */
 export function buddyNudge(buddy: BuddyId, sparksToGo: number): string {

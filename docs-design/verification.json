@@ -1,0 +1,175 @@
+{
+  "checked_at_utc": "2026-11-06T18:26:42.263602+00:00",
+  "markdown_documents": 16,
+  "lines": 2962,
+  "relative_links_checked": 312,
+  "broken_relative_links": 0,
+  "readme_links_all_documents": true,
+  "mermaid": {
+    "diagrams": 22,
+    "checks": "fences, supported diagram kinds, node/decision delimiters, subgraph/sequence block balance, quoted flow labels, sequence separator check and peer review",
+    "rendered": false,
+    "limitation": "No installed Mermaid parser/renderer available; empty historical temporary package directories were not reused. No dependency installed.",
+    "inventory": [
+      {
+        "file": "01-system-overview.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "01-system-overview.md",
+        "number": 2,
+        "type": "flowchart"
+      },
+      {
+        "file": "02-frontend-experience.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "02-frontend-experience.md",
+        "number": 2,
+        "type": "sequenceDiagram"
+      },
+      {
+        "file": "03-backend-api-and-security.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "03-backend-api-and-security.md",
+        "number": 2,
+        "type": "sequenceDiagram"
+      },
+      {
+        "file": "04-database-and-domain-model.md",
+        "number": 1,
+        "type": "erDiagram"
+      },
+      {
+        "file": "05-ai-orchestration.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "06-habit-coach-and-habit-generation.md",
+        "number": 1,
+        "type": "sequenceDiagram"
+      },
+      {
+        "file": "06-habit-coach-and-habit-generation.md",
+        "number": 2,
+        "type": "flowchart"
+      },
+      {
+        "file": "07-planner-review-and-other-ai.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "07-planner-review-and-other-ai.md",
+        "number": 2,
+        "type": "flowchart"
+      },
+      {
+        "file": "08-model-selection-and-runtime-routing.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "09-embedding-model-selection.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "10-habit-research-and-pinecone-catalog.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "10-habit-research-and-pinecone-catalog.md",
+        "number": 2,
+        "type": "sequenceDiagram"
+      },
+      {
+        "file": "11-tokenomics-latency-and-observability.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "12-buddies-artwork-and-assets.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "13-aws-deployment.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "13-aws-deployment.md",
+        "number": 2,
+        "type": "flowchart"
+      },
+      {
+        "file": "14-validation-and-design-decisions.md",
+        "number": 1,
+        "type": "flowchart"
+      },
+      {
+        "file": "README.md",
+        "number": 1,
+        "type": "flowchart"
+      }
+    ]
+  },
+  "rename": {
+    "from": "docs",
+    "to": "docs-detailed",
+    "original_files_preserved": 209,
+    "missing_files": 0,
+    "byte_identical_files": 204,
+    "intentional_text_changes": [
+      "coach-request-walkthrough.md",
+      "README.md",
+      "examples/trace-coach-offline.py",
+      "design-update/buddies/previews/README.md",
+      "design-update/buddies/outfit-review/README.md"
+    ],
+    "binary_evidence_unchanged": true,
+    "backend_docs_unchanged_location": true
+  },
+  "peer_review": [
+    "Application, identity, database and buddy source review",
+    "AI graph, call count, safety and model routing review",
+    "Research, embedding and catalog provenance review",
+    "Independent integration review: source hydration, assignment fields, HTTPS routing, replay, slot order and credit formula"
+  ],
+  "application_logic_changes": false,
+  "schema_changes": false,
+  "configuration_changes": false,
+  "cloud_actions": false,
+  "provider_calls": 0,
+  "application_tests_rerun": false,
+  "source_edits_outside_docs": "Documentation references and five browser-test evidence output paths only",
+  "files": {
+    "00-documentation-plan.md": "b3c02381de45e07bfe697cd23a118502a3e85e4795898dd9f81123577486a9a3",
+    "01-system-overview.md": "c3f45fc07b864e44a9bcdc4022996b0feeada2eaf5abbcf3976e771cbc85d919",
+    "02-frontend-experience.md": "67c9c9b737b71f2a8ac64ddd8ddd2125ce3f5404514a916efbe6928776989630",
+    "03-backend-api-and-security.md": "391a106776f0adb1d225ebf2fafba758bc55976fb48ba73d565a59645a23e48a",
+    "04-database-and-domain-model.md": "a145a5f6bcb3901b533df1362d53b45c04a9e54adb11ecb940e894a9ff5f1306",
+    "05-ai-orchestration.md": "b622ae0b74c4d2c8b155b5682d9f5d575470db666154e10e27c761d5f86be3b1",
+    "06-habit-coach-and-habit-generation.md": "d8ca6f2907f1fcab738cc265dd867988cb355058cb077e4f8b6c8f393c08f3eb",
+    "07-planner-review-and-other-ai.md": "29afad48144d168b01e648b5339f18fee91e9cb7e1a3ff6a08a93a58f659466e",
+    "08-model-selection-and-runtime-routing.md": "a9cbb79e1ff7711719ad4eba48eabf70934631072b37f093768608d5b5d19727",
+    "09-embedding-model-selection.md": "e2ce78db7c5e67da63d58bc87336d43eb21b3724eca18e35f6c6242d7fe83d19",
+    "10-habit-research-and-pinecone-catalog.md": "9daafbe3d9bdad13592040ccacdd5b785905674a0659f43bc31b917c6340386e",
+    "11-tokenomics-latency-and-observability.md": "1cb4d0b6ce048e25f24729344af2f4ad43a63661929426d65add1aefb5afb6fb",
+    "12-buddies-artwork-and-assets.md": "de94e0b787ebe0b00c70acddc4f7a6923eb3f5152a1ad756c5769073dba07631",
+    "13-aws-deployment.md": "3a0d381d77c9300655bcbfd97133ea478deb2c01da78975c2ef88f6df9b6d071",
+    "14-validation-and-design-decisions.md": "2cfb592dde894a309093ecfa4cb85e7ae07a09bf5fc501cc6325aac1aa2735f1",
+    "README.md": "1d9e3b18c925dc83372007be23918492b0aa86ce89f5bdd20d4135f87a564bd0"
+  },
+  "renamed_entry_links_checked": 56,
+  "stale_active_top_level_docs_references": []
+}

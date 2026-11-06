@@ -11,7 +11,7 @@ import Logo from "./Logo";
 export function SiteHeader() {
   const { family } = useStore();
   return (
-    <header className="topbar">
+    <header className="topbar topbar--site">
       <div className="wrap topbar__inner">
         <Logo />
         <nav className="topbar__nav" aria-label="Sections">
@@ -19,6 +19,7 @@ export function SiteHeader() {
           <a href="#habits" onClick={scrollTo("habits")}>Habits</a>
           <a href="#worlds" onClick={scrollTo("worlds")}>Worlds</a>
           <a href="#parents" onClick={scrollTo("parents")}>For parents</a>
+          <a href="#journey" onClick={scrollTo("journey")}>Journey</a>
         </nav>
         <div className="topbar__actions">
           {family ? (

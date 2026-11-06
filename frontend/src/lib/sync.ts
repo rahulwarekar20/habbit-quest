@@ -4,6 +4,7 @@
  */
 import type { Extras, HabitStatus, Progress, Today } from "./api";
 import { updateChild, type Family, type QuestStatus } from "./family";
+import { mergeBuddySelection } from "./buddyIdentity";
 
 const LOCAL_STATUS: Record<HabitStatus, QuestStatus> = { todo: "todo", submitted: "submitted", approved: "approved", rejected: "notyet" };
 
@@ -18,8 +19,8 @@ export function applyToday(family: Family, today: Today): Family {
   const childId = today.child.id;
   const statuses = Object.fromEntries(today.habits.map((h) => [h.habit_id, localStatus(h.status)]));
   const next = updateChild(family, childId, (c) => ({
-    ...c,
-    buddy: today.child.buddy,
+    ...mergeBuddySelection(c, today.child),
+    ...(today.child.age !== undefined ? { age: today.child.age } : {}),
     sparks: today.progress.sparks,
     progress: today.progress,
     balance: today.points,
@@ -40,7 +41,7 @@ export function applyProgress(family: Family, childId: string, progress: Progres
  */
 export function applyExtras(family: Family, childId: string, extras: Extras): Family {
   const next = updateChild(family, childId, (c) => ({
-    ...c,
+    ...mergeBuddySelection(c, extras),
     discoveries: extras.discoveries,
     accessories: extras.accessories,
     wearing: extras.wearing,

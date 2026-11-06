@@ -1,0 +1,66 @@
+Create a publication-quality hand-drawn technical explainer for HabitQuest. Use supplied reference images for STYLE ONLY, never for architecture. This is the implemented refined pipeline, not the old Deep Agents prototype. Match clean white paper, irregular navy ink, readable handwritten headings, indigo/blue emphasis, restrained purple, soft lavender and pale-blue washes. Illustrate real mechanisms with a parent, SQL cylinder, masking eraser, vector dots, filter funnel, canonical evidence book, model robots, and a human approval clipboard. Avoid generic box-diagram appearance. No logos necessary.
+
+Use a large 3:2 landscape poster. Three generous horizontal bands, read left to right, with unmistakable continuation arrows between them. Keep edge margins and readable short labels. Exact model identifiers may use neutral technical type. Do not shrink body lettering to fit decorative drawings. Main workflow is more prominent than the small independent report rail. Do not print these instructions; print only the copy listed below.
+
+BAND 1: Parent request enters authorized SQL context, then a local urgent check. One labeled branch ends at fixed support; the normal path passes through code masking, OpenAI embedding, one Pinecone filter funnel, and a pinned canonical book. Pinecone gives candidate IDs to canonical verification; the book supplies full researched evidence. Arrow then enters prepare in band 2. No other model in retrieval.
+
+BAND 2: Light outlined orchestration boundary with exactly five stops: prepare → generate → safety → decide → finalize. Only generate and safety have model robots. A clearly labeled single revision arrow from decide goes BACK to generate; it must not be a general retry loop. A small direct failure branch from prepare/generate to finalize is acceptable. Finalize has distinct reviewed-success and fixed-failure outcomes. Successful output goes through fresh local checks to reviewed goals saved in SQL, then onward to band 3. Existing canonical evidence is not sent through a separate catalogue Safety pass.
+
+BAND 3: Saved goals authorize separate habit batches, each containing three little habit cards. At most two batches shown working together. One Luna writer leads to local validation; exactly one possible correction arrow returns to that writer. A human parent approval is visibly required before the final child plan. Below or beside this band, an independent small rail begins with an explicit parent action and shows Planner/Weekly Review with one structured call each and local checks. This rail does not connect to the Coach sequence. Use the short footer for observability and exact provider-role labels.
+
+EXACT VISIBLE COPY (preserve wording, numbers and case; do not add invented labels):
+
+HabitQuest AI pipeline
+Implemented design
+
+1  Scope + retrieve
+Parent request
+Authorized child + SQL context
+Local urgent check
+Urgent → fixed support
+Mask known names + contacts
+Code only
+OpenAI embedding
+text-embedding-3-small · 512 dimensions
+Pinecone similarity
+381 cards · filtered top 12
+Canonical evidence
+Verify IDs + hashes; hydrate; deduplicate ≤6 concepts
+No live research or catalog Safety
+
+2  Refined Coach · LangGraph + LangChain
+prepare
+Evidence + facts
+generate
+Structured advice + goals
+safety
+New prose only
+decide
+Code decision
+finalize
+Reviewed output / fixed failure
+One Safety revision
+2 chat calls normally · 4 with revision
+Fresh local checks
+Save selected reviewed goals only
+
+3  Separate habit writer
+3 choices per new goal
+Up to 4 goals · 2 batches in flight
+Luna writer
+1 call per batch
+Local validation
+Source · age · privacy · novelty
+One correction
+Parent approval
+Exact goal-linked child plan
+
+Explicit Planner / Weekly Review
+SQL facts → 1 call each → local checks → parent decision
+No Coach Safety pass
+
+OpenAI writers: gpt-6-luna
+Nebius Safety + reports: deepseek-ai/DeepSeek-V4.1-Flash-1017
+Stage updates + elapsed time + cost ledger
+
+FACTUAL GUARDRAILS: The Safety revision is only after first prose rejection. Fixed failures cannot publish unreviewed model text. Known-name/contact masking is a bounded code helper, not comprehensive PII recognition. Catalog validation checks authoritative IDs and hashes; it does not establish clinical effectiveness. Habits have local checks, not an extra whole-habit Safety model. Catalog habit card maps to app goal; generated action maps to app habit. Automatic drafts still require parent approval. Do not draw autonomous research, tools repeatedly searching, Deep Agents middleware, checkpoint state, latency promises, or a generic global Safety model reviewing every capability. SDK HTTP retries are distinct from the logical chat-call counts shown. Preserve clean text, all five node names, all numerical bounds, and the separation of explicit reports from the Coach graph.

@@ -1,3 +1,4 @@
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 /**
  * The parent's AI helpers on the dashboard, all served by the backend:
  *   - Suggested changes: plan changes from any helper, accepted with the parent PIN.
@@ -7,14 +8,18 @@
  *
  * Helpers only propose. Nothing changes until the parent accepts a card with the PIN.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { acceptSuggestion, dismissSuggestion, errorText, getFamilySettings, getReports, listSuggestions, requestPlan, requestReview, updateFamilySettings, type PlanReport, type Report, type ReviewReport, type Suggestion } from "../lib/api";
 import type { Family } from "../lib/family";
 import { useStore } from "../lib/store";
 import { formatTime } from "../lib/time";
 import Buddy from "./Buddy";
+import { GuidanceText } from "./GuidanceText";
 import HabitArt from "./HabitArt";
-import { useHelperCall, Thinking } from "./AiParts";
+import { useHelperCall, Thinking, GenerationProgress, useResponseTimer, type MeasureResponse } from "./AiParts";
+import { CoachingBudgetMeter, GenerationDebit, useCoachingBudget } from "./CoachingBudget";
+import { refreshCoachingBudget } from "../lib/api/tokenomics";
+import { ApiError } from "../lib/api/client";
 
 const SOURCE_LABEL: Record<Suggestion["source"], string> = {
   planner: "Quest planner", reviewer: "Weekly review", coach: "Habit coach", mastery: "Quest mastered",
@@ -152,6 +157,8 @@ function Proposals({ cards, onChange }: { cards: Suggestion[]; onChange: () => P
 function Reports({ familyId, family, onChange }: { familyId: string; family: Family; onChange: () => Promise<void> }) {
   const [plan, setPlan] = useState<Report<PlanReport> | null>(null);
   const [review, setReview] = useState<Report<ReviewReport> | null>(null);
+  const { budget, error: budgetError } = useCoachingBudget(familyId);
+  const pendingIds = useRef<{ plan?: string; review?: string }>({});
 
   useEffect(() => {
     getReports(familyId).then((found) => {
@@ -160,16 +167,30 @@ function Reports({ familyId, family, onChange }: { familyId: string; family: Fam
     }).catch(() => {}); // the cards still offer to write a new one
   }, [familyId]);
 
+  async function writeReport(kind: "plan" | "review", measure: MeasureResponse) {
+    pendingIds.current[kind] ??= crypto.randomUUID();
+    try {
+      if (kind === "plan") setPlan((await measure(onProgress => requestPlan(familyId, onProgress, pendingIds.current.plan))).value);
+      else setReview((await measure(onProgress => requestReview(familyId, onProgress, pendingIds.current.review))).value);
+      delete pendingIds.current[kind];
+    } catch (error) {
+      if (error instanceof ApiError && error.generationEnded) delete pendingIds.current[kind];
+      throw error;
+    } finally { refreshCoachingBudget(); }
+    await onChange();
+  }
+
   return (
-    <div className="ai__grid">
-      <ReviewCard family={family} review={review} write={async () => { setReview(await requestReview(familyId)); await onChange(); }} />
-      <PlanCard plan={plan} write={async () => { setPlan(await requestPlan(familyId)); await onChange(); }} />
-    </div>
+    <><CoachingBudgetMeter budget={budget} error={budgetError} compact /><div className="ai__grid">
+      <ReviewCard family={family} review={review} quote={budget?.show_costs ? budget.activity_quotes.review : undefined} write={measure => writeReport("review", measure)} />
+      <PlanCard plan={plan} quote={budget?.show_costs ? budget.activity_quotes.planner : undefined} write={measure => writeReport("plan", measure)} />
+    </div></>
   );
 }
 
-function ReviewCard({ family, review, write }: { family: Family; review: Report<ReviewReport> | null; write: () => Promise<void> }) {
+function ReviewCard({ family, review, write, quote }: { family: Family; review: Report<ReviewReport> | null; write: (measure: MeasureResponse) => Promise<void>; quote?: number }) {
   const { busy, error, run } = useHelperCall();
+  const { timing, measure } = useResponseTimer("Weekly review");
   return (
     <article className="ai-card">
       <header className="ai-card__head">
@@ -187,7 +208,7 @@ function ReviewCard({ family, review, write }: { family: Family; review: Report<
             const name = family.children.find((k) => c.child.includes(k.name));
             return (
               <div key={i} className="ai-child">
-                {name && <Buddy buddy={name.buddy} size={34} />}
+                {name && <Buddy {...buddyDisplayProps(name)} size={34} />}
                 <div>
                   <b>{c.child}</b>
                   <p><span className="tag tag--win">Win</span> {c.wins}</p>
@@ -205,15 +226,19 @@ function ReviewCard({ family, review, write }: { family: Family; review: Report<
       )}
 
       {error && <p className="form-error">{error}</p>}
-      <button className="btn btn--soft btn--block" onClick={() => run(write)} disabled={busy}>
-        {busy ? <Thinking label="Reading this week's quests" /> : review ? "Write a fresh review" : "Write this week's review"}
+      <button className="btn btn--soft btn--block" onClick={() => run(() => write(measure))} disabled={busy}>
+        {busy ? <Thinking label="Generating review" /> : review ? "Write a fresh review" : "Write this week's review"}
       </button>
+      <GenerationProgress timing={timing} />
+      {quote !== undefined && <p className="coaching-quote">{quote} credits per useful review.</p>}
+      {quote !== undefined && <GenerationDebit value={review?.tokenomics} />}
     </article>
   );
 }
 
-function PlanCard({ plan, write }: { plan: Report<PlanReport> | null; write: () => Promise<void> }) {
+function PlanCard({ plan, write, quote }: { plan: Report<PlanReport> | null; write: (measure: MeasureResponse) => Promise<void>; quote?: number }) {
   const { busy, error, run } = useHelperCall();
+  const { timing, measure } = useResponseTimer("Quest planner");
   return (
     <article className="ai-card">
       <header className="ai-card__head">
@@ -226,9 +251,9 @@ function PlanCard({ plan, write }: { plan: Report<PlanReport> | null; write: () 
 
       {plan ? (
         <div className="ai-card__body">
-          <p>{plan.result.summary}</p>
+          <GuidanceText text={plan.result.summary} />
           {plan.result.tips.length > 0 && (
-            <ul className="ai-list">{plan.result.tips.map((t, i) => <li key={i}>{t}</li>)}</ul>
+            <ol className="practice-steps">{plan.result.tips.map((t, i) => <li key={i}>{t}</li>)}</ol>
           )}
         </div>
       ) : (
@@ -236,9 +261,12 @@ function PlanCard({ plan, write }: { plan: Report<PlanReport> | null; write: () 
       )}
 
       {error && <p className="form-error">{error}</p>}
-      <button className="btn btn--soft btn--block" onClick={() => run(write)} disabled={busy}>
-        {busy ? <Thinking label="Planning your routine" /> : plan ? "Plan again" : "Suggest a plan"}
+      <button className="btn btn--soft btn--block" onClick={() => run(() => write(measure))} disabled={busy}>
+        {busy ? <Thinking label="Generating plan" /> : plan ? "Plan again" : "Suggest a plan"}
       </button>
+      <GenerationProgress timing={timing} />
+      {quote !== undefined && <p className="coaching-quote">{quote} credits per useful plan.</p>}
+      {quote !== undefined && <GenerationDebit value={plan?.tokenomics} />}
     </article>
   );
 }

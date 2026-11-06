@@ -7,10 +7,11 @@
  */
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  createCustomHabit, deleteCustomHabit, editCustomHabit, errorText, listCatalog, listCustomHabits, listGoals,
+  createCustomHabit, deleteCustomHabit, editCustomHabit, errorText, listCatalog, listCustomHabits, listGoals, restorePlanHabit,
   type CatalogHabit, type CustomHabitInput, type Goal, type Plan, type RoutinePart,
 } from "../lib/api";
-import { MAX_HABITS, savePlan, withHabit } from "../lib/plan";
+import { MAX_HABITS } from "../lib/plan";
+import { useStore } from "../lib/store";
 import HabitArt from "./HabitArt";
 
 const AGES = [
@@ -49,6 +50,7 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
   plan: Plan;
   onPlan: (plan: Plan) => void;
 }) {
+  const { askPinValue } = useStore();
   const [catalog, setCatalog] = useState<CatalogHabit[] | null>(null);
   const [custom, setCustom] = useState<CatalogHabit[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -77,13 +79,14 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
   const recommended = useMemo(() => new Set(plan.goals.flatMap((g) => g.recommended_habit_ids)), [plan.goals]);
   const groups = useMemo(() => {
     const list: [string, CatalogHabit[]][] = [];
-    if ((goal === "all" || goal === MINE) && custom.length) list.push(["Your family's habits", custom]);
+    const childCustom = custom.filter((habit) => !habit.generated_for_child_id || habit.generated_for_child_id === child.id);
+    if ((goal === "all" || goal === MINE) && childCustom.length) list.push(["Your family's habits", childCustom]);
     if (goal !== MINE) {
       const kept = (catalog ?? []).filter((h) => (goal === "all" || h.goal_id === goal) && suits(h, show, child.age, plan.progress.unlocked_tier));
       list.push(...groupBy(kept, (h) => h.goal_title).entries());
     }
     return list;
-  }, [catalog, custom, goal, show, child.age, plan.progress.unlocked_tier]);
+  }, [catalog, custom, goal, show, child.id, child.age, plan.progress.unlocked_tier]);
   const count = groups.reduce((n, [, habits]) => n + habits.length, 0);
 
   async function add(habit: CatalogHabit) {
@@ -91,7 +94,9 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
     setError(null);
     setNotice(null);
     try {
-      onPlan(await savePlan(child.id, plan, withHabit(plan, habit)));
+      const pin = await askPinValue(`Add "${habit.title}" to ${child.name}'s quests.`);
+      if (pin === null) return;
+      onPlan(await restorePlanHabit(child.id, habit.id, pin));
       setNotice(`${habit.title} added to ${child.name}'s quests.`);
     } catch (e) {
       setError(errorText(e));
@@ -170,7 +175,7 @@ export default function HabitCatalog({ child, familyId, plan, onPlan }: {
                 recommended={recommended.has(h.id)} onAdd={() => add(h)}>
                 {h.id.startsWith("my-") && (
                   <span className="cat-habit__more">
-                    <button type="button" className="link-button" onClick={() => { setEditing(h); setNotice(null); }}>Edit</button>
+                    {!h.generated_for_child_id && <button type="button" className="link-button" onClick={() => { setEditing(h); setNotice(null); }}>Edit</button>}
                     <ConfirmButton label="Delete" confirmLabel="Delete for good" disabled={busy === h.id} onConfirm={() => remove(h)} />
                   </span>
                 )}
@@ -205,7 +210,7 @@ function HabitCard({ habit, status, busy, childName, recommended = false, onAdd,
 }) {
   return (
     <article className={`cat-habit ${status.kind === "in" ? "is-added" : ""}`}>
-      <HabitArt habit={habit.id} icon={habit.icon} className="cat-habit__art" />
+      <HabitArt habit={habit.id} icon={habit.icon} text={`${habit.kid_title} ${habit.kid_hint}`} className="cat-habit__art" />
       <div className="cat-habit__body">
         <b>{habit.title}</b>
         <span className="muted">

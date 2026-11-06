@@ -42,6 +42,38 @@ afterEach(() => {
 });
 
 describe("requests", () => {
+  it("stops the server-waking notice once streaming response headers arrive", async () => {
+    vi.useFakeTimers();
+    const waking = vi.fn();
+    setWakingListener(waking);
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    fetchMock.mockResolvedValue(new Response(new ReadableStream({ start(value) { controller = value; } }), { headers: { "Content-Type": "text/event-stream" } }));
+    const pending = request("POST", "/generate?stream=true", {}, { onProgress: vi.fn(), retryWrites: false });
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(waking).not.toHaveBeenCalled();
+    controller.enqueue(new TextEncoder().encode('event: result\ndata: {"reply":"Ready"}\n\n'));
+    controller.close();
+    await expect(pending).resolves.toEqual({ reply: "Ready" });
+  });
+
+  it("streams progress on a single authorized request and returns only the completed result", async () => {
+    const onProgress = vi.fn();
+    fetchMock.mockResolvedValue(new Response('event: stage\ndata: {"stage":"safety","elapsed_ms":1200}\n\nevent: result\ndata: {"reply":"Reviewed response"}\n\n', { headers: { "Content-Type": "text/event-stream" } }));
+    expect(await request("POST", "/generate?stream=true", {}, { onProgress, retryWrites: false })).toEqual({ reply: "Reviewed response" });
+    expect(lastInit().headers).toMatchObject({ Authorization: "Bearer care", Accept: "text/event-stream" });
+    expect(onProgress).toHaveBeenCalledWith({ stage: "safety", elapsed_ms: 1200 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a truncated generation stream and reports stream authorization failures", async () => {
+    fetchMock.mockResolvedValueOnce(new Response('event: stage\ndata: {"stage":"generation","elapsed_ms":0}\n\n', { headers: { "Content-Type": "text/event-stream" } }));
+    await expect(request("POST", "/generate?stream=true", {}, { onProgress: vi.fn(), retryWrites: false })).rejects.toThrow("before the result arrived");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fetchMock.mockResolvedValueOnce(new Response('event: error\ndata: {"status":401,"detail":"Expired"}\n\n', { headers: { "Content-Type": "text/event-stream" } }));
+    await expect(request("POST", "/generate?stream=true", {}, { onProgress: vi.fn(), retryWrites: false })).rejects.toMatchObject({ status: 401 });
+    expect(getCaregiverToken()).toBeNull();
+  });
+
   it("sends the caregiver token to the base URL without a double slash", async () => {
     fetchMock.mockResolvedValue(json(200, { id: "u", families: [] }));
     await getMe();
@@ -150,6 +182,28 @@ describe("errors", () => {
 
 describe("waking the server", () => {
   beforeEach(() => void vi.useFakeTimers());
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])("never replays a %s after gateway or connection failures", async (method) => {
+    for (const status of [502, 503, 504]) {
+      resetWakeState();
+      fetchMock.mockClear().mockResolvedValueOnce(new Response("", { status }));
+      await expect(request(method, "/v1/children/c1/plan", {})).rejects.toMatchObject({ status });
+      expect(fetchMock).toHaveBeenCalledOnce();
+    }
+    resetWakeState();
+    fetchMock.mockClear().mockRejectedValueOnce(new TypeError("response lost after commit"));
+    await expect(request(method, "/v1/children/c1/plan", {}, { retryWrites: true })).rejects.toMatchObject({ status: 0 });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("does not replay inference writes after an ambiguous network failure or proxy error", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("connection interrupted"));
+    await expect(request("POST", "/coach", { text: "Help with bedtime" }, { retryWrites: false })).rejects.toMatchObject({ status: 0 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fetchMock.mockResolvedValueOnce(new Response("", { status: 503 }));
+    await expect(request("POST", "/coach", {}, { retryWrites: false })).rejects.toMatchObject({ status: 503 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 
   it("gives the first call 70 seconds and later warm calls 30", async () => {
     const timeout = vi.spyOn(AbortSignal, "timeout");

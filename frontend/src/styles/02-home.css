@@ -131,3 +131,40 @@
   content: ""; position: absolute; left: 14px; top: 15px; width: 24px; height: 24px; border-radius: 8px;
   background: var(--mint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' stroke='%233f9a58' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 16px no-repeat;
 }
+
+/* Product film: the artwork stays full-frame, with native playback controls. */
+.home-journey {
+  scroll-margin-top: 96px;
+  background: radial-gradient(ellipse at 50% 70%, #eee7ff 0, transparent 70%), var(--bg-warm);
+}
+.home-journey__head { max-width: 860px; margin-right: auto; margin-left: auto; text-align: center; }
+.home-journey__subtitle {
+  margin: 8px 0 12px;
+  color: var(--violet-deep);
+  font: 600 clamp(1.2rem, 2.5vw, 1.65rem)/1.35 var(--font-display);
+}
+.home-journey__film {
+  width: 100%; margin: 0 auto;
+  overflow: hidden; border: 1px solid var(--line); border-radius: 24px;
+  background: var(--surface); box-shadow: var(--shadow-lg);
+}
+.home-journey__video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; background: #241d4f; }
+.home-journey__caption {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px;
+  padding: 14px 20px; color: var(--muted); font-size: var(--text-sm);
+}
+.home-journey__caption a { font-weight: 700; color: var(--violet-deep); }
+
+/* Keep the public section navigation available as it gains the Journey link. */
+@media (max-width: 1100px) {
+  .page--home .topbar--site .topbar__inner { height: auto; flex-wrap: wrap; padding-top: 12px; padding-bottom: 10px; gap: 10px 16px; }
+  .page--home .topbar--site .topbar__nav {
+    display: flex; order: 3; width: 100%; margin-left: 0; gap: 22px;
+    overflow-x: auto; scrollbar-width: thin;
+  }
+  .home-journey { scroll-margin-top: 150px; }
+}
+@media (max-width: 640px) {
+  .home-journey__film { border-radius: 18px; }
+  .home-journey__caption { padding: 12px 14px; font-size: var(--text-xs); }
+}

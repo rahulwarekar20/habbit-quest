@@ -11,11 +11,11 @@ from pydantic import Field
 
 from habitquest_backend.accounts import StrictModel
 from habitquest_backend.auth import KID, family_pin_ok, signed_in
+from habitquest_backend.buddies import BUDDY_COLUMNS, Buddy, BuddySelection, require_selection_revision
 from habitquest_backend.config import Settings
 from habitquest_backend.daily import balance, today_view
 from habitquest_backend.db import one, transaction
 from habitquest_backend.journey import LANDMARKS, progress
-from habitquest_backend.onboarding import Buddy
 
 ACCESSORIES = {
     "party-hat": "Party hat",
@@ -45,6 +45,7 @@ class ExtrasUpdate(StrictModel):
     clear_goal: bool = False
     level_seen: int | None = Field(default=None, ge=1, le=6)
     buddy: Buddy | None = None
+    buddy_selection: BuddySelection | None = None
 
 
 class AppTime(StrictModel):
@@ -78,7 +79,8 @@ def extras_view(conn, child_id: UUID) -> dict:
         " WHERE k.id=%s",
         (child_id,),
     )
-    return {**extras, **settings_row}
+    selection = one(conn, f"SELECT {BUDDY_COLUMNS} FROM hq.children WHERE id=%s", (child_id,))
+    return {**extras, **settings_row, **selection}
 
 
 def add_to_day(conn, column: str, child_id: UUID, amount: int) -> None:
@@ -112,6 +114,17 @@ def router(settings: Settings) -> APIRouter:
         422 if there is no such landmark), the accessory the child is `wearing` (it must be owned; 422 otherwise),
         their savings `goal` (or `clear_goal`), the highest level seen celebrated, and their `buddy`.
         """
+        if "buddy_selection" in body.model_fields_set and body.buddy_selection is None:
+            raise HTTPException(422, "A buddy selection cannot be empty")
+        if body.buddy_selection is not None and "buddy" in body.model_fields_set:
+            raise HTTPException(422, "Send buddy_selection without the compatibility buddy field")
+        require_selection_revision(body.buddy_selection)
+        if (
+            body.buddy_selection is not None
+            and body.buddy_selection.mode == "catalog"
+            and not settings.buddy_catalog_enabled
+        ):
+            raise HTTPException(409, "Catalog buddy choices are temporarily unavailable")
         with transaction(settings, kid=kid) as conn:
             owned = one(conn, "SELECT accessories FROM hq.child_extras WHERE child_id=%s", (kid,))[
                 "accessories"
@@ -129,7 +142,26 @@ def router(settings: Settings) -> APIRouter:
                     " WHERE child_id=%s AND NOT %s=ANY(discoveries)",
                     (body.discover, kid, body.discover),
                 )
-            if body.buddy:
+            if body.buddy_selection is not None:
+                choice = body.buddy_selection.model_dump()
+                status = one(
+                    conn,
+                    "SELECT hq.kid_set_buddy_selection(%s,%s,%s,%s,%s) AS status",
+                    (
+                        choice["mode"],
+                        choice.get("buddy"),
+                        choice.get("catalog_buddy_id"),
+                        choice.get("buddy_catalog_version"),
+                        choice["expected_revision"],
+                    ),
+                )["status"]
+                if status == "conflict":
+                    raise HTTPException(409, "Your buddy changed. Refresh and choose again.")
+                if status == "invalid":
+                    raise HTTPException(422, "That catalog buddy is unavailable for this age or version")
+                if status == "missing":
+                    raise HTTPException(404, "Record not found")
+            elif body.buddy:
                 conn.execute("SELECT hq.kid_set_buddy(%s)", (body.buddy,))
             if body.wearing is not None:
                 conn.execute(

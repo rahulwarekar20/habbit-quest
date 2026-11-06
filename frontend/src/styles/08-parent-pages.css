@@ -78,3 +78,13 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* Exact goal context in the saved plan; details stay in the shared catalog dialog. */
+.plan-goal-focus { padding: 16px; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+.plan-goal-focus h3 { margin: 5px 0; }
+.plan-goal-focus p { margin: 5px 0 10px; }
+.plan-goal-focus > .link-button { margin-right: 18px; }
+.quest-row__name .quest-row__goal { font-size: 12px; text-align: left; }
+.approved-goal-reference { display: flex; align-items: center; gap: 14px; padding: 14px; margin: 18px 0; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+.approved-goal-reference > div:last-child { display: grid; gap: 5px; min-width: 0; }
+.approved-goal-reference a { overflow-wrap: anywhere; font-weight: 700; }

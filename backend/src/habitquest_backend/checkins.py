@@ -12,6 +12,7 @@ from habitquest_backend.auth import KID, signed_in
 from habitquest_backend.config import Settings
 from habitquest_backend.daily import balance
 from habitquest_backend.db import one, transaction
+from habitquest_backend.generation_metering import endpoint
 from habitquest_backend.safety import KID_BLOCKED_MESSAGE, KID_SAFETY_MESSAGE, check_text, screen_text
 
 STICKERS = {"best", "proud", "help", "together", "too-hard", "new-quest"}
@@ -59,6 +60,7 @@ def router(settings: Settings) -> APIRouter:
     Kid = Annotated[UUID, Depends(signed_in(settings, KID))]
 
     @api.post("/v1/kid/checkins", tags=["Kid mode"], summary="Send a check-in")
+    @endpoint(settings, "child_screen", scope="kid")
     def send_checkin(body: CheckinInput, kid: Kid) -> dict:
         """With a kid token: today's mood, trickiest and favourite habit, stickers and an optional short note. A
         newer check-in replaces today's. A note is screened first: an unsafe one is refused (422) with a friendly

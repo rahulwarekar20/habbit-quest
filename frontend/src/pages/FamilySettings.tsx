@@ -1,3 +1,4 @@
+import { GenerationSettings } from "../components/GenerationSettings";
 /**
  * Family settings (parent): things set up once and visited rarely, kept off the dashboard.
  * Connect a kid's device (QR code and family code), the grown-ups and their invite code,
@@ -26,6 +27,7 @@ export default function FamilySettings() {
         </div>
 
         <div className="settings__grid">
+          <GenerationSettings familyId={fam.id} />
           <Section title="Connect a kid's device" note="On a child's own tablet or phone, scan the QR code or open HabitQuest and enter the family code. Each child picks themselves and enters their own PIN.">
             <ShareFamily family={fam} />
           </Section>

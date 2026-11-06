@@ -1,0 +1,774 @@
+{
+  "catalogVersion": "0.1.0",
+  "artVersion": "0.1.0",
+  "buddies": [
+    {
+      "id": "pippin-bear",
+      "name": "Pippin",
+      "kind": "animal",
+      "groupId": "cozy-creatures",
+      "speciesOrForm": "bear",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "cozy",
+      "interestTags": [
+        "soft toys",
+        "stories",
+        "quiet company"
+      ],
+      "description": "A honey-colored pretend bear with a soft, round outline.",
+      "visualComplexity": "low",
+      "altText": "Pippin, a friendly illustrated pretend bear. Round ears, cream muzzle and a lavender neckerchief.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pippin-bear/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Pippin buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pippin-bear/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Pippin, a friendly illustrated pretend bear. Round ears, cream muzzle and a lavender neckerchief."
+      }
+    },
+    {
+      "id": "nori-bunny",
+      "name": "Nori",
+      "kind": "animal",
+      "groupId": "cozy-creatures",
+      "speciesOrForm": "bunny",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "gentle",
+      "interestTags": [
+        "animals",
+        "pretend play",
+        "gardens"
+      ],
+      "description": "A cream pretend bunny with peach ears and a small welcoming paw.",
+      "visualComplexity": "low",
+      "altText": "Nori, a friendly illustrated pretend bunny. Short upright ears and a mint neckerchief.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/nori-bunny/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Nori buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/nori-bunny/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Nori, a friendly illustrated pretend bunny. Short upright ears and a mint neckerchief."
+      }
+    },
+    {
+      "id": "momo-cloud",
+      "name": "Momo",
+      "kind": "nature",
+      "groupId": "imagination-friends",
+      "speciesOrForm": "cloud",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "playful",
+      "interestTags": [
+        "clouds",
+        "shapes",
+        "imagination"
+      ],
+      "description": "A lavender pretend cloud with a friendly face and little mitten hands.",
+      "visualComplexity": "low",
+      "altText": "Momo, a friendly illustrated pretend cloud. Three rounded cloud lobes, peach cheeks and tiny feet.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/momo-cloud/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Momo buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/momo-cloud/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Momo, a friendly illustrated pretend cloud. Three rounded cloud lobes, peach cheeks and tiny feet."
+      }
+    },
+    {
+      "id": "tilly-turtle",
+      "name": "Tilly",
+      "kind": "animal",
+      "groupId": "water-wanderers",
+      "speciesOrForm": "turtle",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "steady",
+      "interestTags": [
+        "water",
+        "animals",
+        "nature"
+      ],
+      "description": "A mint pretend turtle with a rounded lavender shell.",
+      "visualComplexity": "low",
+      "altText": "Tilly, a friendly illustrated pretend turtle. Three broad shell panels and four stubby feet.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/tilly-turtle/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Tilly buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/tilly-turtle/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Tilly, a friendly illustrated pretend turtle. Three broad shell panels and four stubby feet."
+      }
+    },
+    {
+      "id": "sprig-leaf",
+      "name": "Sprig",
+      "kind": "nature",
+      "groupId": "nature-companions",
+      "speciesOrForm": "sprout",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "plants",
+        "growing",
+        "outdoors"
+      ],
+      "description": "A tiny pretend seedling creature with two large leaf ears.",
+      "visualComplexity": "low",
+      "altText": "Sprig, a friendly illustrated pretend sprout. Mint leaf ears and a peach seed-shaped body.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/sprig-leaf/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Sprig buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/sprig-leaf/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Sprig, a friendly illustrated pretend sprout. Mint leaf ears and a peach seed-shaped body."
+      }
+    },
+    {
+      "id": "pebble-bot",
+      "name": "Pebble",
+      "kind": "technology",
+      "groupId": "maker-bots",
+      "speciesOrForm": "robot",
+      "primaryAgeBand": "3-5",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "playful",
+      "interestTags": [
+        "building",
+        "shapes",
+        "robots"
+      ],
+      "description": "A rounded pretend robot with a cream face and soft mint joints.",
+      "visualComplexity": "low",
+      "altText": "Pebble, a friendly illustrated pretend robot. A pebble-shaped body, mitten hands and a short rounded antenna.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pebble-bot/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Pebble buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pebble-bot/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Pebble, a friendly illustrated pretend robot. A pebble-shaped body, mitten hands and a short rounded antenna."
+      }
+    },
+    {
+      "id": "ember-fox",
+      "name": "Ember",
+      "kind": "animal",
+      "groupId": "woodland-explorers",
+      "speciesOrForm": "fox",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "adventurous",
+      "interestTags": [
+        "forests",
+        "adventures",
+        "animals"
+      ],
+      "description": "An orange pretend fox with an open paw and a curved cream-tipped tail.",
+      "visualComplexity": "low",
+      "altText": "Ember, a friendly illustrated pretend fox. Soft triangular ears and a lavender neckerchief.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/ember-fox/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Ember buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/ember-fox/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Ember, a friendly illustrated pretend fox. Soft triangular ears and a lavender neckerchief."
+      }
+    },
+    {
+      "id": "pip-owl",
+      "name": "Pip",
+      "kind": "animal",
+      "groupId": "woodland-explorers",
+      "speciesOrForm": "owl",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "books",
+        "night sky",
+        "discovery"
+      ],
+      "description": "A lavender pretend owl carrying a small wordless book.",
+      "visualComplexity": "low",
+      "altText": "Pip, a friendly illustrated pretend owl. Cream facial disc, peach beak and mint wing tips.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pip-owl/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Pip buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pip-owl/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Pip, a friendly illustrated pretend owl. Cream facial disc, peach beak and mint wing tips."
+      }
+    },
+    {
+      "id": "kiki-dragon",
+      "name": "Kiki",
+      "kind": "fantasy",
+      "groupId": "imagination-friends",
+      "speciesOrForm": "dragon",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "playful",
+      "interestTags": [
+        "stories",
+        "dragons",
+        "adventures"
+      ],
+      "description": "A small mint pretend dragon with folded wings and a curled tail.",
+      "visualComplexity": "low",
+      "altText": "Kiki, a friendly illustrated pretend dragon. Rounded lavender horns and a peach belly; no fire or weapons.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/kiki-dragon/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Kiki buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/kiki-dragon/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Kiki, a friendly illustrated pretend dragon. Rounded lavender horns and a peach belly; no fire or weapons."
+      }
+    },
+    {
+      "id": "otto-otter",
+      "name": "Otto",
+      "kind": "animal",
+      "groupId": "water-wanderers",
+      "speciesOrForm": "otter",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "playful",
+      "interestTags": [
+        "water",
+        "play",
+        "animals"
+      ],
+      "description": "A tan pretend otter with a broad tail and relaxed forepaws.",
+      "visualComplexity": "low",
+      "altText": "Otto, a friendly illustrated pretend otter. Cream belly and a small lavender scarf.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/otto-otter/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Otto buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/otto-otter/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Otto, a friendly illustrated pretend otter. Cream belly and a small lavender scarf."
+      }
+    },
+    {
+      "id": "dot-bot",
+      "name": "Dot",
+      "kind": "technology",
+      "groupId": "maker-bots",
+      "speciesOrForm": "robot",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "building",
+        "puzzles",
+        "robots"
+      ],
+      "description": "A cream-and-lavender pretend robot with circular ear pieces.",
+      "visualComplexity": "low",
+      "altText": "Dot, a friendly illustrated pretend robot. Mint ear discs and a peach panel with one abstract circle.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/dot-bot/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Dot buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/dot-bot/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Dot, a friendly illustrated pretend robot. Mint ear discs and a peach panel with one abstract circle."
+      }
+    },
+    {
+      "id": "lumi-firefly",
+      "name": "Lumi",
+      "kind": "nature",
+      "groupId": "nature-companions",
+      "speciesOrForm": "firefly",
+      "primaryAgeBand": "6-8",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "gentle",
+      "interestTags": [
+        "insects",
+        "nature",
+        "night sky"
+      ],
+      "description": "A lavender pretend firefly with broad mint wings.",
+      "visualComplexity": "low",
+      "altText": "Lumi, a friendly illustrated pretend firefly. Peach abdomen, cream face and curved antennae.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/lumi-firefly/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Lumi buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/lumi-firefly/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Lumi, a friendly illustrated pretend firefly. Peach abdomen, cream face and curved antennae."
+      }
+    },
+    {
+      "id": "juniper-panda",
+      "name": "Juniper",
+      "kind": "animal",
+      "groupId": "woodland-explorers",
+      "speciesOrForm": "red panda",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "thoughtful",
+      "interestTags": [
+        "forests",
+        "discovery",
+        "animals"
+      ],
+      "description": "A rust-colored pretend red panda with a ringed tail and a small satchel.",
+      "visualComplexity": "moderate",
+      "altText": "Juniper, a friendly illustrated pretend red panda. Cream cheek markings and a lavender crossbody satchel.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/juniper-panda/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Juniper buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/juniper-panda/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Juniper, a friendly illustrated pretend red panda. Cream cheek markings and a lavender crossbody satchel."
+      }
+    },
+    {
+      "id": "orbit-axolotl",
+      "name": "Orbit",
+      "kind": "fantasy",
+      "groupId": "imagination-friends",
+      "speciesOrForm": "axolotl",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "space",
+        "water",
+        "discovery"
+      ],
+      "description": "A mint pretend axolotl with rounded gill fronds and a simple space-themed vest.",
+      "visualComplexity": "moderate",
+      "altText": "Orbit, a friendly illustrated pretend axolotl. Lavender gill fronds and a small peach crescent motif.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/orbit-axolotl/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Orbit buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/orbit-axolotl/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Orbit, a friendly illustrated pretend axolotl. Lavender gill fronds and a small peach crescent motif."
+      }
+    },
+    {
+      "id": "moss-grove",
+      "name": "Moss",
+      "kind": "nature",
+      "groupId": "nature-companions",
+      "speciesOrForm": "grove creature",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "steady",
+      "interestTags": [
+        "plants",
+        "forests",
+        "quiet company"
+      ],
+      "description": "A gentle pretend grove creature with a rounded trunk body and leaf antennae.",
+      "visualComplexity": "moderate",
+      "altText": "Moss, a friendly illustrated pretend grove creature. Mint moss hair, lavender feet and minimal wood-ring detail.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/moss-grove/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Moss buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/moss-grove/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Moss, a friendly illustrated pretend grove creature. Mint moss hair, lavender feet and minimal wood-ring detail."
+      }
+    },
+    {
+      "id": "pixel-bot",
+      "name": "Pixel",
+      "kind": "technology",
+      "groupId": "maker-bots",
+      "speciesOrForm": "robot",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "making",
+        "technology",
+        "puzzles"
+      ],
+      "description": "A compact pretend robot with a rounded rectangular face and modular shoulders.",
+      "visualComplexity": "moderate",
+      "altText": "Pixel, a friendly illustrated pretend robot. Lavender body, cream face and mint shoulder pieces.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pixel-bot/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Pixel buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/pixel-bot/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Pixel, a friendly illustrated pretend robot. Lavender body, cream face and mint shoulder pieces."
+      }
+    },
+    {
+      "id": "ripple-ray",
+      "name": "Ripple",
+      "kind": "animal",
+      "groupId": "water-wanderers",
+      "speciesOrForm": "manta ray",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "gentle",
+      "interestTags": [
+        "ocean",
+        "animals",
+        "exploration"
+      ],
+      "description": "A stylized pretend manta ray with broad mint wings and a smooth curved tail.",
+      "visualComplexity": "moderate",
+      "altText": "Ripple, a friendly illustrated pretend manta ray. Lavender wing edges, cream underside and peach cheeks.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/ripple-ray/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Ripple buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/ripple-ray/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Ripple, a friendly illustrated pretend manta ray. Lavender wing edges, cream underside and peach cheeks."
+      }
+    },
+    {
+      "id": "scout-lynx",
+      "name": "Scout",
+      "kind": "animal",
+      "groupId": "woodland-explorers",
+      "speciesOrForm": "lynx",
+      "primaryAgeBand": "9-10",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "adventurous",
+      "interestTags": [
+        "outdoors",
+        "adventures",
+        "animals"
+      ],
+      "description": "A tawny pretend lynx with soft ear tufts and one open paw.",
+      "visualComplexity": "moderate",
+      "altText": "Scout, a friendly illustrated pretend lynx. Lavender ear tufts and a mint neckerchief.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/scout-lynx/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Scout buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/scout-lynx/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Scout, a friendly illustrated pretend lynx. Lavender ear tufts and a mint neckerchief."
+      }
+    },
+    {
+      "id": "nova-fox",
+      "name": "Nova",
+      "kind": "fantasy",
+      "groupId": "imagination-friends",
+      "speciesOrForm": "cosmic fox",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "adventurous",
+      "interestTags": [
+        "space",
+        "design",
+        "adventures"
+      ],
+      "description": "A sleek pretend cosmic fox with a flowing mint-tipped tail.",
+      "visualComplexity": "moderate",
+      "altText": "Nova, a friendly illustrated pretend cosmic fox. Indigo-lavender fur with a few restrained peach shoulder speckles.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/nova-fox/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Nova buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/nova-fox/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Nova, a friendly illustrated pretend cosmic fox. Indigo-lavender fur with a few restrained peach shoulder speckles."
+      }
+    },
+    {
+      "id": "echo-raven",
+      "name": "Echo",
+      "kind": "animal",
+      "groupId": "woodland-explorers",
+      "speciesOrForm": "raven",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "thoughtful",
+      "interestTags": [
+        "books",
+        "music",
+        "nature"
+      ],
+      "description": "A lavender pretend raven with folded wings and a lightly raised wing.",
+      "visualComplexity": "moderate",
+      "altText": "Echo, a friendly illustrated pretend raven. Cream face accent and soft mint feather highlights.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/echo-raven/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Echo buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/echo-raven/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Echo, a friendly illustrated pretend raven. Cream face accent and soft mint feather highlights."
+      }
+    },
+    {
+      "id": "koa-capybara",
+      "name": "Koa",
+      "kind": "animal",
+      "groupId": "cozy-creatures",
+      "speciesOrForm": "capybara",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "steady",
+      "interestTags": [
+        "animals",
+        "quiet company",
+        "art"
+      ],
+      "description": "A taupe-peach pretend capybara wearing a plain lavender hoodie.",
+      "visualComplexity": "moderate",
+      "altText": "Koa, a friendly illustrated pretend capybara. Small round ears, cream muzzle and an unbranded open hoodie.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/koa-capybara/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Koa buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/koa-capybara/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Koa, a friendly illustrated pretend capybara. Small round ears, cream muzzle and an unbranded open hoodie."
+      }
+    },
+    {
+      "id": "flux-rover",
+      "name": "Flux",
+      "kind": "technology",
+      "groupId": "maker-bots",
+      "speciesOrForm": "rover robot",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "curious",
+      "interestTags": [
+        "technology",
+        "making",
+        "space"
+      ],
+      "description": "A compact pretend rover robot with broad wheels and an open arm.",
+      "visualComplexity": "moderate",
+      "altText": "Flux, a friendly illustrated pretend rover robot. Cream face, mint wheels and a peach side panel.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/flux-rover/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Flux buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/flux-rover/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Flux, a friendly illustrated pretend rover robot. Cream face, mint wheels and a peach side panel."
+      }
+    },
+    {
+      "id": "fern-moth",
+      "name": "Fern",
+      "kind": "nature",
+      "groupId": "nature-companions",
+      "speciesOrForm": "moth",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "thoughtful",
+      "interestTags": [
+        "nature",
+        "design",
+        "art"
+      ],
+      "description": "A friendly pretend moth with broad leaf-like wings and a small cream body.",
+      "visualComplexity": "moderate",
+      "altText": "Fern, a friendly illustrated pretend moth. Mint wings with lavender edges and peach antenna tips.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/fern-moth/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Fern buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/fern-moth/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Fern, a friendly illustrated pretend moth. Mint wings with lavender edges and peach antenna tips."
+      }
+    },
+    {
+      "id": "cove-seal",
+      "name": "Cove",
+      "kind": "animal",
+      "groupId": "water-wanderers",
+      "speciesOrForm": "seal",
+      "primaryAgeBand": "11-13",
+      "supportedAgeMin": 3,
+      "supportedAgeMax": 13,
+      "tone": "gentle",
+      "interestTags": [
+        "ocean",
+        "animals",
+        "quiet company"
+      ],
+      "description": "A slate-lavender pretend seal with a relaxed curved pose.",
+      "visualComplexity": "moderate",
+      "altText": "Cove, a friendly illustrated pretend seal. Cream chest, mint-tinted flippers and a small peach cheek accent.",
+      "available": true,
+      "portrait": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/cove-seal/icon.png",
+        "width": 128,
+        "height": 128,
+        "alt": "Cove buddy portrait"
+      },
+      "full": {
+        "url": "https://habbit-quest-assets.s3.us-east-1.amazonaws.com/buddies/catalog-0.1.0/art-0.1.0/9717ad52fb16/cove-seal/image.png",
+        "width": 768,
+        "height": 768,
+        "alt": "Cove, a friendly illustrated pretend seal. Cream chest, mint-tinted flippers and a small peach cheek accent."
+      }
+    }
+  ]
+}

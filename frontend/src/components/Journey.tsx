@@ -5,12 +5,12 @@
  */
 import { useEffect, useState } from "react";
 import type { Journey, JourneyWorld, Landmark, Progress } from "../lib/api";
-import { updateKidExtras } from "../lib/api";
-import { BUDDY_THEME } from "../lib/buddyTheme";
-import { updateChild, type Child } from "../lib/family";
+import { buddyDisplayProps } from "../lib/buddyIdentity";
+import { buddyThemeFor } from "../lib/buddyTheme";
+import type { Child } from "../lib/family";
 import { landmarkState, positionAt, prints, readyLandmarks, trail } from "../lib/journeyPath";
-import { useStore } from "../lib/store";
-import Buddy, { BUDDIES } from "./Buddy";
+import Buddy from "./Buddy";
+import { KidBuddyPicker } from "./BuddyPicker";
 import { SparkIcon } from "./Spark";
 import WorldArt from "./WorldArt";
 
@@ -25,7 +25,7 @@ export function JourneyCard({ child, journey, progress }: { child: Child; journe
   const target = ready ? ready.world.id : world.id;
   return (
     <a className={`journey-card ${ready ? "journey-card--ready" : ""}`} href={`#/world/${child.id}/${target}`}>
-      <Buddy buddy={child.buddy} accessory={child.wearing} size={56} />
+      <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={56} />
       <div>
         <b>{world.name}</b>
         {ready
@@ -76,7 +76,7 @@ export function WorldPath({ child, world, progress, onReveal }: {
   const shown = useWalkedSparks(child.id, progress.sparks);
   const here = positionAt(world, shown);
   const parts = trail(world, shown, progress.pending_sparks);
-  const theme = BUDDY_THEME[child.buddy];
+  const theme = buddyThemeFor(child);
   return (
     <div className="explore-scene">
       <WorldArt world={world.id} />
@@ -101,7 +101,7 @@ export function WorldPath({ child, world, progress, onReveal }: {
         );
       })}
       <div className="path__buddy" style={{ left: `${here.x}%`, top: `${here.y}%` }}>
-        <Buddy buddy={child.buddy} accessory={child.wearing} size={46} />
+        <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={46} />
       </div>
     </div>
   );
@@ -109,20 +109,5 @@ export function WorldPath({ child, world, progress, onReveal }: {
 
 /** Lets a child change their buddy. Progress and outfits stay with them. */
 export function BuddyPicker({ child }: { child: Child }) {
-  const { update } = useStore();
-  const choose = (buddy: Child["buddy"]) => {
-    update((f) => updateChild(f, child.id, (c) => ({ ...c, buddy })));
-    updateKidExtras({ buddy }).catch(() => {}); // the next refresh shows the saved buddy
-  };
-  return (
-    <div className="buddy-picker" role="radiogroup" aria-label="Your buddy">
-      {BUDDIES.map((b) => (
-        <button key={b.id} type="button" role="radio" aria-checked={child.buddy === b.id}
-          className={`buddy-option ${child.buddy === b.id ? "is-on" : ""}`} onClick={() => choose(b.id)}>
-          <Buddy buddy={b.id} accessory={child.wearing} size={64} />
-          <span>{b.name}</span>
-        </button>
-      ))}
-    </div>
-  );
+  return <KidBuddyPicker child={child} />;
 }

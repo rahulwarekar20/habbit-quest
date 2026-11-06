@@ -1,0 +1,33 @@
+Edit this existing HabitQuest architecture figure. Preserve the title/date, browser,
+FastAPI workbench, robot, model labels, goal and three habit cards, parent, quest
+board, PostgreSQL cabinet, artwork palette, explicit Planner/Review booklets,
+operator receipt, footer, colors, style and text outside the specified regions.
+
+1. Correct ONLY the upper research/catalog strip and its connecting arrows.
+   Keep the research bookshelf on the left. Swap the positions of the canonical
+   folder and Pinecone cylinder, so the canonical folder is between the research
+   bookshelf and Pinecone. Keep these exact labels with their respective objects:
+   "Research & catalog authoring", "Offline publication",
+   "Canonical cards + evidence", "Pinned catalog snapshot",
+   "Pinecone semantic index".
+   Delete the current source-strip arrows. Draw a clear left-to-right publication
+   path: research bookshelf → canonical folder → Pinecone cylinder.
+   Draw separate downward runtime connectors from the canonical snapshot and
+   Pinecone cylinder; these converge just above FastAPI and enter the FastAPI
+   boundary. The canonical folder must visibly connect to the API, not remain
+   floating. There must be NO direct research-bookshelf → FastAPI arrow.
+   Keep publication arrows visually separate from the lower runtime connectors;
+   do not let a connector pass through a label or change the main product flow.
+
+2. On the child's quest board, remove all three invented "+10" reward labels.
+   Retain the unnumbered stars, progress bars, coins and gift. Add no replacement
+   number or performance measurement.
+
+3. Add one subtle thin elbow arrow from the lower-right FastAPI boundary to the
+   /admin Tokenomics receipt. It must not connect the parent or quest board to
+   admin. Add no new text. If space allows without crowding, a small two-way
+   connector may also connect the explicit Planner/Review booklets to FastAPI;
+   they must remain outside the main Coach sequence.
+
+Preserve all other facts and artwork. Do not add model-call counts, new services,
+claims, family data, credentials or labels. Export a new corrected version.

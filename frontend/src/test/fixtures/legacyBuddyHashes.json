@@ -1,0 +1,182 @@
+[
+  {
+    "buddy": "fox",
+    "accessory": null,
+    "sha256": "93bf45c6f2ee463e92240454d8e0f23e250d43268d82a7b206d6da9cd9f69d22"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "party-hat",
+    "sha256": "08da75a4867ae5b2b26e24bb731c4c03d9aff45320254f2f305b596713aab5cc"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "crown",
+    "sha256": "92e90b135a9dd5259bf3bcacc879fbdb682cf50cb5709d4cd38efeee76ca2d36"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "shades",
+    "sha256": "b6863ca48684f63b2c0b41fd616a02860771ce53e98f2a91950f00d82462b3b3"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "bow",
+    "sha256": "a59109247b94423db163d5aaf633003eb28c3a7d4d82bae48efebbade6c2e4ac"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "wizard",
+    "sha256": "d8ed3d1796b11ca38aa65728f6eb89136ae46201be419d0a88f166d3d32e0378"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "flower",
+    "sha256": "8803edc2922ae07f6fdffdc18dc26a02f54479105c5dc0466d9fb7d855b1594a"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "headphones",
+    "sha256": "0646be3aa799039120b4a4db2aeff701d18826fef28beda802499813cb5a3402"
+  },
+  {
+    "buddy": "fox",
+    "accessory": "halo",
+    "sha256": "ab3599ec6e5a5e2e3e40982a5d5dea90d218a6ba9c60096c81175ade090491ef"
+  },
+  {
+    "buddy": "owl",
+    "accessory": null,
+    "sha256": "e44df6384d0d65f0236f48923f9ed9a6c38c943bca6339cd05d2b9854801eeda"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "party-hat",
+    "sha256": "02dcab7e78c38b50c8ddd658bbb9d9638aa741404b6608c927bb8f1d48e6981d"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "crown",
+    "sha256": "8efd4ca2325e83223ad6f2397881075d632b535ab054ae79f344673a91cbfe7e"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "shades",
+    "sha256": "e560f24a6e7fc287707e6ea6d0992f7ffad6fb36b5a084e791536096a8fe1859"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "bow",
+    "sha256": "0ff5296c100b922179f92b4a46339c9025a197b747d5d1edfe9f403d113e3a48"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "wizard",
+    "sha256": "455a3fe1de25b7a06a81a8a607c0a6dc5523fe727147746dc1b20af786fe3f74"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "flower",
+    "sha256": "20dd50ced15e7d705f94b7abd088420d02b3798ee9907474cee30ddee4450021"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "headphones",
+    "sha256": "c8c69ccb21526dc58ff80f3617dbdcfeb7a0164a185300acd67c969e3cf20759"
+  },
+  {
+    "buddy": "owl",
+    "accessory": "halo",
+    "sha256": "77c0597a286c0321a3da51a6e0ed1d00fd1408c80caa4be7dbf1a0d745be1617"
+  },
+  {
+    "buddy": "bear",
+    "accessory": null,
+    "sha256": "c271d195cb7f371503468895d5c490d08be66eb5fcd5107c8ba144edf5b56108"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "party-hat",
+    "sha256": "153ecfddbc7727c68ab3fe675ea978b8009e12cf677cfedf6485257548bc7211"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "crown",
+    "sha256": "8e8afa77737289c1ccba8431edfadeda7312390f69a465024baac7015246034f"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "shades",
+    "sha256": "a40096338166fee3079d4245da6d8cd7c5976f27583e8061277326086d1f329c"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "bow",
+    "sha256": "9bdd1153cab5b115a93680b7e6afdea81e42d876db0ca06447af7053ebe53248"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "wizard",
+    "sha256": "5aa41e9ea42422e34ea6415e2817b05053fd1ff05b58aa311f1176ae86b6e10b"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "flower",
+    "sha256": "e0dfb889382a60b7096d3b0c04e7efce6519963768b4a3b3e8ca90a6e8d07abd"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "headphones",
+    "sha256": "c81d9b1cd4522ba945a52c7e49b0b027ae882c5d3dcd55324165e421395a28cd"
+  },
+  {
+    "buddy": "bear",
+    "accessory": "halo",
+    "sha256": "e0668e5843c5b934f7e5b1d76395cc31b8beae5033c659b4a01dd0ca0b1a5a16"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": null,
+    "sha256": "4bbff3940654bcf48c4feef606cb008ccc954c09a1ba1c8fb0137f0e0aad261d"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "party-hat",
+    "sha256": "796d6c9ef6fe9be2b465571c54b0a4fd6f8074a63677c5af2e19ef33fe66217f"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "crown",
+    "sha256": "b60efeb7e0babdf19090292a9441cf35f4e80261794e0a56fbc9f4e44ae524f9"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "shades",
+    "sha256": "afd0bad8ec6f6d4103fccd5b71b45c119afb1479f90c2ccc385de17b1a249753"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "bow",
+    "sha256": "bf0eca360ce405324c9f8c4acae6bcbf17c77879c9d0cac030e499d263796a37"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "wizard",
+    "sha256": "e1620540b15da4ec63e61d836e13bf4fd11381219369f1baa933282cf123f8ef"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "flower",
+    "sha256": "6773e926c54aa4c5980f2c3cd5b4cbd73191973c341e0079f1b2fd6073a88e04"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "headphones",
+    "sha256": "f11c626a18a0f6393c46147aa18d41e4ed25a1d376e1c13cf2a264e4efce8825"
+  },
+  {
+    "buddy": "bunny",
+    "accessory": "halo",
+    "sha256": "93af309206355f122cfdee6194a382f8c7066a2969cc38823ff8a907a9e54a7e"
+  }
+]

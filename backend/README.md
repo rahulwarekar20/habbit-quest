@@ -5,6 +5,33 @@ child's pain points, and pick habits from a pre-approved catalog. Kids submit co
 them, and children earn **Sparks** (progress that is never spent) and **points** (spent on rewards the
 caregiver records).
 
+The refined AI workflow and Pinecone source-goal integration are documented in
+[refined AI operations](../docs-detailed/sys-design-update/refined-ai-operations.md). It covers the three-call Coach,
+explicit generated-habit drafts, parent acceptance, provider configuration and local verification.
+
+The local `/admin` console, linked below Developer login on the sign-in page, uses
+separate backend-only credentials for Tokenomics policy, model/rate configuration
+and sanitized cost/latency metrics. Generation history includes reported input/output
+token totals with measured, partial, unavailable or not-applicable coverage.
+Generation, embeddings and Pinecone attempts share durable accounting. Family
+Settings retains seconds/history and shows daily credits; operator-cap editing has
+moved to admin. Tracking-only mode is the prototype default. See
+[Tokenomics operations](../docs-detailed/design-update/tokenomics/06-operations.md).
+
+Weekly Review and Quest Planner use `AI_HELPER_REASONING_EFFORT=auto`: non-thinking
+output for Nebius DeepSeek V4 report calls, provider defaults for other models.
+This keeps the existing model and token ceiling while avoiding reports truncated
+by internal reasoning. See [helper reliability](../docs-detailed/sys-design-update/ai-helper-report-reliability.md).
+
+The approved buddy catalog adds 24 characters from release `0.1.0` while preserving
+Fox, Owl, Bear and Bunny. Every child keeps a buddy. New setup selects a deterministic
+age-based default; saved choices are never changed by recommendations. Public
+character details appear in the chooser as names, brief characteristics and suggested
+ages. All 24 support ages 3–13; suggested bands only affect local ordering. Choice,
+preview and catalog event copy use local code and metadata, with no AI or retrieval
+call. See the [API contract](docs/frontend-integration.md#buddy-selection-november-5-2026)
+and [implementation and rollout record](../docs-detailed/design-update/buddies/execution.md).
+
 The MVP is being built in steps (see [docs/mvp-plan.md](docs/mvp-plan.md); current status and what is left in [docs/status.md](docs/status.md); connecting the frontend in
 [docs/frontend-integration.md](docs/frontend-integration.md)). Done so far: the lean schema,
 the seeded catalog and catalog endpoints (step 1); accounts (step 2): Google sign-in, families with one or
@@ -45,8 +72,10 @@ Python 3.12, uv, FastAPI and Pydantic, PostgreSQL with row-level security, psyco
 
 ## Children and onboarding
 
-1. **Children.** `POST /v1/families/{id}/children` with `name`, `age` (3-13), `buddy` and optional
-   `routine_times` per part of the day (`morning`, `midday`, `after_school`, `evening`, `bedtime`).
+1. **Children.** `POST /v1/families/{id}/children` with `name`, `age` (3-13), optional
+   `buddy_selection` and `routine_times` per part of the day (`morning`, `midday`, `after_school`,
+   `evening`, `bedtime`). Old requests retain the `buddy` field and Fox default. New clients save explicit
+   original or pinned catalog choices through `buddy_selection`; later changes require `expected_revision`.
 2. **Describe a problem.** `POST /v1/children/{id}/pain-points` with the parent's own words. The backend
    offers the AI the active goals and, per goal, the habits that suit the child's age and unlocked tier; the AI
    picks one to three goals with a one-sentence reason and recommends up to two habits per goal. Its answer is
@@ -82,7 +111,9 @@ Forest 30, Sky Islands 90, Coral Cove 180, Crystal Caves 300, Star Harbour 450),
   labels before any model call, tools work on an in-memory snapshot and cannot change anything, and any failure
   falls back to keyword matching. Conversations are kept for 90 days.
 - **Quest planner and weekly review** (`insights.py`): one structured call each, on facts computed in code.
-- **Buddy lines**: one small call, then a safety check; a built-in line replaces anything unusable.
+- **Buddy lines**: original buddies retain the optional small-call/safety-check path and built-in fallback.
+  Catalog mode uses shared deterministic lines and skips the animal-only prompt. Selecting a buddy never
+  makes a provider call or changes a habit, points or Sparks.
 - **Suggestions**: nothing applies until a caregiver accepts with the family PIN, and the plan rules are checked again.
 - **Coach traces** (`tracing.py`): off unless `TRACE_COACH=true` with `LANGSMITH_API_KEY`. Family names, emails, phone
   numbers, addresses and links are removed on the server. Failed, retried and no-match turns keep redacted text, as do
@@ -135,7 +166,8 @@ Browsers may call the API from the origins in `CORS_ORIGINS` (comma-separated; t
 
 ## Data model
 
-Twenty-two tables in the `hq` schema ([db/migrations](db/migrations)), with no version columns. The core eleven
+The `hq` schema ([db/migrations](db/migrations)) preserves the original core tables and adds bounded reference,
+generation and accounting records. The core eleven
 are below; [docs/schema.md](docs/schema.md) has diagrams and a guide to all of them, including rewards, kid extras,
 check-ins, surprises, family settings and the AI tables.
 
@@ -144,7 +176,7 @@ check-ins, surprises, family settings and the AI tables.
 | `users` | A signed-in person; `id` is the subject of our access tokens, `google_sub` links a Google account |
 | `families` | The family: name, time zone, parent PIN hash, invite code for further caregivers |
 | `caregivers` | Who cares for the family's children, with their `role` (`father`, `mother`, `guardian`, `other`) |
-| `children` | Name, age (3-13), buddy, the world reached, a parent's quest tier override and routine times per anchor |
+| `children` | Name, age (3-13), retained original buddy, explicit selection mode/catalog ID/version/revision, the world reached, a parent's quest tier override and routine times per anchor |
 | `goals` | Pre-approved goals ("Calmer bedtimes") with keywords for matching pain points |
 | `habits` | Pre-approved habits, one goal each: parent and kid wording, icon, routine anchor, ages, tier (1-3), points. A family's custom habits live here too, with its `family_id` and an id starting `my-` |
 | `pain_points` | A parent's description of a problem, and how it was mapped to goals (`ai`, `keywords`, `manual`) |
@@ -159,13 +191,35 @@ Points are the sum of the ledger.
 
 **Access.** Caregiver requests run as the `hq_api` database role with the caller's user id; row-level
 security limits every family table to the families the caller is a caregiver in. Kid requests run as `hq_kid`
-with the child's id and see only that child. The catalog is read-only to the API, and the points ledger can
+with the child's id and see only that child. The API has no general catalog write privilege. Reviewed Coach
+selection uses a restricted function to create only a matching pinned source goal for an owned, eligible child.
+The points ledger can
 only be added to. Creating a Google user, creating a family and joining one go through `SECURITY DEFINER`
 functions, because the caller cannot yet see the rows involved.
 
 **Catalog.** [db/seed.sql](db/seed.sql) holds 8 goals and 41 habits taken from the frontend's quest library.
 It is applied on every start and upserts by id, so editing a row and redeploying updates it. To stop offering a
 goal or habit, set `is_active = false`; rows are never deleted because plans and history refer to them.
+The Pinecone reference catalog is bundled separately; it is not bulk-seeded into local goals. Only reviewed
+selected goals are materialized, with canonical provenance, before parents generate habits beneath them.
+
+**Buddy references and compatibility.** The additive
+[`202611050005_buddy_catalog.sql`](db/migrations/202611050005_buddy_catalog.sql) migration
+adds `hq.buddy_catalog` with 24 immutable app-readable ID/version/age/availability references.
+Existing children remain in `legacy` mode at revision 0 with their current buddy, wardrobe,
+assignments and progress. Catalog identity lives beside the original four-value `buddy`, which remains
+its visual fallback. A deliberate choice advances the revision; later unrevisioned flat `buddy` fields
+are ignored while unrelated profile edits still save. Parent writes lock the child and validate one merged
+update; kid writes use a narrow session-derived security-definer function, with direct child-table updates
+still denied. All eight accessories and equipped values remain, using separate portrait/full-body anchors
+for catalog art. Final visual QA and local rollout status are tracked in the
+[execution record](../docs-detailed/design-update/buddies/execution.md).
+
+`BUDDY_CATALOG_ENABLED=true` is the backend default. Setting it to `false` rejects new catalog
+choices with 409 while keeping reads, unrelated edits and explicit original-buddy choices available.
+`VITE_BUDDY_CATALOG_ENABLED=false` is the frontend template default until the migration and rollout
+checks pass; set it to `true` to show the expanded chooser. Disabling it again preserves saved identities
+and selection-aware reads. Keep the additive columns/reference data when rolling back presentation.
 
 ## Run it locally
 
@@ -174,7 +228,7 @@ Prerequisites: uv, Python 3.12 and PostgreSQL (its `bin` folder on PATH).
 ```bash
 uv sync --locked
 uv run python scripts/bootstrap_local.py
-uv run python -m uvicorn habitquest_backend.main:app --reload --host 127.0.0.1
+uv run python -m uvicorn habitquest_backend.main:app --reload --host 127.0.0.1 --no-proxy-headers
 ```
 
 The bootstrap creates a loopback-only cluster under `.local/postgres` (port 55433), the `habitquest` and
@@ -189,7 +243,7 @@ label>` logs in as a separate parent, e.g. to check that families are isolated.
 
 ## Connect a frontend
 
-The frontend needs three public settings, in its `.env.local` or on its host. No API key, Nebius key or database
+The frontend uses public settings in its `.env.local` or on its host. No API key, Nebius key or database
 setting belongs there: the frontend only signs in and calls this API.
 
 | Setting | Value |
@@ -197,6 +251,7 @@ setting belongs there: the frontend only signs in and calls this API.
 | `VITE_API_URL` | The API's address (see below) |
 | `VITE_GOOGLE_CLIENT_ID` | The same Google client id as `GOOGLE_CLIENT_ID` here. Public |
 | `VITE_DEV_LOGIN` | `true` shows the test login, which works only while this API has `DEV_LOGIN=true` |
+| `VITE_BUDDY_CATALOG_ENABLED` | Template default `false`; enable the expanded chooser after the buddy migration and rollout checks |
 
 ### Local backend with a local frontend
 
@@ -270,6 +325,15 @@ the hosted database, so use made-up details while testing. Real AI needs the `OP
 5. Accept a card with `POST /v1/suggestions/{suggestion_id}/accept` and the family `pin`.
 
 Use `parent:<any label>`, such as `parent:test2`, to log in as a separate parent and check that families stay isolated.
+
+In refined source-goal mode, **Get more goals** sends `more_goals: true` with the
+setting and a follow-up message. It keeps the original concern for retrieval,
+excludes previously shown and active saved goals, and appends up to four reviewed
+goals. `response_goal_ids` identifies this response's goals so the browser prepares
+habits only for those additions. Earlier cards survive reload and empty or failed
+responses. **More habit choices** uses the existing draft endpoint with `count: 3`;
+existing choices remain available. Both actions retain the current budget and
+review limits. See the [frontend contract](docs/frontend-integration.md).
 
 **Try kid endpoints:** `/v1/kid/*` refuses a caregiver token. Get a kid token from
 `POST /v1/children/{child_id}/kid-session`, then click **Authorize**, log out, and paste it into the **HTTPBearer** box.

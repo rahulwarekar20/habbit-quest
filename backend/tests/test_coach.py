@@ -8,7 +8,7 @@ import pytest
 from conftest import OTHER, PARENT, token
 from fastapi.testclient import TestClient
 
-from habitquest_backend import coach
+from habitquest_backend import coach, tokenomics
 from habitquest_backend.ai import SAFETY_GUIDANCE, Candidate
 from habitquest_backend.coach import FALLBACK_MATCH, FALLBACK_NONE, fallback, run_turn, swap_names
 from habitquest_backend.coach_tools import Snapshot, Turn, build_tools
@@ -252,6 +252,7 @@ def test_a_model_failure_falls_back_and_logs_only_the_status(remote, llm_reply, 
 
 
 def test_a_turn_over_its_deadline_falls_back(remote, monkeypatch):
+    monkeypatch.setattr(coach, "parent_risk_model", lambda *args: False)
     release = threading.Event()
 
     class Slow:
@@ -319,6 +320,36 @@ def test_a_message_saves_the_conversation_and_cards(client, alex):
     assert client.get(f"/v1/children/{alex}/coach/messages").json()["messages"] == body["messages"]
 
 
+def test_coach_metadata_survives_reload_without_another_generation(client, family, alex, db):
+    other = client.post(f"/v1/families/{family}/children", json={"name": "Maya", "age": 6}).json()["id"]
+    alex_result = say(client, alex).json()
+    other_result = say(client, other, "A calmer morning please").json()
+    alex_operation = alex_result["tokenomics"]["operation_id"]
+    other_operation = other_result["tokenomics"]["operation_id"]
+    assert alex_operation != other_operation
+    before = db.execute("SELECT count(*) FROM hq.ai_operations").fetchone()[0]
+    restored = client.get(f"/v1/children/{alex}/coach/messages").json()
+    assert restored["tokenomics"]["operation_id"] == alex_operation
+    assert "estimated_cost_usd" not in restored["tokenomics"]
+    children = client.get(f"/v1/families/{family}/coach-context").json()["children"]
+    assert children[alex]["tokenomics"]["operation_id"] == alex_operation
+    assert children[other]["tokenomics"]["operation_id"] == other_operation
+    assert db.execute("SELECT count(*) FROM hq.ai_operations").fetchone()[0] == before
+    client.delete(f"/v1/children/{alex}/coach/messages")
+    assert "tokenomics" not in client.get(f"/v1/children/{alex}/coach/messages").json()
+
+
+def test_legacy_saved_reply_does_not_inherit_another_operations_metadata(client, alex, db):
+    say(client, alex)
+    db.execute(
+        "INSERT INTO hq.coach_messages(child_id,role,content) VALUES(%s,'coach','Older unmetered result')",
+        (alex,),
+    )
+    restored = client.get(f"/v1/children/{alex}/coach/messages").json()
+    assert restored["messages"][-1]["content"] == "Older unmetered result"
+    assert "tokenomics" not in restored
+
+
 def test_refining_replaces_the_cards_with_different_habits(client, alex):
     first = say(client, alex).json()["suggestions"][0]["habit_id"]
     second = say(client, alex, "Something different for bedtime please").json()["suggestions"]
@@ -364,15 +395,39 @@ def test_a_turn_uses_the_snapshot_and_saves_changes(settings, remote, db, alex, 
 def test_new_chat_clears_the_thread(client, alex):
     say(client, alex)
     assert client.delete(f"/v1/children/{alex}/coach/messages").status_code == 204
-    assert client.get(f"/v1/children/{alex}/coach/messages").json() == {"messages": [], "suggestions": []}
+    assert client.get(f"/v1/children/{alex}/coach/messages").json() == {
+        "messages": [],
+        "suggestions": [],
+        "goal_recommendations": [],
+    }
 
 
-def test_the_daily_limit_stops_more_requests(settings, db, alex):
-    limited = settings.model_copy(update={"ai_daily_limit": 1})
-    with TestClient(create_app(limited)) as c:
-        c.headers["Authorization"] = "Bearer " + token(settings)
-        assert say(c, alex).status_code == 200
-        assert say(c, alex).status_code == 429
+def test_tracking_only_mode_bypasses_the_old_daily_limit_and_keeps_accounting(
+    settings, remote, db, alex, llm_reply
+):
+    limited = remote.model_copy(update={"ai_daily_limit": 1})
+    policy = tokenomics.get_policy(settings)
+    tokenomics.update_policy(settings, policy["revision"], {"enforce_budgets": False})
+    llm_reply("Try one small step before bedtime.")
+    try:
+        with TestClient(create_app(limited)) as c:
+            c.headers["Authorization"] = "Bearer " + token(settings)
+            first = say(c, alex)
+            second = say(c, alex)
+        assert first.status_code == second.status_code == 200
+        assert first.json()["mapped_by"] == second.json()["mapped_by"] == "ai"
+        assert first.json()["tokenomics"]["operation_id"] != second.json()["tokenomics"]["operation_id"]
+        assert len(llm_reply.seen) == 2
+        assert db.execute(
+            "SELECT count(*),sum(credits) FROM hq.ai_operations WHERE activity='coach' AND child_id=%s",
+            (alex,),
+        ).fetchone() == (2, 4)
+    finally:
+        tokenomics.update_policy(
+            settings,
+            tokenomics.get_policy(settings)["revision"],
+            {"enforce_budgets": policy["enforce_budgets"]},
+        )
 
 
 def test_accepting_needs_the_pin_and_adds_the_habit(client, family, alex):

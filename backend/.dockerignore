@@ -1,0 +1,20 @@
+# Defense in depth. The deployment helper also builds from an allowlisted snapshot.
+**
+!pyproject.toml
+!uv.lock
+!README.md
+!src/
+!src/**
+!db/
+!db/migrations/
+!db/migrations/*.sql
+!db/seed.sql
+!scripts/
+!scripts/setup_db.py
+!deployment/
+!deployment/**
+**/.env*
+**/__pycache__
+**/*.pyc
+**/*.pem
+**/.DS_Store

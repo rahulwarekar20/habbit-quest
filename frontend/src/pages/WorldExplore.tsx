@@ -13,6 +13,7 @@ import { landmarkKey } from "../lib/journeyPath";
 import { useStore } from "../lib/store";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound, LockIcon } from "../components/KidChrome";
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 
 /** Exploring one world (#/world/:child/:world). */
 export function WorldExplore({ childId, worldId }: { childId: string; worldId: string }) {
@@ -41,7 +42,7 @@ export function WorldExplore({ childId, worldId }: { childId: string; worldId: s
   }
 
   return (
-    <div className="page page--kid" data-buddy={child.buddy}>
+    <div className="page page--kid" data-buddy={buddyDisplayProps(child).selectionMode === "catalog" ? "catalog" : child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>

@@ -1,0 +1,68 @@
+Create a friendly publication-quality hand-drawn technical explainer, landscape 16:9. Use supplied previous HabitQuest illustrations as STYLE REFERENCES ONLY. Their old proposed architecture is not this diagram's content. This figure depicts an IMPLEMENTED AWS DEMO. Do not render implementation dates, review dates or any date labels anywhere in the artwork.
+
+Visual language: clean white paper; slightly irregular rounded dark navy pen outlines; beautifully readable indigo/blue handwritten headings; neutral readable body text; soft pale-blue and lavender marker washes; restrained purple for configuration lines; generous margins and whitespace. Recognizable semantic objects, not a slide made of generic colored boxes. Make a browser window, gateway arches, container crates, locked database cylinder, certificate ribbon, registry shelf, key vault and logbook help explain the system. Match the warm illustrated style of the references. No photographic, 3D-rendered, neon or dark theme.
+
+Viewer question: how does the browser reach HabitQuest, where is the database, and how do the containers reach external AI services while secrets remain backend-only?
+
+TITLE: "HabitQuest on AWS"
+SUBTITLE: "Implemented demo"
+
+COMPOSITION AND BOUNDARIES
+Place a browser on the far left outside AWS. Dominant central scene is an AWS boundary labeled "AWS · us-east-1", containing an "Existing VPC". Within the VPC use a very light public-subnet frame labeled "2 public application subnets". This contains TWO parallel lanes, each an ALB gateway followed by its OWN Fargate crate: app above/left, API below/right. Both ALBs and both tasks must clearly be inside the public-subnet frame. Do not duplicate task crates per subnet. A separate private database alcove inside the VPC but OUTSIDE the public-subnet frame holds one locked RDS cylinder. Right side shows an internet-gateway portal at the VPC edge and an external AI-provider cloud beyond the AWS boundary. Near the top, outside VPC but within AWS, Route 53 and a shared ACM certificate attach to the two ALBs with thin dashed purple lines. A small GoDaddy note OUTSIDE AWS points to Route 53 with a dashed line labeled "Delegated DNS". DNS and certificate lines must never appear to forward browser request traffic.
+
+Below the VPC but inside the AWS outline, use a compact supporting band with illustrated ECR registry shelf, Secrets Manager vault and CloudWatch logbook. They are managed AWS services, not containers inside the VPC. Keep all connectors readable, direct and minimally crossing. Main solid request arrows dominate; dashed deployment/configuration lines are subordinate. Keep footer legend distinct from component labels.
+
+MAIN REQUEST PATHS — EXACT RELATIONSHIPS
+1. Browser has a solid blue HTTPS arrow directly into the app ALB, then the ALB forwards to the frontend task. This is NOT a DNS proxy path.
+2. Browser has a SECOND, independent solid blue HTTPS arrow directly into the API ALB, then that ALB forwards to the API task. Do NOT draw a frontend-container-to-API link. The browser calls the API directly.
+3. API task connects to private RDS with a solid arrow labeled "TLS · :5432". Keep this entire connection within the VPC.
+4. API task connects through "Internet gateway" to the external providers with a solid arrow labeled "Outbound HTTPS". Tasks use public IPs for egress, not NAT. Place "Public task IPs · ALB-only ingress" next to the two tasks, clearly applying to BOTH.
+5. Private ECR supplies BOTH task crates with dashed purple deployment arrows.
+6. Secrets Manager has a dashed purple arrow ONLY into the API task, labeled "Execution-role injection · API startup". It has NO arrow into frontend or browser.
+7. Both tasks send logs with thin solid blue arrows to CloudWatch. Do not reverse those arrows.
+8. One shared ACM certificate has dashed purple branches to BOTH ALBs. Route 53's dashed branches indicate DNS configuration of both named endpoints. GoDaddy remains outside AWS as registrar, not inside the runtime request path.
+
+EXACT VISIBLE LABELS (do not invent additional labels or quantities)
+Browser
+GoDaddy registrar
+Delegated DNS
+Route 53
+AWS · us-east-1
+Shared ACM certificate
+Existing VPC
+2 public application subnets
+habitquest.quest
+App ALB
+api.habitquest.quest
+API ALB
+HTTPS
+Frontend · ECS Fargate
+NGINX · :8080
+1 task · 0.25 vCPU · 0.5 GiB
+Public Vite config only
+API · ECS Fargate
+FastAPI · :8000
+1 task · 0.5 vCPU · 1 GiB
+Public task IPs · ALB-only ingress
+Private database subnets
+RDS PostgreSQL 18.6
+db.t4g.micro · 1 GiB
+20 GiB encrypted gp3 · Single-AZ
+TLS · :5432
+Internet gateway
+Outbound HTTPS
+OpenAI · Nebius · Pinecone
+Private ECR
+Immutable images
+Secrets Manager
+Execution-role injection · API startup
+CloudWatch Logs
+7-day retention
+
+FOOTER LEGEND: a small solid blue arrow and "Solid: request/data"; a small dashed purple arrow and "Dashed: deploy/config".
+BOTTOM QUALIFIER: "Always-on demo · No NAT · Not production HA"
+
+STATUS AND ACCURACY RULES
+Keep hostname text exact and distinct: root domain habitquest.quest, API api.habitquest.quest. Two public ALBs share one certificate; do not merge them. Public HTTPS terminates at ALBs; do not mark the ALB-to-task links TLS. Private RDS SQL uses TLS. Fargate tasks are PUBLIC-subnet tasks with public IPs and ALB-only security-group ingress. Do not place tasks in private subnets or add a NAT gateway. Database is PostgreSQL 18.6, db.t4g.micro, 1 GiB, encrypted 20 GiB gp3, Single-AZ, always-on; not Aurora, serverless or Multi-AZ. One task per service is steady state. API is 0.5 vCPU/1 GiB; frontend is 0.25 vCPU/0.5 GiB. Secrets arrive at API task startup through ECS execution role, never in frontend or browser. No provider credentials appear. Omit S3 art, Google sign-in details and release script internals from this figure to keep the network explanation readable; do not invent relationships for them. No IDs, ARNs, IP addresses, latency promises or production HA claims. Do not copy the word "proposed" or Deep Agents from the style references.
+
+Make all essential labels legible at normal screen viewing size. Use compact line breaks within each semantic object, large domains and numbers, and generous outer margins. Approximately 190 visible words maximum. Avoid decorative illegible microtext. Deliver one cohesive, polished illustrated architecture scene.

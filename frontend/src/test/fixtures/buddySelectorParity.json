@@ -1,0 +1,386 @@
+[
+  {
+    "age": 3,
+    "options": {},
+    "expected": [
+      {
+        "id": "momo-cloud",
+        "score": 1
+      },
+      {
+        "id": "nori-bunny",
+        "score": 1
+      },
+      {
+        "id": "pebble-bot",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 5,
+    "options": {},
+    "expected": [
+      {
+        "id": "momo-cloud",
+        "score": 1
+      },
+      {
+        "id": "nori-bunny",
+        "score": 1
+      },
+      {
+        "id": "pebble-bot",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 6,
+    "options": {},
+    "expected": [
+      {
+        "id": "dot-bot",
+        "score": 1
+      },
+      {
+        "id": "ember-fox",
+        "score": 1
+      },
+      {
+        "id": "kiki-dragon",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 8,
+    "options": {},
+    "expected": [
+      {
+        "id": "dot-bot",
+        "score": 1
+      },
+      {
+        "id": "ember-fox",
+        "score": 1
+      },
+      {
+        "id": "kiki-dragon",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 9,
+    "options": {},
+    "expected": [
+      {
+        "id": "juniper-panda",
+        "score": 1
+      },
+      {
+        "id": "moss-grove",
+        "score": 1
+      },
+      {
+        "id": "orbit-axolotl",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 10,
+    "options": {},
+    "expected": [
+      {
+        "id": "juniper-panda",
+        "score": 1
+      },
+      {
+        "id": "moss-grove",
+        "score": 1
+      },
+      {
+        "id": "orbit-axolotl",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 11,
+    "options": {},
+    "expected": [
+      {
+        "id": "cove-seal",
+        "score": 1
+      },
+      {
+        "id": "echo-raven",
+        "score": 1
+      },
+      {
+        "id": "fern-moth",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 13,
+    "options": {},
+    "expected": [
+      {
+        "id": "cove-seal",
+        "score": 1
+      },
+      {
+        "id": "echo-raven",
+        "score": 1
+      },
+      {
+        "id": "fern-moth",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 8,
+    "options": {
+      "interests": [
+        "Stories",
+        "space",
+        "quiet-company"
+      ],
+      "tones": [
+        "gentle"
+      ],
+      "limit": 6
+    },
+    "expected": [
+      {
+        "id": "pippin-bear",
+        "score": 6
+      },
+      {
+        "id": "cove-seal",
+        "score": 5
+      },
+      {
+        "id": "kiki-dragon",
+        "score": 4
+      },
+      {
+        "id": "flux-rover",
+        "score": 3
+      },
+      {
+        "id": "lumi-firefly",
+        "score": 3
+      },
+      {
+        "id": "ember-fox",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "age": 9,
+    "options": {
+      "interests": [
+        "nature",
+        "art"
+      ],
+      "tones": [
+        "curious"
+      ],
+      "limit": 6,
+      "diversifyGroups": false
+    },
+    "expected": [
+      {
+        "id": "fern-moth",
+        "score": 6
+      },
+      {
+        "id": "echo-raven",
+        "score": 3
+      },
+      {
+        "id": "koa-capybara",
+        "score": 3
+      },
+      {
+        "id": "lumi-firefly",
+        "score": 3
+      },
+      {
+        "id": "orbit-axolotl",
+        "score": 3
+      },
+      {
+        "id": "pixel-bot",
+        "score": 3
+      }
+    ]
+  },
+  {
+    "age": 13,
+    "options": {
+      "excludeKinds": [
+        "robot"
+      ],
+      "excludeGroups": [
+        "cozy-creatures"
+      ],
+      "maxVisualComplexity": "low",
+      "limit": 6
+    },
+    "expected": [
+      {
+        "id": "dot-bot",
+        "score": 0
+      },
+      {
+        "id": "ember-fox",
+        "score": 0
+      },
+      {
+        "id": "kiki-dragon",
+        "score": 0
+      },
+      {
+        "id": "lumi-firefly",
+        "score": 0
+      },
+      {
+        "id": "otto-otter",
+        "score": 0
+      },
+      {
+        "id": "momo-cloud",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "age": 3,
+    "options": {
+      "excludeIds": [
+        "momo-cloud"
+      ],
+      "excludeInterests": [
+        "stories"
+      ],
+      "limit": 6
+    },
+    "expected": [
+      {
+        "id": "nori-bunny",
+        "score": 1
+      },
+      {
+        "id": "pebble-bot",
+        "score": 1
+      },
+      {
+        "id": "sprig-leaf",
+        "score": 1
+      },
+      {
+        "id": "tilly-turtle",
+        "score": 1
+      },
+      {
+        "id": "echo-raven",
+        "score": 0
+      },
+      {
+        "id": "nova-fox",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "age": 3,
+    "options": {
+      "preferredId": "nova-fox"
+    },
+    "expected": [
+      {
+        "id": "nova-fox",
+        "score": null
+      }
+    ]
+  },
+  {
+    "age": 13,
+    "options": {
+      "preferredId": "pippin-bear"
+    },
+    "expected": [
+      {
+        "id": "pippin-bear",
+        "score": null
+      }
+    ]
+  },
+  {
+    "age": 7,
+    "options": {
+      "preferredId": "dot-bot",
+      "excludeIds": [
+        "dot-bot"
+      ]
+    },
+    "expected": []
+  },
+  {
+    "age": 7,
+    "options": {
+      "preferredId": "unknown"
+    },
+    "expected": []
+  },
+  {
+    "age": 7,
+    "options": {
+      "excludeIds": [
+        "pippin-bear",
+        "nori-bunny",
+        "momo-cloud",
+        "tilly-turtle",
+        "sprig-leaf",
+        "pebble-bot",
+        "ember-fox",
+        "pip-owl",
+        "kiki-dragon",
+        "otto-otter",
+        "dot-bot",
+        "lumi-firefly",
+        "juniper-panda",
+        "orbit-axolotl",
+        "moss-grove",
+        "pixel-bot",
+        "ripple-ray",
+        "scout-lynx",
+        "nova-fox",
+        "echo-raven",
+        "koa-capybara",
+        "flux-rover",
+        "fern-moth",
+        "cove-seal"
+      ]
+    },
+    "expected": []
+  },
+  {
+    "age": 2,
+    "options": {},
+    "expected": []
+  },
+  {
+    "age": 14,
+    "options": {},
+    "expected": []
+  }
+]

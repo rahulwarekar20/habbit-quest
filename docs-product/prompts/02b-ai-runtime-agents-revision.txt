@@ -1,0 +1,7 @@
+Edit this existing HabitQuest AI runtime illustration with one relationship correction. Preserve all titles, date-free subtitle, five Coach nodes, RAG objects, wording, two independent helper panels, colors, provider footer, habit cards and parent approval.
+
+Remove ONLY the long navy connector that leaves the upper "Save selected reviewed goals" SQL object and curves downward toward the bottom-right "Exact goal-linked child plan". It must NOT connect saved goals directly to the child plan or bypass habit writing and parent acceptance.
+
+Replace this cross-band connector with matched circled capital A continuation markers. Put a small circled "A" just below the upper saved-goal SQL label, with a short arrow leaving that SQL object toward the marker. Put a second matching circled "A" at the start of the bottom "Separate habit writer" lane, immediately before its existing left-hand SQL cylinder labeled "(from saved goals)", with a short arrow into that cylinder. Make room by a small local spacing adjustment only; do not cover any title or text. If a caption is needed, use exactly "Continue below" beside the upper A.
+
+The only reading path must now be saved reviewed goals → A continuation → bottom-left saved-goals SQL → three habit choices → writer and local checks → parent acceptance → exact goal-linked child plan. Preserve the fixed-failure stop. Add no other connection, service, date or claim. Leave the existing correction-loop semantics unchanged. Export a corrected new version.

@@ -1,0 +1,56 @@
+Use case: infographic-diagram. Create a friendly publication-quality hand-drawn HabitQuest technical explainer. Use supplied illustrations for STYLE ONLY. White paper, slightly irregular navy ink, readable indigo/blue handwritten headings, restrained purple, lavender and pale-blue washes. Recognizable request booklet, identity key, reservation ticket, three provider meters, durable receipt cabinet, settlement stamp, credit progress chip and operator control desk. Match the existing architecture series. No calendar dates, timestamps, invented measurements, prices or credentials anywhere.
+
+Landscape 16:9 with generous margins. Main left-to-right mechanism occupies the middle: numbered authorize/reserve → meter attempts → PostgreSQL ledger → settle once → family meter. Use small semantic drawings, not a wall of rectangular service boxes. An operator policy desk above supplies controls to admission/dispatch and family visibility. A versioned tariff booklet feeds the ledger. A metrics dashboard below receives ledger observations. Keep control arrows thin/dashed and accounting flow solid. Do not draw the model directly updating credits or bypassing the server.
+
+The provider-meter group contains THREE clearly distinct objects: chat robot/token counters, embedding vector beads/input tokens, and Pinecone search funnel/read-unit counter. The ledger retains actual attempts including retries and failures. Settlement visibly forks into useful-result credit debit and failed-result release of the credit hold. BOTH retain provider-cost records; show this as a retained receipt, not a refund of provider spend. Family meter shows no fabricated numeric usage. Admin metrics shows graph shapes without invented axes or measured values.
+
+Print ONLY the exact copy below. Use readable line breaks, no slashes inserted between unrelated labels. The short seed-policy ribbon is illustrative configured starting policy, not actual usage. Keep its label intact. The two enforcement labels describe alternate toggle modes; do not imply both are currently active. No DATES in any visible text.
+
+HabitQuest Tokenomics
+Meter every attempt. Charge useful outcomes.
+
+1  Authorize + reserve
+Explicit request + idempotency key
+Family-local daily allowance
+Replay → saved result, no new call
+
+2  Meter provider attempts
+Chat input/output + cached tokens
+Embedding input tokens
+Pinecone read units + egress
+Record before dispatch
+Retries + failures retained
+
+3  Durable PostgreSQL ledger
+Model + usage + elapsed seconds
+Versioned tariff → estimated cost
+Missing usage ≠ zero
+
+4  Settle once
+Useful result → activity credits
+Failure → release credit hold
+Provider costs remain
+
+Family meter
+Used · pending · remaining · overage
+Refresh after completion
+
+/admin policy
+Daily credits + activity weights
+Operator spending ceiling
+Enforce ON: allowance + exposure checks
+Enforce OFF: demo tracking, no budget blocking
+Show costs toggle
+Timing display separate
+
+/admin metrics
+History + model cohorts
+Tokens · generation time · latency · cost
+Sample counts + usage coverage
+
+Seed policy: 100/day · Coach 2 · Habit batch 1 · Planner 2 · Weekly Review 2
+Credits ≠ dollars ≠ child rewards
+Enforcement requires verified tariffs + bounds
+Numeric metadata, not family prose
+
+FACTUAL LIMITS: Family credits are configured activity weights, not token counts or real-time dollars. Retries can increase cost without another useful credit debit. Demo mode bypasses budget allowance/operator-cap blocking only, not safety, authentication, timeouts or validation. Enforced dispatch needs verified tariffs and bounded exposure; unresolved usage may block. Costs are estimates, not invoices. Existing saved request replay makes no new provider call. Automatic habit batches are separate operations; never imply they are free or included inside the Coach's own two-credit debit. Cost visibility and timing display are separate settings, while metering continues. No family prose or keys enter accounting. The image is a mechanism overview, not a claim of representative benchmarks or guaranteed latency. Preserve every required distinction without adding more text.

@@ -1,0 +1,43 @@
+Use case: infographic-diagram. Create one publication-quality HabitQuest illustration slide matching the supplied paper-and-ink reference. White paper, navy hand-drawn outlines, indigo/blue handwritten heading, restrained lavender and pale-blue washes, readable short labels. Landscape 16:9, NO DATES. Give this Weekly Review role the same full-slide prominence as Quest Planner and Coach.
+
+COMPOSITION: A five-stage journey with distinctive progress-review objects. Parent explicitly clicks a dashboard review button. SQL cabinet supplies TWO labeled seven-day tally booklets and the current scoped plan; do not invent counts on the booklets. Names are replaced by Child A/Child B labels before one model robot writes a parent-facing report. Show separate report artifacts for a headline, per-child win/watch cards and evidence-linked patterns. A local validation clipboard checks proposed changes; saved report and at most two valid suggestion cards are shown to a parent. Parent acceptance leads through a fresh-check lock into an updated plan; dismissal has no plan update. Failure terminates before partial-report storage. Use a clear directed path, roomy spacing, semantic objects and the same visual weight as the Planner figure. A compact report-reading branch may end at saved history without a new model call.
+
+EXACT VISIBLE COPY:
+
+Weekly Review agent
+Independent one-call role · explicitly requested by a parent
+
+1  Parent starts a review
+Dashboard: Run Weekly Review
+Authorize family + reserve allowance
+
+2  Compare scoped SQL facts
+Last 7 days vs previous 7
+Approved completions · current plans · check-ins
+Child A / Child B replace names
+
+3  Write a structured review
+LangChain · 1 model call
+Headline + per-child win + watch point
+Prompt: up to 3 patterns tied to facts
+Celebrate effort · no shame or sibling comparisons
+No habits yet → acknowledge, do not invent
+
+4  Validate proposed changes
+Child + habit + action + time checks
+Remove duplicates · keep up to 2 changes
+
+5  Save report + suggestions
+Restore names for display
+Parent accepts or dismisses
+Accept → fresh checks → plan update
+Read saved report → no new model call
+
+Provider failure → no partial report
+Stage updates · seconds · usage · cost · credits
+Nebius: deepseek-ai/DeepSeek-V4.1-Flash-1017
+Outside Coach LangGraph · local checks, no Coach Safety pass
+
+END OF VISIBLE COPY. The remaining instructions must not be printed.
+
+Keep interpretation honest: SQL computes completion counts. The model interprets scoped facts, not arbitrary raw event histories. Wins, watch points and patterns are parent-facing prose; the code locally checks actionable proposals, not every narrative claim. The three-pattern preference and supportive tone are prompt instructions. Two persisted changes is the local code cap. Parent decisions govern changes; no auto-scheduling or autonomous plan update. 'Weekly' names the seven-day comparison, not an automatic recurring trigger. The provider call occurs outside the DB transaction. Local validation and persistence follow successful generation; truncated or failed calls do not save partial reports. This helper is independent of Quest Planner, not a call to Planner or Coach. It uses no Pinecone retrieval, query embedding, separate whole-report Safety model or background multi-agent loop. Include no fabricated data, dates, benchmarks or safety guarantee. Show success and failure with separate paths and readable endpoints.

@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from habitquest_backend.ai import RISK
 from habitquest_backend.config import Settings
-from habitquest_backend.llm import chat_model
+from habitquest_backend.llm import chat_model, role_chat_model
 
 log = logging.getLogger(__name__)
 Audience = Literal["kid-writes", "kid-reads"]
@@ -200,11 +200,15 @@ class ParentRisk(BaseModel):
     reason: str
 
 
-def parent_risk_model(settings: Settings, text: str) -> bool | None:
+def parent_risk_model(settings: Settings, text: str, *, timeout_seconds: float | None = None) -> bool | None:
     """The safety model's view of a parent's message, after the word lists: True when a child may be at risk, False
     when not, None when it could not be checked. Children's names must already be replaced with labels.
     """
-    model = chat_model(settings, small=True, model=settings.openai_safety_model, reasoning_effort="low")
+    model = (
+        role_chat_model(settings, role="parent_risk", timeout_seconds=timeout_seconds)
+        if settings.coach_engine == "refined" or settings.parent_risk_model
+        else chat_model(settings, small=True, model=settings.openai_safety_model, reasoning_effort="low")
+    )
     classifier = model.with_structured_output(ParentRisk, method="json_schema", strict=True)
     data = re.sub(r"</?message>", "", text)
     try:
@@ -222,7 +226,7 @@ def model_screen(settings: Settings, text: str, audience: Audience) -> Screen:
     """The safety model's check of kid text for `audience`. Raises on model errors; check_text decides what
     that means for each audience.
     """
-    classifier = chat_model(settings, small=True).with_structured_output(Verdict)
+    classifier = chat_model(settings, small=True, role="child_screen").with_structured_output(Verdict)
     data = re.sub(r"</?text>", "", text)
     messages = [("system", CLASSIFIER_PROMPT), ("user", f"Audience: {audience}\n<text>{data}</text>")]
     verdict = cast(Verdict, classifier.invoke(messages))

@@ -1,0 +1,9 @@
+Edit this existing illustration. Preserve all artwork, colors, labels, numeric values, domains, browser paths, task/database/provider positions and the bottom legend. Make ONLY these three relationship corrections:
+
+1. In the lower deployment band, keep the existing dashed purple Private ECR → API task arrow and add a clear separate dashed purple Private ECR → Frontend task arrow. Terminate the new arrow on the Frontend ECS Fargate crate, not on its ALB or a log line. Both services get their immutable images from ECR.
+
+2. Replace only the confusing dashed connections between Route 53, Shared ACM certificate and the ALBs. Draw FOUR independently traceable thin dashed purple configuration arrows: Route 53 → App ALB; Route 53 → API ALB; Shared ACM certificate → App ALB; Shared ACM certificate → API ALB. Use tidy branched routes with clearly distinguishable origins and arrowheads at each ALB; avoid accidental shared junctions between DNS and certificate lines. Retain the GoDaddy → Route 53 “Delegated DNS” arrow. Leave both solid Browser HTTPS arrows untouched. Do not draw request traffic through DNS or ACM.
+
+3. Move the bottom edge of the rounded “Existing VPC” outline upward so it ends immediately above the row containing Private ECR, Secrets Manager and CloudWatch Logs. Those three managed services must be outside the VPC outline but still inside the separate outer AWS outline. Preserve the outer AWS boundary. Preserve the existing public-subnet grouping around the ALBs/tasks and the private database grouping. Keep the internet gateway at the VPC edge.
+
+Do not change any text or numbers, add new services, or alter the correct API → RDS TLS, API → gateway → providers, Secrets Manager → API and tasks → CloudWatch directions. Use small line bridges where unavoidable crossings would otherwise suggest a junction. Export as a new version, preserving this draft.
