@@ -151,7 +151,7 @@ for (const width of [1280, 390]) test(`Coach budget and cost visibility at ${wid
   await page.getByLabel("Message the habit coach").fill("Help with bedtime");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(page.getByLabel("2 / 100 credits used")).toBeVisible();
-  await expect(page.getByLabel("Generation accounting")).toContainText("Estimated cost $0.00218770");
+  await expect(page.getByLabel("Generation accounting")).toHaveCount(0); // the coach shows spending in the meter only
   // Measure in one frame: the conversation can still be smoothly scrolling after Send.
   const toolbar = await page.locator(".ai-chat__tools").evaluate(element => {
     const meter = element.querySelector(".coaching-meter")!.getBoundingClientRect();
@@ -173,7 +173,7 @@ for (const width of [1280, 390]) test(`Coach budget and cost visibility at ${wid
   await expect(page.getByRole("progressbar", { name: "Coaching credits used" })).toHaveJSProperty("value", 100);
   await page.screenshot({ path: `../docs-detailed/evidence/2026-11-05/coaching-meter/coach-overage-${width}.png`, fullPage: true });
   costs = false; await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(page.getByLabel("Generation accounting")).not.toContainText("Estimated cost");
+  await expect(page.getByLabel("Generation accounting")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   used = 6; enforced = true;
   await page.goto("http://localhost:5180/#/parent");

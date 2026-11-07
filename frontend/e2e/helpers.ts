@@ -34,7 +34,7 @@ export async function createFamily(page: Page, { child = "Mia", age = "7", pin }
 
   await expect(page.getByRole("heading", { name: "Who's going on quests?" })).toBeVisible();
   await page.getByLabel("Child's first name").fill(child);
-  await page.getByLabel("Age").selectOption(age);
+  await page.getByRole("combobox", { name: "Age" }).selectOption(age); // the buddy cards say "ages" too
   await page.getByRole("button", { name: "Add child" }).click();
   await expect(page.getByRole("heading", { name: /, Robin$/ })).toBeVisible();
 }

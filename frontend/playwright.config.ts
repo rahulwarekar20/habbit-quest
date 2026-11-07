@@ -14,6 +14,8 @@ const APP = "http://localhost:5180"; // localhost, not 127.0.0.1: the API's CORS
 
 export default defineConfig({
   testDir: "e2e",
+  // The buddy suite starts its own API and app (playwright.buddies.config.ts), so it is left out here.
+  testIgnore: ["buddy-catalog.spec.ts"],
   fullyParallel: false, // one shared API and its sign-in rate limit; the tests are few and quick
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",

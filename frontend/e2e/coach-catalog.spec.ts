@@ -23,7 +23,7 @@ const batch = { id: "b1", child_id: "c1", goal_id: source.goal_id, status: "read
 for (const width of [1280, 390]) test(`goal and habit presentation at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 950 });
   const unknown: string[] = [];
-  let generated = 0, accepted = 0, cap = 5;
+  let generated = 0, accepted = 0;
   let lastBatch = batch;
   let currentThread = structuredClone(thread);
   const [extraId, extraVisual] = Object.entries(presentation.goals).find(([, value]) => (value as any).age === "6–8" && !thread.goal_recommendations.some(card => card.goal_id === (value as any).goalId))! as [string, any];
@@ -39,10 +39,7 @@ for (const width of [1280, 390]) test(`goal and habit presentation at ${width}px
     const path = new URL(route.request().url()).pathname;
     const method = route.request().method();
     let body: unknown;
-    if (path === "/v1/ai/budget") {
-      if (method === "PATCH") cap = route.request().postDataJSON().cap_usd;
-      body = { cap_usd: cap, accounted_usd: 0.9830207, remaining_usd: cap - 0.9830207, initialized: true, enabled: true, can_edit: true };
-    }
+    if (path === "/v1/families/f1/ai/budget") body = { allowance: 100, used: 4, pending: 0, remaining: 96, overage: 0, reset_at: "2099-01-01T05:00:00Z", enforced: false, show_costs: false, activity_quotes: { coach: 2, habit_batch: 1, planner: 2, review: 2 }, policy_revision: 1 };
     else if (path === "/v1/me") body = { id: "u1", name: "Sam", email: null, families: [{ id: "f1", name: "Example", display_name: "Sam", role: "mother" }] };
     else if (path === "/v1/families/f1") body = { id: "f1", name: "Example", timezone: "America/New_York", has_pin: false, caregivers: [{ user_id: "u1", display_name: "Sam", role: "mother" }], created_at: now };
     else if (path === "/v1/families/f1/children") body = [{ id: "c1", family_id: "f1", name: "Alex", age: 8, buddy: "bunny", world: "camp", tier_override: 0, routine_times: {}, created_at: now }];
@@ -178,7 +175,7 @@ for (const width of [1280, 390]) test(`goal and habit presentation at ${width}px
   await expect(page.getByText("Added to Alex's quests")).toBeVisible();
   await page.screenshot({ path: `../docs-detailed/evidence/2026-11-05/more-choices/more-goals-${width}.png`, fullPage: true });
   await page.goto("http://localhost:5180/#/family");
-  await expect(page.getByLabel("Cumulative cap ($)")).toHaveValue("5");
+  await expect(page.getByRole("heading", { name: "Family coaching allowance" })).toBeVisible(); // the cap itself moved to the operator page
   await page.getByText("Recent generation history (4)").click();
   await expect(page.locator(".generation-history > li")).toHaveCount(4);
   await page.locator(".generation-settings").screenshot({ path: `../docs-detailed/evidence/2026-11-05/more-choices/generation-settings-${width}.png` });
@@ -186,10 +183,6 @@ for (const width of [1280, 390]) test(`goal and habit presentation at ${width}px
   await page.reload();
   await expect(page.getByLabel("Show generation seconds and stage details")).not.toBeChecked();
   await expect(page.getByText("Recent generation history (4)")).toBeVisible();
-  await page.getByLabel("Cumulative cap ($)").fill("6");
-  await page.getByRole("button", { name: "Save cap", exact: true }).click();
-  await expect(page.getByText("Budget cap saved. Existing usage was preserved.")).toBeVisible();
-  await expect(page.getByText("$0.983", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.goto("http://localhost:5180/#/kid/c1");
   await expect(page.getByRole("heading", { name: "My little question" })).toBeVisible();
