@@ -223,6 +223,7 @@ erDiagram
     text content
     text_array shown_habits
     boolean no_habit_match
+    text_array covered_by
   }
   ai_suggestions {
     uuid id PK
