@@ -1,0 +1,114 @@
+{
+  "goal_id": "hqg-3485089313fb8646f1695921",
+  "source_ref": {
+    "source_id": "learning-homework--ask-about-one-stuck-spot--a6-8",
+    "concept_id": "learning-homework--ask-about-one-stuck-spot",
+    "category_id": "learning-homework",
+    "catalog_version": "0.1.0",
+    "record_sha256": "e6a14ece5f09159bd1fa6a11612c9ba3affe53a4d6929fe4b570d468ae78c12f",
+    "snapshot_id": "22cec20089fee49e76ee76861b01a199e05f765ec19a2f1911eddef1088828df"
+  },
+  "age_min": 6,
+  "age_max": 8,
+  "contexts": [
+    "home"
+  ],
+  "readiness_note": "Check the actual language, motor and learning demands; age does not imply independent reading, writing or conflict management.",
+  "title": "Ask a specific learning question",
+  "description": "Practice indicating the exact part of a learning activity that needs explanation or support.",
+  "parent": {
+    "adaptations": [
+      "Offer speech, pointing, drawing, objects, signing or AAC; allow extra processing time and an adult to do the writing."
+    ],
+    "avoid": [
+      "Do not make a child attempt a fixed number of failures before asking.",
+      "Do not mistake inaccessible work or missing teaching for low effort."
+    ],
+    "review_guidance": "Notice whether the action is usable and welcome, not how many perfect days occur. Reduce the step or change the environment when it adds strain; discuss persistent difficulty with the relevant educator or professional.",
+    "say": "You can show me the confusing part; you do not have to struggle alone first.",
+    "selection_guidance": "Choose this when help is available but the child cannot show what is confusing. First make help emotionally safe and check whether the task requires new teaching or accommodations.",
+    "setup": "Offer a help card next to the activity and read directions when needed.",
+    "steps": [
+      "Respond to help promptly; help does not have to be earned.",
+      "Model a specific question such as “What does this word mean?”",
+      "Accept pointing to the confusing part and provide teaching or a school follow-up."
+    ]
+  },
+  "kid": {
+    "delivery_options": [
+      "read_aloud",
+      "gesture_or_picture",
+      "AAC",
+      "text"
+    ],
+    "description": "Tell someone which bit is tricky.",
+    "help_phrase": "Can you help me with this?",
+    "instructions": [
+      "Point to the tricky bit.",
+      "Ask “Can you show me this?”"
+    ],
+    "title": "Ask one learning question"
+  },
+  "practice": {
+    "adult_role": "model_then_support",
+    "allowed_outcomes": [
+      "practiced_with_support",
+      "completed",
+      "observed_model",
+      "declined",
+      "not_needed",
+      "paused"
+    ],
+    "challenge": "easy",
+    "completion": "Child points to or asks about one part; adult responds.",
+    "easier_version": "Use the help card.",
+    "form": "cue_triggered_skill",
+    "minimum_seconds": 15,
+    "observation_rule": "Record actual participation separately from pass, pause or observation. Do not score feelings, compliance, disclosure or independence. Outgoing events require separate observation.",
+    "schedule": "when_relevant_not_a_daily_quota",
+    "stretch_version": "Ask one question about the example.",
+    "support_level": "adult_scaffolded",
+    "timing_note": "Editorial estimate of this card's micro-action, not a deadline or the full activity/care/recovery duration.",
+    "typical_seconds": 120
+  },
+  "safety": {
+    "care_and_help_unconditional": true,
+    "flags": [],
+    "not_for": [
+      "Not for requiring failed attempts, precise speech, a diagnosis or a polished question before help. Not a substitute for missing teaching or needed accommodations."
+    ],
+    "sensitive_disclosure_storage": "none_in_catalog_or_search_index"
+  },
+  "research": {
+    "evidence": [
+      {
+        "age_transfer": "Correlational school/college samples; K–8 overlap, not preschool causal evidence.",
+        "does_not_establish": "The exact micro-habit, app card and stacking sequence were not tested.",
+        "relationship": "mechanism_informed",
+        "source_id": "M07",
+        "source_url": "https://link.springer.com/article/10.1007/s10648-015-9329-z",
+        "supports": "Autonomy-supportive parenting is associated with adaptive functioning, with confounding limitations."
+      },
+      {
+        "age_transfer": "Developmental review across childhood/adulthood, not age-specific microhabit trials.",
+        "does_not_establish": "The exact micro-habit, app card and stacking sequence were not tested.",
+        "relationship": "mechanism_informed",
+        "source_id": "M08",
+        "source_url": "https://www.annualreviews.org/content/journals/10.1146/annurev-psych-113011-143750",
+        "supports": "Development and context constrain task performance, supporting adult scaffolding."
+      }
+    ],
+    "insight": "Autonomy-support and developmental guidance favor responsive scaffolding. Specific help-question practice is a proposed support behavior; no cited trial isolates this card.",
+    "product_efficacy": "not_established"
+  },
+  "support_targets": [
+    "learning_help_seeking",
+    "stuck_on_schoolwork"
+  ],
+  "mechanisms": [
+    "accessible_help_seeking",
+    "adult_response"
+  ],
+  "clinical_review_status": "not_clinically_reviewed",
+  "status": "research_grounded_editorial_draft"
+}

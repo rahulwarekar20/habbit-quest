@@ -24,6 +24,7 @@ load_dotenv()
 # Tests never reach a real model or use a developer's sign-in settings, whatever their .env says.
 for name in (
     "AI_MODE",
+    "AI_HELPER_REASONING_EFFORT",
     "OPENAI_BASE_URL",
     "OPENAI_MODEL",
     "OPENAI_SMALL_MODEL",
@@ -34,9 +35,26 @@ for name in (
     "GOOGLE_CLIENT_ID",
     "DEV_LOGIN",
     "DEV_LOGIN_PASSWORD",
+    "BUDDY_CATALOG_ENABLED",
 ):
     os.environ.pop(name, None)
 os.environ["TRACE_COACH"] = "false"
+# The imported OpenAI/Pinecone group must never leak from a developer's dotenv
+# into fixtures. Keep DB URLs, but clear every feature/model routing switch.
+for name in tuple(os.environ):
+    if name.startswith(
+        ("PLANNING_", "COACH_", "PINECONE_", "OPENAI_", "HABIT_GENERATION_", "EMBEDDING_", "ADMIN_")
+    ) or name in {
+        "PARENT_RISK_MODEL",
+        "OUTPUT_SAFETY_MODEL",
+        "RETRIEVAL_MODE",
+        "CATALOG_VERSION",
+        "CATALOG_SNAPSHOT_POINTER",
+        "SSL_CERT_FILE",
+    }:
+        os.environ.pop(name)
+os.environ["LANGSMITH_TRACING"] = "false"
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
 URL = os.getenv("TEST_DATABASE_URL", "postgresql://hq_dev@127.0.0.1:55432/hq_test")
 if not conninfo_to_dict(URL).get("dbname", "").endswith("_test"):
     raise pytest.UsageError(
@@ -45,6 +63,20 @@ if not conninfo_to_dict(URL).get("dbname", "").endswith("_test"):
 
 
 REAL_GOLDEN = daily.golden_habit
+
+
+@pytest.fixture(autouse=True)
+def no_provider_network(monkeypatch):
+    """HTTP model/retrieval tests must inject transports, never use live keys."""
+
+    def reject(self, request):
+        raise RuntimeError("Tests must use MockTransport instead of real provider HTTP")
+
+    async def reject_async(self, request):
+        raise RuntimeError("Tests must use MockTransport instead of real provider HTTP")
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", reject)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", reject_async)
 
 
 @pytest.fixture(autouse=True)
@@ -81,6 +113,7 @@ def db(settings):
     with psycopg.connect(settings.database_url, autocommit=True) as conn:
         conn.execute("TRUNCATE hq.users,hq.families CASCADE")
         conn.execute((Path(__file__).parents[1] / "db/seed.sql").read_text())
+        conn.execute("INSERT INTO hq.planning_budget(singleton) VALUES(true) ON CONFLICT DO NOTHING")
         yield conn
 
 

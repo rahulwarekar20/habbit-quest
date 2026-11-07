@@ -1,0 +1,42 @@
+{
+  "matches": [
+    {
+      "_id": "attention-task-start--begin-one-action--a6-8",
+      "_score": 0.99999535,
+      "age_max": 8.0,
+      "age_min": 6.0,
+      "available_by_default": true,
+      "canonical_record_sha256": "e5236d9bdeb7445108796078ace7153419e576bf631e3e1201ef7ced0debc604",
+      "catalog_version": "0.1.0",
+      "category_id": "attention-task-start",
+      "concept_id": "attention-task-start--begin-one-action",
+      "contexts": [
+        "home",
+        "school"
+      ],
+      "embedding_dimensions": 512.0,
+      "embedding_model": "text-embedding-3-small",
+      "intent_class": "targeted_skill_support",
+      "language": "en"
+    },
+    {
+      "_id": "worry-brave-steps--choose-tiny-new-step--a6-8",
+      "_score": 0.81881785,
+      "age_max": 8.0,
+      "age_min": 6.0,
+      "available_by_default": true,
+      "canonical_record_sha256": "2a7c6502891ee58e91a8ce8c622fd008eb0abbb02de79b81f590f5b4c8ebf198",
+      "catalog_version": "0.1.0",
+      "category_id": "worry-brave-steps",
+      "concept_id": "worry-brave-steps--choose-tiny-new-step",
+      "contexts": [
+        "home",
+        "school"
+      ],
+      "embedding_dimensions": 512.0,
+      "embedding_model": "text-embedding-3-small",
+      "intent_class": "targeted_skill_support",
+      "language": "en"
+    }
+  ]
+}

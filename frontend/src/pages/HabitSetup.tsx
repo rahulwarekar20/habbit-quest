@@ -1,3 +1,4 @@
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 /**
  * A child's details and routine times: when each part of the day starts. New quests default to
  * these times. Quests already in the plan keep theirs; change those in the quest library.
@@ -19,6 +20,7 @@ export default function HabitSetup({ childId }: { childId?: string }) {
   const [loaded, setLoaded] = useState<ApiChild | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [formVersion, setFormVersion] = useState(0);
   const id = child?.id;
 
   useEffect(() => {
@@ -42,6 +44,14 @@ export default function HabitSetup({ childId }: { childId?: string }) {
     setLoaded(updated);
     await reload();
     setSaved(true);
+    return updated;
+  }
+
+  async function reloadDetails() {
+    const fresh = await getChild(child!.id);
+    setLoaded(fresh); setSaved(false); setFormVersion(value => value + 1);
+    await reload();
+    return fresh;
   }
 
   return (
@@ -59,7 +69,7 @@ export default function HabitSetup({ childId }: { childId?: string }) {
             {fam.children.map((c) => (
               <button key={c.id} role="tab" aria-selected={c.id === child.id} className={`about__chip ${c.id === child.id ? "is-on" : ""}`}
                 onClick={() => go(`/setup/${c.id}`)}>
-                <Buddy buddy={c.buddy} accessory={c.wearing} size={24} /> {c.name}
+                <Buddy {...buddyDisplayProps(c)} accessory={c.wearing} size={24} /> {c.name}
               </button>
             ))}
           </div>
@@ -67,7 +77,7 @@ export default function HabitSetup({ childId }: { childId?: string }) {
         <section className="panel">
           {error && <p className="form-error">{error}</p>}
           {loaded
-            ? <ChildForm key={loaded.id} initial={loaded} onSubmit={save} onCancel={() => go("/parent")} onEdit={() => setSaved(false)} submitLabel="Save changes" wide />
+            ? <ChildForm key={`${loaded.id}:${formVersion}`} initial={loaded} onSubmit={save} onReload={reloadDetails} onCancel={() => go("/parent")} onEdit={() => setSaved(false)} submitLabel="Save changes" wide />
             : !error && <p className="empty">Loading…</p>}
           {saved && <p className="form-ok" role="status">Saved.</p>}
         </section>

@@ -4,7 +4,7 @@
  * newly unlocked (a landmark, a world, or a new level with harder quests). Tap anywhere to close.
  */
 import { useEffect, type CSSProperties } from "react";
-import { BUDDY_THEME } from "../lib/buddyTheme";
+import { BUDDY_THEME, CATALOG_BUDDY_THEME } from "../lib/buddyTheme";
 import type { BuddyId } from "../lib/family";
 import type { QuestDef } from "../lib/habits";
 import HabitArt from "./HabitArt";
@@ -14,6 +14,7 @@ interface Props {
   habits: Pick<QuestDef, "id" | "kidTitle">[];
   name: string;
   buddy: BuddyId;
+  catalogMode?: boolean;
   sparks: number;
   points?: number;
   unlocks?: string[];
@@ -26,7 +27,7 @@ interface Props {
  * The full-screen celebration after an approval (see above). On a child's own screen (`forKid`) anything newly
  * unlocked also says "Show a grown-up!". `onDone` closes it.
  */
-export default function Celebration({ habits, name, buddy, sparks, points = 0, unlocks = [], forKid = false, buddyLine, onDone }: Props) {
+export default function Celebration({ habits, name, buddy, catalogMode = false, sparks, points = 0, unlocks = [], forKid = false, buddyLine, onDone }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onDone();
     window.addEventListener("keydown", onKey);
@@ -39,7 +40,7 @@ export default function Celebration({ habits, name, buddy, sparks, points = 0, u
       <div className="celebrate__burst" aria-hidden="true">
         {Array.from({ length: 18 }, (_, i) => (
           <span key={i} style={{ "--a": `${i * 20}deg`, "--d": `${(i % 3) * 0.12}s` } as CSSProperties}>
-            <span style={{ fontSize: 14 + (i % 3) * 8 }}>{BUDDY_THEME[buddy].confetti}</span>
+            <span style={{ fontSize: 14 + (i % 3) * 8 }}>{(catalogMode ? CATALOG_BUDDY_THEME : BUDDY_THEME[buddy]).confetti}</span>
           </span>
         ))}
       </div>

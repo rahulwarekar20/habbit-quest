@@ -1,3 +1,5 @@
+import { buddyDisplayProps, mergeBuddySelection } from "../lib/buddyIdentity";
+import HabitArt from "../components/HabitArt";
 /**
  * Kid mode: "Who's playing?" and the child's picture quests for today. Exploring a world is
  * WorldExplore.tsx; the top bar and other shared pieces are components/KidChrome.tsx.
@@ -24,7 +26,7 @@ import WorldArt from "../components/WorldArt";
 import PinDialog from "../components/PinDialog";
 import { ApiError, errorText, getTodayCheckin, startKidSession, updateKidExtras, type TodayHabit } from "../lib/api";
 import { useBuddyLine, type BuddyEvent } from "../lib/buddy";
-import { BUDDY_THEME, buddyNudge } from "../lib/buddyTheme";
+import { buddyThemeFor, buddyNudgeFor } from "../lib/buddyTheme";
 import { BOOST_LABEL, WORLDS, celebrationsDue, isUnlocked, markCelebrated, type Child } from "../lib/family";
 import { readyLandmarks } from "../lib/journeyPath";
 import { go } from "../lib/router";
@@ -35,7 +37,7 @@ import { localStatus } from "../lib/sync";
 import { greeting } from "../lib/time";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound, LockIcon } from "../components/KidChrome";
-import { QuestCard } from "../components/QuestCard";
+import { GeneratedSteps, QuestCard } from "../components/QuestCard";
 
 /** "Who's playing?" (#/kid): the children of this family; one with a kid PIN asks for it. */
 export function KidPicker() {
@@ -80,7 +82,7 @@ export function KidPicker() {
         <div className="kid-picker__grid">
           {fam.children.map((c) => (
             <button key={c.id} className="kid-picker__card" onClick={() => pick(c)}>
-              <Buddy buddy={c.buddy} accessory={c.wearing} size={110} />
+              <Buddy {...buddyDisplayProps(c)} accessory={c.wearing} size={110} />
               <b>{c.name}</b>
               <SparkCount count={c.sparks} />
               {c.hasPin && <span className="kid-picker__lock" aria-label="Needs your PIN"><LockIcon /></span>}
@@ -121,7 +123,9 @@ export function KidQuests({ childId }: { childId: string }) {
   const secondsLeft = usePlaytime(child);
 
   // Buddy lines: a null event means buddy talk is off (or no child), so nothing is fetched.
-  const talk = !!child && fam.settings.buddyTalk;
+  const effectiveBuddy = child && today ? mergeBuddySelection(child, today.child) : child;
+  const catalogMode = effectiveBuddy?.buddySelectionMode === "catalog";
+  const talk = !!child && fam.settings.buddyTalk && !catalogMode;
   const buddyAsk = (event: BuddyEvent): BuddyEvent | null => (talk ? event : null);
   const quests = today?.habits ?? [];
   const remaining = quests.filter((q) => q.status !== "approved");
@@ -129,13 +133,16 @@ export function KidQuests({ childId }: { childId: string }) {
   const submittedLine = useBuddyLine(`${childId}:submitted:${submitted?.habit_id}`, submitted ? buddyAsk("submitted") : null);
   const celebrateLine = useBuddyLine(`${childId}:celebrate:${celebrating?.quests.map((h) => h.id).join("+")}`,
     celebrating ? buddyAsk("celebrate") : null);
-  const buddySays = submittedLine ?? greetLine;
+  // A cached legacy line can survive in hook state until its effect runs; guard immediately.
+  const buddySays = catalogMode
+    ? submitted ? "Sent to your grown-up. You can wait or choose another quest." : today && remaining.length > 0 ? "Choose one small step. A grown-up can help." : null
+    : submittedLine ?? greetLine;
   const progress = today?.progress;
   const waitingFind = child && journey && progress && readyLandmarks(journey.worlds, progress.sparks, child.discoveries).length > 0;
   const buddyNote = !child || !progress ? null
-    : today.welcome_back ? BUDDY_THEME[child.buddy].welcomeBack
-      : waitingFind ? BUDDY_THEME[child.buddy].waiting
-        : progress.next_landmark ? buddyNudge(child.buddy, progress.next_landmark.sparks - progress.sparks) : null;
+    : today.welcome_back ? buddyThemeFor(effectiveBuddy ?? child).welcomeBack
+      : waitingFind ? buddyThemeFor(effectiveBuddy ?? child).waiting
+        : progress.next_landmark ? buddyNudgeFor(effectiveBuddy ?? child, progress.next_landmark.sparks - progress.sparks) : null;
 
   useEffect(() => {
     if (today) getTodayCheckin().then((found) => setCheckedIn(!!found)).catch(() => {});
@@ -184,11 +191,11 @@ export function KidQuests({ childId }: { childId: string }) {
     : "You finished every quest today. Super star!";
 
   return (
-    <div className="page page--kid" data-buddy={child.buddy}>
+    <div className="page page--kid" data-buddy={catalogMode ? "catalog" : child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <section className="kid-hero">
-          <Buddy buddy={child.buddy} accessory={child.wearing} size={92} />
+          <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={92} />
           <div className="kid-hero__text">
             <h1>{greeting()}, {child.name}!</h1>
             <p>
@@ -236,6 +243,15 @@ export function KidQuests({ childId }: { childId: string }) {
           ))}
         </div>
 
+        {!!today?.upcoming_habits?.length && <section className="kid-other-days" aria-label="Habits for other days">
+          <h2>Other days in your plan</h2><p>These habits are saved for another day. No need to do them today.</p>
+          <div className="quest-grid">{today.upcoming_habits.map(habit => <article className="quest" key={habit.habit_id}>
+            <div className="quest__art"><HabitArt habit={habit.habit_id} icon={habit.icon} text={`${habit.kid_title} ${habit.kid_hint}`} /></div>
+            <div className="quest__body"><h3>{habit.kid_title}</h3><p>{habit.kid_hint}</p><p className="chip">{habit.days.map(day => day[0].toUpperCase() + day.slice(1)).join(", ")} · {habit.cue_time}</p>
+              <details><summary>See this habit and its goal</summary>{habit.habit_id.startsWith("my-ai-") && <GeneratedSteps habitId={habit.habit_id} />}</details>
+            </div>
+          </article>)}</div>
+        </section>}
         {today && quests.length > 0 && <ChestCard child={child} today={today} />}
 
         <div className="kid-actions">
@@ -282,8 +298,8 @@ export function KidQuests({ childId }: { childId: string }) {
       {surprises[0] && <SurpriseReveal key={surprises[0].id} surprise={surprises[0]} child={child} parentName={fam.parentName}
         onDone={() => dropSurprise(surprises[0].id)} />}
       {!surprises[0] && celebrating && (
-        <Celebration habits={celebrating.quests} name={child.name} buddy={child.buddy} sparks={celebrating.sparks} points={celebrating.points} unlocks={celebrating.unlocks} forKid
-          buddyLine={celebrateLine} onDone={() => setCelebrating(null)} />
+        <Celebration habits={celebrating.quests} name={child.name} buddy={child.buddy} catalogMode={catalogMode} sparks={celebrating.sparks} points={celebrating.points} unlocks={celebrating.unlocks} forKid
+          buddyLine={catalogMode ? "Your grown-up approved your quests. Look at the Sparks you earned!" : celebrateLine} onDone={() => setCelebrating(null)} />
       )}
       {checkIn && <CheckIn child={child} quests={quests.map((h) => ({ id: h.habit_id, kidTitle: h.kid_title }))} onClose={() => setCheckIn(false)} />}
       {secondsLeft === 0 && <BreakTime child={child} family={fam} />}

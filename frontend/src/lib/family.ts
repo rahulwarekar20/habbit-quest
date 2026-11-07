@@ -27,6 +27,10 @@ export interface Child {
   name: string;
   age: number;
   buddy: BuddyId;
+  buddySelectionMode?: "legacy" | "catalog";
+  catalogBuddyId?: string | null;
+  buddyCatalogVersion?: string | null;
+  buddySelectionRevision?: number;
   hasPin?: boolean; // the child has their own kid PIN (from the backend)
   sparks: number; // mirrored from the backend
   progress: Progress | null; // the journey as the backend last sent it
@@ -123,6 +127,7 @@ export function defaultHabits(): HabitSettings {
 }
 
 const CHILD_DEFAULTS: Omit<Child, "id" | "name" | "age" | "buddy"> = {
+  buddySelectionMode: "legacy", catalogBuddyId: null, buddyCatalogVersion: null, buddySelectionRevision: 0,
   sparks: 0, progress: null, balance: 0, celebrated: [], discoveries: [], streak: 0, week: {}, levelSeen: 1,
   accessories: [], wearing: null, goal: null, chests: [], appSeconds: {}, appExtraMinutes: {}, screenBonus: {},
 };

@@ -8,7 +8,7 @@ import pytest
 from conftest import OTHER, PARENT, token
 from fastapi.testclient import TestClient
 
-from habitquest_backend import coach
+from habitquest_backend import coach, tokenomics
 from habitquest_backend.ai import SAFETY_GUIDANCE, Candidate
 from habitquest_backend.coach import FALLBACK_MATCH, FALLBACK_NONE, fallback, run_turn, swap_names
 from habitquest_backend.coach_tools import Snapshot, Turn, build_tools
@@ -23,7 +23,6 @@ HABITS = [
 GOALS = [Candidate("bedtime", "Calmer bedtimes", "Bed on time.", ["bedtime", "sleep"], HABITS)]
 BEDTIME = "Alex keeps stalling at bedtime"
 PLAN = {"homework": {"title": "Homework", "cue_time": "16:00", "status": "active"}}
-FULL_PLAN = {f"habit-{i}": {"title": "Habit", "cue_time": "16:00", "status": "active"} for i in range(6)}
 CHILD_HABIT = "44444444-4444-4444-4444-444444444444"
 REF = search_guidance("stalling at bedtime", 8)[0].ref
 
@@ -85,14 +84,6 @@ def test_recommendations_refuse_unknown_shown_and_planned_habits():
     )
     assert "Skipped: flying" in result
     assert turn.recommendations == {"bedtime": "Early nights.", "wash-hands": "This could help."}
-
-
-def test_a_full_plan_gets_no_cards():
-    turn = Turn()
-    result = tools_of(snapshot(plan=FULL_PLAN), turn)["recommend_habits"].invoke(
-        {"quests": [pick("bedtime")]}
-    )
-    assert result.startswith("Error: the plan already has 6 habits") and turn.recommendations == {}
 
 
 def test_recommending_without_errors_mentions_nothing_skipped():
@@ -209,30 +200,6 @@ def test_a_failed_fit_check_drops_the_picks(remote, llm_reply):
     assert reply.turn.recommendations == {} and reply.no_habit_match and reply.text == "Keep it calm."
 
 
-def test_fallback_offers_no_cards_for_a_full_plan():
-    reply = fallback(snapshot(plan=FULL_PLAN), BEDTIME)
-    assert (reply.mapped_by, reply.turn.recommendations) == ("manual", {})
-
-
-def test_tips_for_a_full_plan_are_not_flagged_as_no_match(remote, llm_reply):
-    llm_reply(call("research", problem="stalling at bedtime"), f"Keep a calm routine [{REF}].")
-    reply = run_turn(remote, snapshot(plan=FULL_PLAN), [], BEDTIME, ["Alex"])
-    assert not reply.no_habit_match and reply.turn.recommendations == {} and reply.turn.sources
-
-
-def test_habits_in_the_plan_that_suit_the_problem_are_found():
-    plan = PLAN | {"bedtime": {"title": "Bed", "cue_time": "20:00", "status": "active"}}
-    assert coach.covering_habits(snapshot(plan=plan), BEDTIME) == ["bedtime"]
-    assert coach.covering_habits(snapshot(), BEDTIME) == []
-
-
-def test_tips_when_the_plan_already_covers_the_problem_name_those_habits(remote, llm_reply):
-    llm_reply(call("research", problem="stalling at bedtime"), f"Keep a calm routine [{REF}].")
-    plan = PLAN | {"bedtime": {"title": "Bed", "cue_time": "20:00", "status": "active"}}
-    reply = run_turn(remote, snapshot(plan=plan), [], BEDTIME, ["Alex"])
-    assert reply.covered_by == ["bedtime"] and not reply.no_habit_match and reply.turn.recommendations == {}
-
-
 def test_researching_and_choosing_no_habit_is_flagged(remote, llm_reply):
     llm_reply(call("research", problem="lying"), "Stay calm and praise honesty.")
     reply = run_turn(remote, snapshot(), [], "He lies to us", ["Alex"])
@@ -244,10 +211,6 @@ def test_replies_are_tidied():
     text = "A routine helps. I have shown three habit cards below! Tell me more."
     assert coach.tidy_reply(text, False) == "A routine helps. Tell me more."
     assert coach.tidy_reply(text, True) == text
-    loose = "Try these: 1️⃣ A tiny bite (G19). 2️⃣ Eat together (G20, G45). Kids aged 3. 4 is fine."
-    assert coach.tidy_reply(loose, True) == (
-        "Try these:\n1. A tiny bite [G19].\n2. Eat together [G20, G45]. Kids aged 3. 4 is fine."
-    )
 
 
 def test_several_citations_in_one_bracket_are_kept(remote, llm_reply):
@@ -289,6 +252,7 @@ def test_a_model_failure_falls_back_and_logs_only_the_status(remote, llm_reply, 
 
 
 def test_a_turn_over_its_deadline_falls_back(remote, monkeypatch):
+    monkeypatch.setattr(coach, "parent_risk_model", lambda *args: False)
     release = threading.Event()
 
     class Slow:
@@ -356,6 +320,36 @@ def test_a_message_saves_the_conversation_and_cards(client, alex):
     assert client.get(f"/v1/children/{alex}/coach/messages").json()["messages"] == body["messages"]
 
 
+def test_coach_metadata_survives_reload_without_another_generation(client, family, alex, db):
+    other = client.post(f"/v1/families/{family}/children", json={"name": "Maya", "age": 6}).json()["id"]
+    alex_result = say(client, alex).json()
+    other_result = say(client, other, "A calmer morning please").json()
+    alex_operation = alex_result["tokenomics"]["operation_id"]
+    other_operation = other_result["tokenomics"]["operation_id"]
+    assert alex_operation != other_operation
+    before = db.execute("SELECT count(*) FROM hq.ai_operations").fetchone()[0]
+    restored = client.get(f"/v1/children/{alex}/coach/messages").json()
+    assert restored["tokenomics"]["operation_id"] == alex_operation
+    assert "estimated_cost_usd" not in restored["tokenomics"]
+    children = client.get(f"/v1/families/{family}/coach-context").json()["children"]
+    assert children[alex]["tokenomics"]["operation_id"] == alex_operation
+    assert children[other]["tokenomics"]["operation_id"] == other_operation
+    assert db.execute("SELECT count(*) FROM hq.ai_operations").fetchone()[0] == before
+    client.delete(f"/v1/children/{alex}/coach/messages")
+    assert "tokenomics" not in client.get(f"/v1/children/{alex}/coach/messages").json()
+
+
+def test_legacy_saved_reply_does_not_inherit_another_operations_metadata(client, alex, db):
+    say(client, alex)
+    db.execute(
+        "INSERT INTO hq.coach_messages(child_id,role,content) VALUES(%s,'coach','Older unmetered result')",
+        (alex,),
+    )
+    restored = client.get(f"/v1/children/{alex}/coach/messages").json()
+    assert restored["messages"][-1]["content"] == "Older unmetered result"
+    assert "tokenomics" not in restored
+
+
 def test_refining_replaces_the_cards_with_different_habits(client, alex):
     first = say(client, alex).json()["suggestions"][0]["habit_id"]
     second = say(client, alex, "Something different for bedtime please").json()["suggestions"]
@@ -368,15 +362,6 @@ def test_a_reply_with_no_matching_habit_clears_earlier_cards(client, alex, db, m
     monkeypatch.setattr(coach, "run_turn", lambda *args: coach.Reply("Tips.", no_habit_match=True))
     body = say(client, alex, "He bites his nails").json()
     assert [s["id"] for s in body["suggestions"]] == [str(planner)] and body["messages"][-1]["no_habit_match"]
-
-
-def test_a_reply_stores_the_titles_of_the_habits_that_cover_it(client, alex, db, monkeypatch):
-    monkeypatch.setattr(
-        coach, "run_turn", lambda *args: coach.Reply("Tips.", covered_by=["homework", "gone"])
-    )
-    title = db.execute("SELECT title FROM hq.habits WHERE id='homework'").fetchone()[0]
-    message = say(client, alex).json()["messages"][-1]
-    assert message["covered_by"] == [title] and not message["no_habit_match"]
 
 
 def test_risky_text_is_never_stored(client, alex, db):
@@ -410,25 +395,39 @@ def test_a_turn_uses_the_snapshot_and_saves_changes(settings, remote, db, alex, 
 def test_new_chat_clears_the_thread(client, alex):
     say(client, alex)
     assert client.delete(f"/v1/children/{alex}/coach/messages").status_code == 204
-    empty = {"plan_full": False, "messages": [], "suggestions": []}
-    assert client.get(f"/v1/children/{alex}/coach/messages").json() == empty
+    assert client.get(f"/v1/children/{alex}/coach/messages").json() == {
+        "messages": [],
+        "suggestions": [],
+        "goal_recommendations": [],
+    }
 
 
-def test_the_thread_says_when_the_plan_is_full(client, alex, db):
-    for habit in ["homework", "screen", "bedtime", "outdoor-play", "day-chat", "tidy-space"]:
-        db.execute(
-            "INSERT INTO hq.child_habits(child_id,habit_id,cue_time,days) VALUES(%s,%s,'16:00','{mon}')",
-            (alex, habit),
+def test_tracking_only_mode_bypasses_the_old_daily_limit_and_keeps_accounting(
+    settings, remote, db, alex, llm_reply
+):
+    limited = remote.model_copy(update={"ai_daily_limit": 1})
+    policy = tokenomics.get_policy(settings)
+    tokenomics.update_policy(settings, policy["revision"], {"enforce_budgets": False})
+    llm_reply("Try one small step before bedtime.")
+    try:
+        with TestClient(create_app(limited)) as c:
+            c.headers["Authorization"] = "Bearer " + token(settings)
+            first = say(c, alex)
+            second = say(c, alex)
+        assert first.status_code == second.status_code == 200
+        assert first.json()["mapped_by"] == second.json()["mapped_by"] == "ai"
+        assert first.json()["tokenomics"]["operation_id"] != second.json()["tokenomics"]["operation_id"]
+        assert len(llm_reply.seen) == 2
+        assert db.execute(
+            "SELECT count(*),sum(credits) FROM hq.ai_operations WHERE activity='coach' AND child_id=%s",
+            (alex,),
+        ).fetchone() == (2, 4)
+    finally:
+        tokenomics.update_policy(
+            settings,
+            tokenomics.get_policy(settings)["revision"],
+            {"enforce_budgets": policy["enforce_budgets"]},
         )
-    assert client.get(f"/v1/children/{alex}/coach/messages").json()["plan_full"]
-
-
-def test_the_daily_limit_stops_more_requests(settings, db, alex):
-    limited = settings.model_copy(update={"ai_daily_limit": 1})
-    with TestClient(create_app(limited)) as c:
-        c.headers["Authorization"] = "Bearer " + token(settings)
-        assert say(c, alex).status_code == 200
-        assert say(c, alex).status_code == 429
 
 
 def test_accepting_needs_the_pin_and_adds_the_habit(client, family, alex):

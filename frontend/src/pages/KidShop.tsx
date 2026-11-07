@@ -1,3 +1,4 @@
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 /**
  * Kid mode reward shop, from the backend. Asking for a reward holds the points until a grown-up says
  * yes or "not this time" (the points come back). A mystery box picks its prize on the server. The
@@ -68,12 +69,12 @@ export default function KidShop({ childId }: { childId: string }) {
   }
 
   return (
-    <div className="page page--kid" data-buddy={child.buddy}>
+    <div className="page page--kid" data-buddy={buddyDisplayProps(child).selectionMode === "catalog" ? "catalog" : child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>
         <section className="shop-hero">
-          <Buddy buddy={child.buddy} accessory={child.wearing} size={84} />
+          <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={84} />
           <div>
             <h1>Reward shop</h1>
             <p>Pick something fun. A grown-up says yes before you get it, and if it's not this time, your points come back.</p>

@@ -37,6 +37,8 @@
 .page--kid[data-buddy] .kid-hero p:not(.speech) { color: #fff; }
 .page--kid[data-buddy] .btn--primary { background: linear-gradient(135deg, var(--kid-from), var(--kid-to)); box-shadow: none; }
 
+.page--kid[data-buddy="catalog"] { --violet: #7550e5; --violet-deep: #4e2d9f; --violet-soft: #eee7ff; --line: #e2d8f7; --kid-from: #7550e5; --kid-to: #3d2a91; }
+
 /* Fingers need bigger targets than a mouse does. */
 @media (pointer: coarse) {
   .btn, .chip--button, .about__chip, .pill-choice button { min-height: 44px; }

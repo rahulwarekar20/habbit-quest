@@ -12,11 +12,15 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, vi } from "vitest";
 import App from "../App";
 import { resetWakeState } from "../lib/api";
+import { clearCoachContext } from "../lib/coachContext";
 import { saveCaregiverToken } from "../lib/storage";
 import { StoreProvider } from "../lib/store";
 import { activeServer, stopFakeServer } from "./fakeServer";
 
 beforeEach(() => {
+  // Expanded-buddy journeys opt in explicitly; old screens remain deterministic with local rollout envs.
+  vi.stubEnv("VITE_BUDDY_CATALOG_ENABLED", "false");
+  localStorage.setItem("habitquest.generation.u1.details", "true");
   // jsdom does not lay pages out or scroll, and has no media queries.
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   Element.prototype.scrollIntoView = vi.fn();
@@ -34,6 +38,7 @@ afterEach(() => {
   sessionStorage.clear();
   window.location.hash = "";
   resetWakeState();
+  clearCoachContext();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   // A request the fake doesn't answer means a screen was tested against a 404 it would never get for real.

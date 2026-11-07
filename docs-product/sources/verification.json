@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "main_slides": 10,
+  "final_pngs": 11,
+  "local_links_checked": 221,
+  "missing_targets": [],
+  "png_chunk_integrity": "pass",
+  "metadata_matches_png_dimensions": true,
+  "gallery_alt_text_and_anchors": "pass",
+  "trailing_whitespace": false,
+  "visual_review": "VISUAL-QA.md",
+  "dates_in_artwork_check": "Visual inspection, not OCR",
+  "new_provider_evaluations_run": false,
+  "preserved_images_unchanged": 9
+}

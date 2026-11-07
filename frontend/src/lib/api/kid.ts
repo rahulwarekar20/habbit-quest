@@ -1,5 +1,5 @@
 /** Kid mode: kid sessions, signing in with the family code and a kid PIN, today's quests. */
-import type { ApiFamily, Approval, Buddy, Decision, ThemeWorld, Today, TokenResponse } from "./types";
+import type { ApiFamily, Approval, Buddy, BuddySelectionFields, Decision, ThemeWorld, Today, TokenResponse } from "./types";
 import { request } from "./client";
 
 // ── Kid mode and the daily loop ───────────────────────────────────────────────
@@ -12,10 +12,10 @@ export const startKidSession = (childId: string, pin?: string) =>
 
 export interface LoginFamily {
   family: { id: string; name: string };
-  children: { id: string; name: string; buddy: Buddy; has_pin: boolean }[];
+  children: ({ id: string; name: string; buddy: Buddy; has_pin: boolean } & BuddySelectionFields)[];
 }
 export interface KidLoginResult extends TokenResponse {
-  child: { id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld };
+  child: { id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld } & BuddySelectionFields;
   family: { id: string; name: string };
 }
 
@@ -33,7 +33,7 @@ export const kidLogin = (code: string, childId: string, pin: string) =>
   request<KidLoginResult>("POST", `/v1/kid-login/${encodeURIComponent(code)}`, { child_id: childId, pin }, { noAuth: true });
 /** Kid mode (kid token): Who is playing: `GET /v1/kid/me`. */
 export const getKidMe = () =>
-  request<{ id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld }>("GET", "/v1/kid/me", undefined, { kid: true });
+  request<{ id: string; name: string; age: number; buddy: Buddy; world: ThemeWorld } & BuddySelectionFields>("GET", "/v1/kid/me", undefined, { kid: true });
 /** Kid mode (kid token): Today's quests: `GET /v1/kid/today`. */
 export const getKidToday = () => request<Today>("GET", "/v1/kid/today", undefined, { kid: true });
 /** A child's day: `GET /v1/children/{child_id}/today`. */

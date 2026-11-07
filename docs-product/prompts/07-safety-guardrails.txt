@@ -1,0 +1,53 @@
+Use case: infographic-diagram. Create a polished 16:9 illustration slide titled HabitQuest safety and guardrails. Match supplied HabitQuest figures for STYLE ONLY: clean white paper, slightly irregular navy pen outlines, large indigo/blue headings, lavender/light-blue washes, generous whitespace and semantic objects. NO dates anywhere. This is the implemented refined Coach/source-goal/habit workflow with qualified boundaries, not a claim that every legacy endpoint uses identical safeguards.
+
+COMPOSITION: Six numbered, distinct semantic stations; do not make six identical boxes. Upper left research book (1) supplies evidence to central verified-retrieval funnel (3); lower left authenticated request with a small shield and masking eraser (2) also feeds that funnel. Retrieval feeds typed structured-output sheets/local checklists (4). That output visibly splits: a path labeled with the existing new-prose wording goes to the Coach Safety review and code-decision workbench (5); locally validated HABIT drafts that are ALREADY bound to reviewed saved goals go directly toward the parent gate (6), WITHOUT a whole-habit Safety model. Reviewed Coach prose can reach the parent-facing outcome. A human parent at station6 chooses/previews/accepts; a small lock and transaction checklist stand BEFORE the final PostgreSQL plan cylinder. Only an accepted habit can become a plan write.
+
+The Safety station has a single bounded rejected-prose revision and a clear terminal STOP for twice-rejected/unavailable output. No stop/failure arrow reaches the plan. Do not make the safety model inspect the curated catalog or every habit. LangGraph orchestrates the five-node Coach, not six agents. Use local labeled connections with clean endpoints; the six numbers explain controls, not six serial model calls. Small bottom rail notes distinct report and child-note policies.
+
+EXACT VISIBLE COPY:
+
+HabitQuest safety and guardrails
+Six complementary controls • not six LLM calls
+
+1  Researched source authority
+Canonical cards + evidence
+Age fit • adaptations • explicit limits
+
+2  Scoped Coach input
+Family + child authorization
+Known names + contacts masked
+Recognized urgency → fixed support
+
+3  Verified retrieval
+Pinecone → canonical records
+IDs • hashes • release • age • context
+Code checks; no catalog Safety call
+
+4  Structured output checks
+LangChain: typed provider calls
+Allowed goal IDs + relationships
+Habits use reviewed goals
+Habit schema • age • privacy • novelty
+One habit correction maximum
+
+5  Coach prose review
+New prose only → Safety → code decision
+One rejected-prose revision
+Approved → reviewed output
+Rejected twice / unavailable → fixed failure
+LangGraph: five Coach nodes
+2 normal chat calls • 4 with revision
+
+6  Parent authority
+Choose + preview + accept
+PIN when configured
+Ownership • goal linkage • capacity
+Atomic plan write
+
+Planner/review: local checks; no Coach Safety pass
+Child-note screening: separate policy
+Layered safeguards, not a guarantee of safety.
+
+END OF VISIBLE COPY. Remaining instructions must not be drawn.
+
+FACTUAL BOUNDARIES: Evidence-informed sources are not clinically proven app actions. Local masking catches known names/common contacts, not all personal information. Urgent routing is a recognized-phrase code check, not a clinical diagnosis. No remote input ParentRisk call belongs in refined Coach. Normal Coach has two logical calls, four with one Safety revision; other graph nodes are code. Habit writing uses one writer plus local checks, at most one correction; no separate whole-habit Safety review. Reports use one structured call plus local checks, without Coach Safety. Child-written note screening has separate failure behavior, so do not claim everything fails closed. Approved prose can be shown without a plan mutation; parent acceptance applies to assignment/changes. The unreviewed/failure branch must terminate. Do not add credentials, dates, universal safety guarantees, new autonomous agents or unlisted text. Retain large readable labels; no tiny caveat block.

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from habitquest_backend.accounts import StrictModel
 from habitquest_backend.auth import KID, signed_in
+from habitquest_backend.buddies import BUDDY_COLUMNS
 from habitquest_backend.coach import save_suggestion
 from habitquest_backend.config import Settings
 from habitquest_backend.db import one, transaction
@@ -124,7 +125,7 @@ def history_view(conn, child_id: UUID, day: date) -> dict:
 
 def today_view(conn, child_id: UUID) -> dict:
     """The child's habits scheduled for today (in the family's time zone), each with today's status."""
-    child = one(conn, "SELECT id,name,buddy,world FROM hq.children WHERE id=%s", (child_id,))
+    child = one(conn, f"SELECT id,name,age,{BUDDY_COLUMNS},world FROM hq.children WHERE id=%s", (child_id,))
     day = conn.execute("SELECT hq.child_today(%s) AS day", (child_id,)).fetchone()["day"]
     habits = conn.execute(
         "SELECT ch.id AS child_habit_id,h.id AS habit_id,h.kid_title,h.kid_hint,h.icon,h.anchor,h.tier,h.points,"
@@ -143,6 +144,14 @@ def today_view(conn, child_id: UUID) -> dict:
         habit["stars"] = stars.get(habit["habit_id"], 0)
     week = quest_days(conn, child_id)
     upcoming = (day + timedelta(n) for n in range(1, 8))
+    other_days = conn.execute(
+        "SELECT h.id AS habit_id,h.kid_title,h.kid_hint,h.icon,ch.days,"
+        "to_char(ch.cue_time,'HH24:MI') AS cue_time"
+        " FROM hq.child_habits ch JOIN hq.habits h ON h.id=ch.habit_id"
+        " WHERE ch.child_id=%s AND ch.status='active' AND NOT (to_char(%s::date,'dy')=ANY(ch.days))"
+        " ORDER BY ch.cue_time,h.kid_title",
+        (child_id, day),
+    ).fetchall()
     return {
         "child": child,
         "day": day,
@@ -152,6 +161,7 @@ def today_view(conn, child_id: UUID) -> dict:
         "progress": progress(conn, child_id),
         "points": balance(conn, child_id),
         "habits": habits,
+        "upcoming_habits": other_days,
         **history_view(conn, child_id, day),
     }
 

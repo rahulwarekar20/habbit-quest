@@ -9,10 +9,20 @@ from pydantic import Field, field_validator
 
 from habitquest_backend.accounts import StrictModel
 from habitquest_backend.ai import Candidate, map_pain_point
-from habitquest_backend.auth import signed_in
+from habitquest_backend.auth import family_pin_ok, signed_in
+from habitquest_backend.buddies import (
+    BUDDY_COLUMNS,
+    Buddy,
+    BuddySelection,
+    require_selection_revision,
+    selection_changes,
+    validate_catalog_choice,
+)
 from habitquest_backend.config import Settings
 from habitquest_backend.db import one, transaction
+from habitquest_backend.generation_metering import endpoint
 from habitquest_backend.journey import progress
+from habitquest_backend.planning_catalog import CatalogRepository, Setting, require_goal
 
 MAX_ACTIVE_HABITS = 6
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -23,13 +33,12 @@ DEFAULT_CUES = {
     "evening": "18:30",
     "bedtime": "20:00",
 }
-CHILD_COLUMNS = "id,family_id,name,age,buddy,world,tier_override,routine_times,kid_pin_hash IS NOT NULL AS has_pin,created_at"
+CHILD_COLUMNS = f"id,family_id,name,age,{BUDDY_COLUMNS},world,tier_override,routine_times,kid_pin_hash IS NOT NULL AS has_pin,created_at"
 HABIT_COLUMNS = "h.id,h.goal_id,h.title,h.description,h.kid_title,h.kid_hint,h.icon,h.anchor,h.tier,h.points"
 
 Anchor = Literal["morning", "midday", "after_school", "evening", "bedtime"]
 Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 Time = Annotated[str, Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$", description="24-hour HH:MM")]
-Buddy = Literal["fox", "owl", "bear", "bunny"]
 Days = Annotated[list[Day], Field(min_length=1, max_length=7)]
 
 
@@ -46,6 +55,7 @@ class ChildInput(StrictModel):
     name: str = Field(min_length=1, max_length=40)
     age: int = Field(ge=3, le=13)
     buddy: Buddy = "fox"
+    buddy_selection: BuddySelection | None = None
     routine_times: dict[Anchor, Time] = Field(
         default_factory=dict, description='When each part of the day starts, e.g. {"bedtime": "20:00"}'
     )
@@ -57,6 +67,7 @@ class ChildUpdate(StrictModel):
     name: str | None = Field(default=None, min_length=1, max_length=40)
     age: int | None = Field(default=None, ge=3, le=13)
     buddy: Buddy | None = None
+    buddy_selection: BuddySelection | None = None
     tier_override: int | None = Field(
         default=None, ge=0, le=3, description="Highest quest tier to allow; 0 follows the child's world"
     )
@@ -66,6 +77,7 @@ class ChildUpdate(StrictModel):
 class PainPointInput(StrictModel):
     """The request body of `POST /v1/children/{child_id}/pain-points`."""
 
+    request_id: UUID | None = None
     text: str = Field(min_length=5, max_length=2000, description="The problem, in the parent's own words")
 
 
@@ -102,6 +114,97 @@ class ChildHabitUpdate(StrictModel):
     status: Literal["active", "paused", "removed"] | None = None
 
     _days = field_validator("days")(unique)
+
+
+class ChildHabitAdd(PlanHabit):
+    """Add an already approved/catalog habit without replacing the rest of a child's plan."""
+
+    pin: str | None = Field(default=None, pattern=r"^\d{4}$")
+
+
+class ChildGoalUpdate(StrictModel):
+    """Save or remove one goal while keeping its immutable source and past assignments."""
+
+    status: Literal["active", "dropped"]
+    setting: Setting = "home"
+
+
+def require_plan_room(conn, child_id: UUID) -> None:
+    """Check the shared plan limit while the caller holds this child's row lock."""
+    used = conn.execute(
+        "SELECT count(*) AS n FROM hq.child_habits WHERE child_id=%s AND status<>'removed'", (child_id,)
+    ).fetchone()["n"]
+    if used >= MAX_ACTIVE_HABITS:
+        raise HTTPException(
+            409,
+            f"This plan already has {MAX_ACTIVE_HABITS} habits. Remove a habit from the plan, then add this one. Your generated choices are saved.",
+        )
+
+
+def assign_existing_habit(conn, child: dict, body: PlanHabit, repository: CatalogRepository) -> dict:
+    """Add or restore approved content, preserving old assignments and completion history."""
+    habit = one(
+        conn,
+        "SELECT h.id,h.goal_id,h.anchor,h.min_age,h.max_age,h.tier,h.generated_child_id"
+        " FROM hq.habits h JOIN hq.goals g ON g.id=h.goal_id"
+        " WHERE h.id=%s AND h.is_active AND g.is_active",
+        (body.habit_id,),
+    )
+    if habit["generated_child_id"] not in (None, child["id"]):
+        raise HTTPException(422, "This generated habit belongs to another child")
+    if not habit["min_age"] <= child["age"] <= habit["max_age"]:
+        raise HTTPException(422, "This habit does not fit the child's current age")
+    if habit["tier"] > progress(conn, child["id"])["unlocked_tier"]:
+        raise HTTPException(422, "This habit is above the child's unlocked tier")
+    if habit["generated_child_id"] is not None:
+        detail = one(
+            conn,
+            "SELECT d.source,d.draft,d.content_digest,b.setting FROM hq.generated_habit_details d"
+            " JOIN hq.habit_draft_batches b ON b.id=d.batch_id WHERE d.habit_id=%s AND d.child_id=%s",
+            (body.habit_id, child["id"]),
+        )
+        goal = require_goal(conn, repository, habit["goal_id"], child["age"], detail["setting"])
+        if detail["source"] != goal.source_ref:
+            raise HTTPException(409, "The source goal changed. Generate fresh habits.")
+        if detail["draft"]["recurrence"] == "daily" and body.days is not None and set(body.days) != set(DAYS):
+            raise HTTPException(422, "Daily habits require all seven days")
+        if conn.execute(
+            "SELECT 1 FROM hq.generated_habit_details d JOIN hq.child_habits ch ON ch.habit_id=d.habit_id"
+            " WHERE d.child_id=%s AND d.content_digest=%s AND d.habit_id<>%s AND ch.status<>'removed'",
+            (child["id"], detail["content_digest"], body.habit_id),
+        ).fetchone():
+            raise HTTPException(409, "This action is already in the child's plan")
+    current = conn.execute(
+        "SELECT id,to_char(cue_time,'HH24:MI') AS cue_time,days FROM hq.child_habits"
+        " WHERE child_id=%s AND habit_id=%s AND status<>'removed'",
+        (child["id"], body.habit_id),
+    ).fetchone()
+    if current is None:
+        require_plan_room(conn, child["id"])
+    cue = (
+        body.cue_time
+        or (current and current["cue_time"])
+        or child["routine_times"].get(habit["anchor"])
+        or DEFAULT_CUES[habit["anchor"]]
+    )
+    days = body.days or (current and current["days"]) or DAYS
+    conn.execute(
+        "INSERT INTO hq.child_goals(child_id,goal_id,status) VALUES(%s,%s,'active')"
+        " ON CONFLICT(child_id,goal_id) DO UPDATE SET status='active'",
+        (child["id"], habit["goal_id"]),
+    )
+    if current:
+        conn.execute(
+            "UPDATE hq.child_habits SET status='active',cue_time=%s,days=%s WHERE id=%s",
+            (cue, days, current["id"]),
+        )
+        return current
+    return one(
+        conn,
+        "INSERT INTO hq.child_habits(child_id,habit_id,cue_time,days,started_on)"
+        " VALUES(%s,%s,%s,%s,hq.child_today(%s)) RETURNING id",
+        (child["id"], body.habit_id, cue, days, child["id"]),
+    )
 
 
 def candidates(conn, age: int, tier: int) -> list[Candidate]:
@@ -148,8 +251,9 @@ def plan_view(conn, child_id: UUID) -> dict:
     ).fetchall()
     options = conn.execute(
         f"SELECT {HABIT_COLUMNS} FROM hq.habits h WHERE h.is_active AND h.goal_id=ANY(%s)"
-        " AND %s BETWEEN h.min_age AND h.max_age AND h.tier<=%s ORDER BY h.tier,h.title",
-        ([g["goal_id"] for g in goals], child["age"], level["unlocked_tier"]),
+        " AND %s BETWEEN h.min_age AND h.max_age AND h.tier<=%s"
+        " AND (h.generated_child_id IS NULL OR h.generated_child_id=%s) ORDER BY h.tier,h.title",
+        ([g["goal_id"] for g in goals], child["age"], level["unlocked_tier"], child_id),
     ).fetchall()
     for goal in goals:
         goal["options"] = [
@@ -163,12 +267,23 @@ def plan_view(conn, child_id: UUID) -> dict:
         " WHERE ch.child_id=%s AND ch.status<>'removed' ORDER BY ch.cue_time,h.title",
         (child_id,),
     ).fetchall()
-    return {"child_id": child["id"], "progress": level, "goals": goals, "habits": habits}
+    return {
+        "child_id": child["id"],
+        "progress": level,
+        "goals": goals,
+        "habits": habits,
+        "capacity": {
+            "limit": MAX_ACTIVE_HABITS,
+            "used": len(habits),
+            "remaining": max(0, MAX_ACTIVE_HABITS - len(habits)),
+        },
+    }
 
 
 def router(settings: Settings) -> APIRouter:
     api = APIRouter()
     User = Annotated[UUID, Depends(signed_in(settings))]
+    repository = CatalogRepository()
 
     @api.post("/v1/families/{family_id}/children", status_code=201, tags=["Children"], summary="Add a child")
     def add_child(family_id: UUID, body: ChildInput, user: User) -> dict:
@@ -178,11 +293,32 @@ def router(settings: Settings) -> APIRouter:
         """
         with transaction(settings, user) as conn:
             one(conn, "SELECT id FROM hq.families WHERE id=%s", (family_id,))
+            selection = {}
+            if "buddy_selection" in body.model_fields_set:
+                if body.buddy_selection is None:
+                    raise HTTPException(422, "A buddy selection cannot be empty")
+                choice = body.buddy_selection.model_copy(
+                    update={"expected_revision": body.buddy_selection.expected_revision or 0}
+                )
+                selection = selection_changes(
+                    conn, settings, {"age": body.age, "buddy_selection_revision": 0}, choice
+                )
             return one(
                 conn,
-                f"INSERT INTO hq.children(family_id,name,age,buddy,routine_times) VALUES(%s,%s,%s,%s,%s)"
+                "INSERT INTO hq.children(family_id,name,age,buddy,routine_times,buddy_selection_mode,"
+                "catalog_buddy_id,buddy_catalog_version,buddy_selection_revision) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 f" RETURNING {CHILD_COLUMNS}",
-                (family_id, body.name, body.age, body.buddy, Jsonb(body.routine_times)),
+                (
+                    family_id,
+                    body.name,
+                    body.age,
+                    selection.get("buddy", body.buddy),
+                    Jsonb(body.routine_times),
+                    selection.get("buddy_selection_mode", "legacy"),
+                    selection.get("catalog_buddy_id"),
+                    selection.get("buddy_catalog_version"),
+                    selection.get("buddy_selection_revision", 0),
+                ),
             )
 
     @api.get("/v1/families/{family_id}/children", tags=["Children"], summary="List children")
@@ -206,12 +342,29 @@ def router(settings: Settings) -> APIRouter:
         """Changes any of `name`, `age`, `buddy`, `tier_override` (the highest quest tier to allow, 0 to follow
         the child's world) and `routine_times` (replaced as a whole); omitted fields stay as they are. Habits already in the plan keep their times.
         """
-        changes = body.model_dump(exclude_none=True)
+        changes = body.model_dump(exclude_none=True, exclude={"buddy_selection"})
+        if "buddy_selection" in body.model_fields_set and body.buddy_selection is None:
+            raise HTTPException(422, "A buddy selection cannot be empty")
+        if body.buddy_selection is not None and "buddy" in body.model_fields_set:
+            raise HTTPException(422, "Send buddy_selection without the compatibility buddy field")
+        require_selection_revision(body.buddy_selection)
         with transaction(settings, user) as conn:
-            one(conn, "SELECT id FROM hq.children WHERE id=%s", (child_id,))
-            for column, value in changes.items():
-                value = Jsonb(value) if column == "routine_times" else value
-                conn.execute(f"UPDATE hq.children SET {column}=%s WHERE id=%s", (value, child_id))
+            child = one(
+                conn, f"SELECT age,{BUDDY_COLUMNS} FROM hq.children WHERE id=%s FOR UPDATE", (child_id,)
+            )
+            if child["buddy_selection_revision"] > 0:
+                changes.pop("buddy", None)
+            final = {**child, **changes}
+            if body.buddy_selection is not None:
+                changes.update(selection_changes(conn, settings, final, body.buddy_selection))
+            elif final["buddy_selection_mode"] == "catalog" and "age" in changes:
+                validate_catalog_choice(conn, final)
+            if changes:
+                assignments = ",".join(f"{column}=%s" for column in changes)
+                values = [
+                    Jsonb(value) if column == "routine_times" else value for column, value in changes.items()
+                ]
+                conn.execute(f"UPDATE hq.children SET {assignments} WHERE id=%s", (*values, child_id))
             return one(conn, f"SELECT {CHILD_COLUMNS} FROM hq.children WHERE id=%s", (child_id,))
 
     @api.post(
@@ -220,6 +373,7 @@ def router(settings: Settings) -> APIRouter:
         tags=["Onboarding"],
         summary="Describe a problem",
     )
+    @endpoint(settings, "onboarding")
     def add_pain_point(child_id: UUID, body: PainPointInput, user: User, response: Response) -> dict:
         """The parent describes a problem in their own words. AI maps it to one to three pre-approved goals, each
         with a one-sentence `reason`, and recommends up to two habits per goal from those suited to the child's
@@ -266,6 +420,49 @@ def router(settings: Settings) -> APIRouter:
         with transaction(settings, user) as conn:
             return plan_view(conn, child_id)
 
+    @api.patch(
+        "/v1/children/{child_id}/goals/{goal_id}", tags=["Onboarding"], summary="Save or remove a goal"
+    )
+    def update_goal(child_id: UUID, goal_id: str, body: ChildGoalUpdate, user: User) -> dict:
+        """Saves a goal without assigning habits, or drops it and ends its assignments while preserving history."""
+        with transaction(settings, user) as conn:
+            child = one(conn, "SELECT id,age FROM hq.children WHERE id=%s FOR UPDATE", (child_id,))
+            goal = one(conn, "SELECT id,is_active FROM hq.goals WHERE id=%s", (goal_id,))
+            if body.status == "active":
+                if not goal["is_active"]:
+                    raise HTTPException(404, "This goal is retired")
+                if goal_id.startswith("hqg-"):
+                    require_goal(conn, repository, goal_id, child["age"], body.setting)
+                conn.execute(
+                    "INSERT INTO hq.child_goals(child_id,goal_id,status) VALUES(%s,%s,'active')"
+                    " ON CONFLICT(child_id,goal_id) DO UPDATE SET status='active'",
+                    (child_id, goal_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE hq.child_goals SET status='dropped' WHERE child_id=%s AND goal_id=%s",
+                    (child_id, goal_id),
+                )
+                conn.execute(
+                    "UPDATE hq.child_habits SET status='removed',ended_on=hq.child_today(%s)"
+                    " WHERE child_id=%s AND status<>'removed'"
+                    " AND habit_id IN (SELECT id FROM hq.habits WHERE goal_id=%s)",
+                    (child_id, child_id, goal_id),
+                )
+            return plan_view(conn, child_id)
+
+    @api.post("/v1/children/{child_id}/habits", tags=["Onboarding"], summary="Add an existing habit")
+    def add_existing(child_id: UUID, body: ChildHabitAdd, user: User) -> dict:
+        """Adds or restores one approved/catalog habit after the family PIN, ownership, age and capacity checks."""
+        settings.pin_attempts.check(str(user))
+        with transaction(settings, user) as conn:
+            child = one(conn, "SELECT * FROM hq.children WHERE id=%s FOR UPDATE", (child_id,))
+            family = one(conn, "SELECT pin_hash FROM hq.families WHERE id=%s", (child["family_id"],))
+            if not family_pin_ok(body.pin, family["pin_hash"]):
+                raise HTTPException(403, "Incorrect grown-ups PIN")
+            assign_existing_habit(conn, child, body, repository)
+            return plan_view(conn, child_id)
+
     @api.put("/v1/children/{child_id}/plan", tags=["Onboarding"], summary="Set the plan")
     def set_plan(child_id: UUID, body: PlanInput, user: User) -> dict:
         """Sets the child's plan in one step: the `goals` to work on and the `habits` to do, at most six.
@@ -277,7 +474,9 @@ def router(settings: Settings) -> APIRouter:
         """
         requested = [h.habit_id for h in body.habits]
         with transaction(settings, user) as conn:
-            child = one(conn, "SELECT id,age,routine_times FROM hq.children WHERE id=%s", (child_id,))
+            child = one(
+                conn, "SELECT id,age,routine_times FROM hq.children WHERE id=%s FOR UPDATE", (child_id,)
+            )
             tier = progress(conn, child_id)["unlocked_tier"]
             goals = {
                 row["id"]
@@ -290,7 +489,9 @@ def router(settings: Settings) -> APIRouter:
             catalog = {
                 row["id"]: row
                 for row in conn.execute(
-                    "SELECT id,goal_id,anchor,min_age,max_age,tier FROM hq.habits WHERE is_active AND id=ANY(%s)",
+                    "SELECT h.id,h.goal_id,h.anchor,h.min_age,h.max_age,h.tier,d.child_id AS generated_for_child_id"
+                    " FROM hq.habits h LEFT JOIN hq.generated_habit_details d ON d.habit_id=h.id"
+                    " WHERE h.is_active AND h.id=ANY(%s)",
                     (requested,),
                 ).fetchall()
             }
@@ -298,6 +499,8 @@ def router(settings: Settings) -> APIRouter:
                 habit = catalog.get(habit_id)
                 if habit is None:
                     raise HTTPException(422, f"Unknown habit: {habit_id}")
+                if habit["generated_for_child_id"] not in (None, child_id):
+                    raise HTTPException(422, "This generated habit belongs to another child")
                 if habit["goal_id"] not in goals:
                     raise HTTPException(
                         422, f"{habit_id} belongs to goal {habit['goal_id']}, which is not listed"
@@ -362,14 +565,19 @@ def router(settings: Settings) -> APIRouter:
         """
         changes = body.model_dump(exclude_none=True)
         with transaction(settings, user) as conn:
-            row = one(conn, "SELECT child_id,status FROM hq.child_habits WHERE id=%s", (child_habit_id,))
+            hint = one(conn, "SELECT child_id FROM hq.child_habits WHERE id=%s", (child_habit_id,))
+            one(conn, "SELECT id FROM hq.children WHERE id=%s FOR UPDATE", (hint["child_id"],))
+            row = one(
+                conn, "SELECT child_id,status FROM hq.child_habits WHERE id=%s FOR UPDATE", (child_habit_id,)
+            )
             if row["status"] == "removed":
                 raise HTTPException(409, "This habit was removed; add it again through the plan")
             for column, value in changes.items():
                 conn.execute(f"UPDATE hq.child_habits SET {column}=%s WHERE id=%s", (value, child_habit_id))
             if changes.get("status") == "removed":
                 conn.execute(
-                    "UPDATE hq.child_habits SET ended_on=current_date WHERE id=%s", (child_habit_id,)
+                    "UPDATE hq.child_habits SET ended_on=hq.child_today(%s) WHERE id=%s",
+                    (row["child_id"], child_habit_id),
                 )
             return plan_view(conn, row["child_id"])
 

@@ -17,7 +17,9 @@ describe("signing in", () => {
     const server = startFakeServer();
     const { user } = renderApp("/login", { signedIn: false });
 
+    expect(await screen.findByRole("link", { name: "Admin login" })).toHaveAttribute("href", "/admin");
     await user.click(await screen.findByRole("button", { name: "Developer login" }));
+    expect(screen.getByRole("link", { name: "Admin login" })).toBeVisible();
     await user.type(screen.getByLabelText("Shared password"), DEV_PASSWORD);
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -45,6 +47,7 @@ describe("signing in", () => {
     renderApp("/login", { signedIn: false });
     await screen.findByRole("heading", { name: "Welcome to HabbitQuest" });
     expect(screen.queryByRole("button", { name: "Developer login" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Admin login" })).toHaveAttribute("href", "/admin");
   });
 });
 

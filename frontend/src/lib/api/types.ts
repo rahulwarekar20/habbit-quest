@@ -4,6 +4,18 @@
 
 export type Role = "father" | "mother" | "guardian" | "other";
 export type Buddy = "fox" | "owl" | "bear" | "bunny";
+export type BuddySelectionMode = "legacy" | "catalog";
+/** Optional for old cached responses; current server responses include all four fields. */
+export interface BuddySelectionFields {
+  buddy_selection_mode?: BuddySelectionMode;
+  catalog_buddy_id?: string | null;
+  buddy_catalog_version?: string | null;
+  buddy_selection_revision?: number;
+}
+export type BuddySelectionInput = (
+  | { mode: "legacy"; buddy: Buddy; catalog_buddy_id?: never; buddy_catalog_version?: never }
+  | { mode: "catalog"; catalog_buddy_id: string; buddy_catalog_version: string; buddy?: never }
+) & { expected_revision?: number };
 export type ThemeWorld = "camp" | "mosswood" | "sky" | "coral" | "crystal" | "star";
 export type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
@@ -35,7 +47,7 @@ export interface ApiFamily {
   caregivers: Caregiver[];
 }
 
-export interface ApiChild {
+export interface ApiChild extends BuddySelectionFields {
   id: string;
   family_id: string;
   name: string;
@@ -47,7 +59,7 @@ export interface ApiChild {
   has_pin: boolean; // the child has their own kid PIN
   created_at: string;
 }
-export type ChildInput = Pick<ApiChild, "name" | "age" | "buddy" | "routine_times"> & { tier_override?: number };
+export type ChildInput = Pick<ApiChild, "name" | "age" | "routine_times"> & { buddy?: Buddy; buddy_selection?: BuddySelectionInput; tier_override?: number };
 
 export interface Landmark { id: string; name: string; emoji: string; sparks: number; x: number; y: number }
 export interface JourneyWorld {
@@ -101,7 +113,7 @@ export interface PlanHabit extends HabitText {
   status: "active" | "paused";
   started_on: string;
 }
-export interface Plan { child_id: string; progress: Progress; goals: PlanGoal[]; habits: PlanHabit[] }
+export interface Plan { child_id: string; progress: Progress; goals: PlanGoal[]; habits: PlanHabit[]; capacity?: { limit: number; used: number; remaining: number } }
 export interface PlanInput {
   goals: string[];
   habits: { habit_id: string; cue_time?: string; days?: DayName[] }[];
@@ -135,7 +147,8 @@ export interface TodayHabit {
   stars: number;
 }
 export interface Today {
-  child: { id: string; name: string; buddy: Buddy; world: ThemeWorld };
+  upcoming_habits?: { habit_id: string; kid_title: string; kid_hint: string; icon: string; cue_time: string; days: DayName[] }[];
+  child: { id: string; name: string; age?: number; buddy: Buddy; world: ThemeWorld } & BuddySelectionFields;
   day: string;
   welcome_back: boolean;
   rest_day: boolean; // the child has a plan, but no quests today
@@ -212,7 +225,8 @@ export interface Surprise {
 }
 
 export interface FamilySettings { app_limit: number; buddy_talk: boolean }
-export interface Extras extends FamilySettings {
+export interface Extras extends FamilySettings, BuddySelectionFields {
+  buddy?: Buddy;
   discoveries: string[];
   accessories: string[];
   wearing: string | null;
@@ -245,16 +259,43 @@ export interface CoachMessage {
   content: string;
   sources: { ref: string; title: string }[];
   no_habit_match: boolean;
-  /** Titles of quests already in the plan that suit this problem, when the reply offered no new one. */
-  covered_by: string[];
   created_at: string;
 }
-/** `plan_full`: the child already has the most quests allowed, so the coach gives tips without quest cards. */
-export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[]; plan_full?: boolean }
+export type HabitSetting = "home" | "school" | "community" | "outdoors" | "online";
+export interface SourceReference {
+  source_id: string;
+  concept_id: string;
+  category_id: string;
+  catalog_version: string;
+  record_sha256: string;
+  snapshot_id?: string;
+}
+export interface GoalRecommendation {
+  id: string;
+  child_id: string;
+  goal_id: string;
+  title: string;
+  description: string;
+  reason: string;
+  source_ref: SourceReference;
+  setting: HabitSetting;
+  created_at: string;
+}
+export interface CoachThread { messages: CoachMessage[]; suggestions: Suggestion[]; goal_recommendations?: GoalRecommendation[]; tokenomics?: import("./tokenomics").GenerationAccounting }
+export interface CoachContext { children: Record<string, CoachThread>; history_limit: number }
 export interface CoachReply extends CoachThread {
+  tokenomics?: import("./tokenomics").GenerationAccounting;
   reply: string;
+  response_goal_ids?: string[];
   safety: { guidance: string } | null;
   mapped_by: "ai" | "keywords" | "manual";
+  outcome?: string;
+  timings?: Record<string, number>;
+  logical_calls?: number | null;
+  generation_passes?: number | null;
+  safety_revision?: boolean | null;
+  provider_attempts?: Record<string, number>;
+  risk_status?: "risk" | "no_risk" | "unavailable" | "local_risk" | "local_only" | "not_checked";
 }
 export interface PlanReport { summary: string; tips: string[] }
 export interface ReviewReport {
@@ -262,4 +303,4 @@ export interface ReviewReport {
   children: { child: string; wins: string; watch: string }[];
   patterns: string[];
 }
-export interface Report<T> { id: string; kind: "plan" | "review"; result: T; created_at: string }
+export interface Report<T> { id: string; kind: "plan" | "review"; result: T; created_at: string; tokenomics?: import("./tokenomics").GenerationAccounting }

@@ -1,0 +1,49 @@
+Use case: infographic-diagram. Create a polished hand-drawn landscape 16:9 illustration slide for HabitQuest evaluation evidence. Use the supplied current HabitQuest figures ONLY as style references: white paper, dark navy hand ink, readable indigo/blue headings, restrained purple/lavender marker washes, meaningful illustrated objects and generous whitespace. No date anywhere in the artwork. No logos required.
+
+VIEWER QUESTION: What evidence supports the catalog, model choices and safeguards, and what does each kind of test actually establish?
+
+COMPOSITION: Four spacious numbered workbenches in a two-by-two arrangement, each with a distinct evidence-type heading. Top left: source books, magnifying glass, age-tagged catalog card, qualified-review clipboard, small lexical query tray. Top right: synthetic query cards separated into development and held-out folders, a model-comparison sheet with NO invented graph values, and a two-line quality-versus-implementation decision card. Bottom left: a synthetic request page, masking eraser, canonical key/hash clipboard, new-prose sheet through a Safety review clipboard and decision fork; the rejected scenario allows one revision and then a fixed-failure stop, with no draft reaching the family. Beside that mechanism, show a smaller separate habit-validation checklist. Bottom right: saved regression report, model compatibility plug/socket, small live-sample receipt and failure notebook. Connect objects only within each station; do NOT connect the four stations into a production agent pipeline. All station headings must be visually parallel; no extra agents or model calls are implied.
+
+EXACT VISIBLE COPY (print only these labels, preserve qualifications and numbers):
+
+HabitQuest evaluation evidence
+Recorded studies + regression checks
+
+1  Source + catalog review
+Evidence claims • age fit • exclusions
+15 claim audits: qualified pass
+Schema • provenance • decline rules
+48 lexical smoke queries
+Evidence-informed, not clinically validated
+
+2  Retrieval model study
+80 synthetic cases • 40 held out
+8 embedding configurations + BM25
+Ranking • recall • latency • cost
+OpenAI text-embedding-3
+Quality choice: large/512
+Implemented tradeoff: small/512
+Similarity is not suitability
+
+3  Current guardrail regression
+Synthetic inputs + mocked model verdicts
+Names + contacts masked
+Canonical ID/hash checks
+New prose → Safety → decision
+Reject → one revision → fixed failure
+No rejected draft published
+Habit schema • age • privacy • novelty
+
+4  Recorded verification
+Whole-app suite: 1,073 backend + 206 frontend tests
+Writer / Safety compatibility checks
+Small live synthetic samples
+Relevance • valid output • calls • timing
+Failures and limits retained
+
+Test evidence is not a zero-harm guarantee.
+No new evaluations run for this illustration.
+
+END OF VISIBLE COPY. Remaining instructions must not be drawn.
+
+ACCURACY: Source audit is agent-assisted and qualified, not a clinical trial. The 48 lexical smoke queries are not semantic benchmark scores. The 80 synthetic comparison cases include separate habit and buddy tasks; do not label all cases as habit requests. large/512 was the original quality-rule choice; small/512 was the implemented cost/quality tradeoff, NOT a benchmark winner. No numerical score chart or model trophy. The regression station tests current code with mocked model verdicts; it does not measure Safety detection accuracy. The 1,073+206 counts are recorded whole-app tests, not all AI-safety cases. Small live samples check compatibility and behavior, not universal latency or safety. Safety reviews NEW PROSE; habit checks are LOCAL, not a remote second Safety pass. A rejected draft must never point to a published family plan. Preserve a clear stop after exhausted rejection. Do not print any date, month, year, latency promise, percentage of safety, or claim that bad generation has been eliminated. Keep the two bottom qualification sentences readable, not microtext. Deliver one cohesive slide matching the reference series.

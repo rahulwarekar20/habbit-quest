@@ -1,0 +1,123 @@
+{
+  "title": "HabitQuest architecture",
+  "slides": [
+    {
+      "number": 1,
+      "id": "system",
+      "title": "Application components",
+      "image": "illustrations/01b-system-components.png",
+      "contract": "sources/01b-system-components-contract.md",
+      "alt": "A React/Vite browser serves parent, child and operator experiences. One FastAPI application contains identity, RAG, Coach, habit writer, separate Planner and Review helpers, domain rules and Tokenomics; only the API accesses PostgreSQL.",
+      "caption": "The frontend presents parent, child and operator experiences. One modular FastAPI backend owns authorization, retrieval, bounded AI calls, exact goal links, plans, approval rules and accounting. LangGraph belongs to the Coach module; these responsibilities are not separate microservices.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 2,
+      "id": "catalog",
+      "title": "AI pipeline \u00b7 1 of 2: research and catalog",
+      "image": "illustrations/04-research-catalog.png",
+      "contract": "sources/04-research-catalog-contract.md",
+      "alt": "Evidence and framework books feed editorial age-specific practice cards. Cross-review and local validation produce a versioned catalog. Search-text embeddings are archived before Pinecone publication, alongside pinned canonical guidance for runtime reuse.",
+      "caption": "Offline research, editorial authoring and cross-review create reusable age-specific practice cards. Prepared search text is embedded, frozen and published to Pinecone; full guidance remains in pinned canonical JSON. Live requests reuse the release. Reviewed source cards become goals, while personalized habit choices are generated later.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 3,
+      "id": "runtime",
+      "title": "AI pipeline \u00b7 2 of 2: runtime and agents",
+      "image": "illustrations/02b-ai-runtime-agents.png",
+      "contract": "sources/02b-ai-runtime-agents-contract.md",
+      "alt": "Scoped context and masked retrieval feed the five-node Coach LangGraph, followed by separate habit generation and parent acceptance. Quest Planner and Weekly Review appear as independent explicit helper roles, each using one structured call plus local checks.",
+      "caption": "RAG supplies verified context to the five-node Coach graph. New prose receives model Safety; separate writer batches prepare habit choices. Quest Planner and Weekly Review are independent, explicitly triggered agent roles outside that graph. Each helper is a structured model call plus local checks, not an autonomous multi-agent loop.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "id": "coach-detail",
+      "title": "Habit Coach: detailed runtime pipeline",
+      "image": "illustrations/02-ai-pipeline.png",
+      "contract": "sources/02-ai-pipeline-contract.md",
+      "alt": "The preserved detailed runtime diagram shows scoped context, masking, embedding, Pinecone, canonical hydration, five Coach graph nodes with one bounded Safety revision, and separate habit batches with parent approval.",
+      "caption": "Preserved original runtime illustration: it explains the API request-to-result pipeline without offline catalog creation. Follow A from verified retrieval into the Coach graph and B from reviewed saved goals into separate habit batches. Planner and Review retain their own dedicated slides.",
+      "width": 1536,
+      "height": 1024,
+      "number": 4
+    },
+    {
+      "id": "planner",
+      "title": "Quest Planner agent",
+      "image": "illustrations/08-quest-planner.png",
+      "contract": "sources/08-quest-planner-contract.md",
+      "alt": "A parent explicitly runs Quest Planner. Labelled SQL family facts feed one LangChain model call, code validates up to four change suggestions, and the parent accepts or dismisses them before any plan update.",
+      "caption": "Quest Planner focuses on practical adjustments to the family plan. One structured call uses scoped SQL facts; code checks references and retains up to four suggestions. The parent decides, with fresh eligibility and capacity checks before changes are applied. It runs outside the Coach graph.",
+      "width": 1672,
+      "height": 941,
+      "number": 5
+    },
+    {
+      "id": "review",
+      "title": "Weekly Review agent",
+      "image": "illustrations/09-weekly-review.png",
+      "contract": "sources/09-weekly-review-contract.md",
+      "alt": "A parent explicitly runs Weekly Review. Two seven-day SQL windows and labelled child context feed one structured model call. Parent-facing wins, watch points and patterns accompany at most two checked change proposals.",
+      "caption": "Weekly Review interprets recent progress rather than creating a schedule automatically. It compares two seven-day SQL windows, produces a parent-facing report and at most two locally checked suggestions. Parents decide on changes; reading the saved report makes no new model call.",
+      "width": 1672,
+      "height": 941,
+      "number": 6
+    },
+    {
+      "number": 7,
+      "id": "safety",
+      "title": "Safety guardrails",
+      "image": "illustrations/07-safety-guardrails.png",
+      "contract": "sources/07-safety-guardrails-contract.md",
+      "alt": "Research authority and scoped Coach input feed verified retrieval and structured output checks. Generated Coach prose receives Safety review; locally checked habit drafts proceed to parent acceptance. Six controls are not six model calls.",
+      "caption": "Six complementary controls cover researched source authority, scoped Coach input, verified retrieval, structured output checks, Coach prose review and parent authority. They are not six LLM calls. Trusted catalog lookup and bounded habit checks do not receive an extra whole-content Safety pass.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 8,
+      "id": "tokenomics",
+      "title": "Tokenomics and monitoring",
+      "image": "illustrations/05-tokenomics.png",
+      "contract": "sources/05-tokenomics-contract.md",
+      "alt": "An explicit operation reserves allowance, meters chat, embedding and Pinecone attempts, records usage and tariff-based cost in PostgreSQL, then settles useful credits or releases failed holds. Admin policy and metrics remain separate from the family credit meter.",
+      "caption": "Every provider attempt retains usage, timing and estimated cost, including embeddings, search, retries and failures. Useful results settle family credits once; failed work releases credit holds without erasing provider cost. Admin can enforce allowance and exposure gates or track demo overage. Enforcement requires verified tariffs and bounded exposure.",
+      "width": 1671,
+      "height": 941
+    },
+    {
+      "number": 9,
+      "id": "evaluations",
+      "title": "Evaluation evidence",
+      "image": "illustrations/06-evaluations.png",
+      "contract": "sources/06-evaluations-contract.md",
+      "alt": "Four separate workbenches show source audits, a frozen synthetic retrieval-model study, mocked guardrail regression tests and recorded application/live-provider checks. The evidence types do not form an extra runtime pipeline.",
+      "caption": "Recorded source audits, a synthetic embedding study, mocked guardrail regressions and small live-provider samples answer different questions. They support content, model and control-flow decisions. They do not establish a zero-harm guarantee, clinical effectiveness or a new production latency benchmark.",
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "number": 10,
+      "id": "aws",
+      "title": "AWS deployment",
+      "image": "illustrations/03-aws-deployment.png",
+      "contract": "sources/03-deployment-contract.md",
+      "alt": "Independent browser HTTPS paths reach app and API ALBs and Fargate tasks. API connects to private RDS and external AI providers; shared DNS and certificate configuration, ECR images, backend secrets and CloudWatch support deployment.",
+      "caption": "The browser independently reaches the app and API through two public ALBs. Public-subnet Fargate tasks use restricted ALB-only ingress and internet-gateway egress; RDS stays private. ECR supplies both services, API secrets arrive at startup and CloudWatch retains logs. This always-on demo uses no NAT and is not production HA.",
+      "width": 1672,
+      "height": 941
+    }
+  ],
+  "supplemental": [
+    {
+      "title": "Original product journey overview",
+      "image": "illustrations/01-system-overview.png",
+      "contract": "sources/01-system-contract.md"
+    }
+  ],
+  "preservation_record": "sources/pre-planner-review-image-hashes.json"
+}

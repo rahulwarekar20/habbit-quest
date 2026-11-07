@@ -1,0 +1,6 @@
+Edit the supplied catalog illustration with ONLY two short label clarifications in the lower-right Runtime reuse area. Preserve every object, arrow, number, model name, title, layout, color and date-free subtitle.
+
+1. Above the reviewed source-card/book object, replace "Reviewed source card → goal" with "Reviewed source card → saved goal".
+2. Below the PostgreSQL cylinder, replace "Only selected goals enter PostgreSQL" with "Reviewed goals + parent-approved plans".
+
+Keep the text readable inside the existing areas. This clarifies that reviewed goals are saved before habit generation, while plan assignments require parent acceptance. Do not add a second database, extra arrows, new stages, dates or other wording. Preserve the initial offline catalog creation and all publication ordering exactly.

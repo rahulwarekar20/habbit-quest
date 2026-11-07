@@ -1,0 +1,7 @@
+Edit this evaluation illustration with ONLY two text corrections. Preserve its layout, artwork, colors, all other wording and every number. Do not add any date.
+
+1. In the upper-left source-review panel, change the small lavender badge on the catalog card from "Age: 6–9" to exactly "Age: 6–8".
+
+2. In the lower-left guardrail panel's bottom ribbon, replace ONLY "Reject → one revision → fixed failure" with exactly "Rejected twice → fixed failure". Preserve the separate "One revision" box and the accept/reject drawing above. Keep the line "No rejected draft published" unchanged. The shown failure path is conditional on the revision also being rejected; an approved revision can succeed, although that branch is omitted from this small evaluation scenario.
+
+Do not redraw any other panel, change counts, add scores, or print these instructions. Export a corrected new version.

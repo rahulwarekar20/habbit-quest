@@ -1,0 +1,11 @@
+{
+  "illustrations/04-research-catalog.png": "d71ba0994123293b215baee65ee7aa8d1e9b1df1b95ee44cb600109770dbef61",
+  "illustrations/01-system-overview.png": "5b0c78ffd90f84125264da814560f823b148b2a2b14a7ded44ffc16450ef7926",
+  "illustrations/02-ai-pipeline.png": "6422d74a73817a129eeaaeea5e06448cc34ce0dc95f851437dc3bc1f6389b6c3",
+  "illustrations/06-evaluations.png": "73470fc7f71f7d85c40bdb23cf3a7b711b80ff035df013d151bbd53c90fbaccb",
+  "illustrations/05-tokenomics.png": "f85727a3a674dadfc8cc987cbea14a4db26dba3fe27067561c99ad9775a550fe",
+  "illustrations/07-safety-guardrails.png": "e6bcde65e80935e912bbd52a6f8bc67750784b93e5f819bc7985bdd47a6908d2",
+  "illustrations/03-aws-deployment.png": "24806f1a4280e1809e369551fbf267b7a256e4e82ff56122e976d2fad362189d",
+  "illustrations/01b-system-components.png": "d57e58863dd4b0d11c0defb197b678802f08d72670af8198c3d00dc56514b202",
+  "illustrations/02b-ai-runtime-agents.png": "6dab5dfc6031d9c90bfac21edf8d669d2b47b2a8871819ec6b4af00ffbd802ca"
+}

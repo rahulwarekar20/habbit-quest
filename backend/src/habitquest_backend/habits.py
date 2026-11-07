@@ -83,12 +83,15 @@ def router(settings: Settings) -> APIRouter:
     @api.get("/v1/families/{family_id}/habits", tags=["Catalog"], summary="List custom habits")
     def list_custom(family_id: UUID, user: User) -> list[dict]:
         """The family's own active habits, newest first, in the same shape as the catalog. Any caregiver of the
-        family can add them to any of its children's plans.
+        family can add ordinary custom habits to its children. Generated habits include their owning child
+        as `generated_for_child_id` and cannot be assigned to a sibling or edited through this endpoint.
         """
         with transaction(settings, user) as conn:
             one(conn, "SELECT id FROM hq.families WHERE id=%s", (family_id,))
             return conn.execute(
-                f"SELECT {COLUMNS} FROM hq.habits h JOIN hq.goals g ON g.id=h.goal_id"
+                f"SELECT {COLUMNS},(SELECT child_id FROM hq.generated_habit_details d"
+                " WHERE d.habit_id=h.id) AS generated_for_child_id"
+                " FROM hq.habits h JOIN hq.goals g ON g.id=h.goal_id"
                 " WHERE h.family_id=%s AND h.is_active ORDER BY h.created_at DESC,h.id",
                 (family_id,),
             ).fetchall()
@@ -103,7 +106,7 @@ def router(settings: Settings) -> APIRouter:
         of 30 custom habits. Custom habits are never sent to the AI provider.
         """
         with transaction(settings, user) as conn:
-            one(conn, "SELECT id FROM hq.families WHERE id=%s", (family_id,))
+            one(conn, "SELECT id FROM hq.families WHERE id=%s FOR UPDATE", (family_id,))
             fields = checked(conn, body)
             count = conn.execute(
                 "SELECT count(*) AS n FROM hq.habits WHERE family_id=%s AND is_active", (family_id,)
@@ -140,6 +143,10 @@ def router(settings: Settings) -> APIRouter:
         once. Catalog habits cannot be changed (404). 422 as when creating.
         """
         with transaction(settings, user) as conn:
+            if conn.execute(
+                "SELECT habit_id FROM hq.generated_habit_details WHERE habit_id=%s", (habit_id,)
+            ).fetchone():
+                raise HTTPException(409, "Generate a new reviewed draft to change this habit's wording")
             fields = checked(conn, body)
             row = conn.execute(
                 "UPDATE hq.habits SET goal_id=%s,title=%s,description=%s,kid_title=%s,kid_hint=%s,icon=%s,anchor=%s"

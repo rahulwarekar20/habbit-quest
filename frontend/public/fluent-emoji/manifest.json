@@ -1,0 +1,499 @@
+{
+  "schema_version": "1.0.0",
+  "library": "Microsoft Fluent Emoji",
+  "style": "Flat",
+  "upstream_repository": "https://github.com/microsoft/fluentui-emoji",
+  "upstream_commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+  "license": "MIT",
+  "license_file": "LICENSE",
+  "copyright": "Copyright (c) Microsoft Corporation.",
+  "default_icon_key": "sparkles",
+  "purpose": "Curated local action-card icons. Keys are allowlisted; the LLM selects a key, never supplies SVG markup or an external URL.",
+  "icons": [
+    {
+      "key": "sparkles",
+      "emoji": "✨",
+      "label": "Sparkles",
+      "file": "sparkles.svg",
+      "url": "/fluent-emoji/sparkles.svg",
+      "codepoints": [
+        "2728"
+      ],
+      "source_path": "assets/Sparkles/Flat/sparkles_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sparkles/Flat/sparkles_flat.svg",
+      "source_git_blob_sha": "8c76e710005e12bf336546a13c35b10e6602e24b",
+      "sha256": "d5802877677464187a510c3fbb9d8c272dea164bcca2bf6a2270944e6cd2324e",
+      "bytes": 1752
+    },
+    {
+      "key": "star",
+      "emoji": "⭐",
+      "label": "Star",
+      "file": "star.svg",
+      "url": "/fluent-emoji/star.svg",
+      "codepoints": [
+        "2B50"
+      ],
+      "source_path": "assets/Star/Flat/star_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Star/Flat/star_flat.svg",
+      "source_git_blob_sha": "b95adbea1085ca6827ae50c3454d8b4b4d756f73",
+      "sha256": "47b4772001147be3920d3471e9c1ac2024ca739b384f414ac37cf95a59a07bfa",
+      "bytes": 783
+    },
+    {
+      "key": "book",
+      "emoji": "📖",
+      "label": "Open book",
+      "file": "book.svg",
+      "url": "/fluent-emoji/book.svg",
+      "codepoints": [
+        "1F4D6"
+      ],
+      "source_path": "assets/Open book/Flat/open_book_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Open%20book/Flat/open_book_flat.svg",
+      "source_git_blob_sha": "bd34ea54e51c842017646d2003663ea5713c32e5",
+      "sha256": "84809f80ba9252021198ee4f015f1e16ac76020727625c3ee611712c017108b4",
+      "bytes": 1885
+    },
+    {
+      "key": "books",
+      "emoji": "📚",
+      "label": "Books",
+      "file": "books.svg",
+      "url": "/fluent-emoji/books.svg",
+      "codepoints": [
+        "1F4DA"
+      ],
+      "source_path": "assets/Books/Flat/books_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Books/Flat/books_flat.svg",
+      "source_git_blob_sha": "db742578d00d71f3acfc24d97249ba418c0d5f8d",
+      "sha256": "41e2686cdc526bfa41ea599e2a74378f3a02788ff7e8cd1b9ad0a39ea157000c",
+      "bytes": 1989
+    },
+    {
+      "key": "pencil",
+      "emoji": "✏️",
+      "label": "Pencil",
+      "file": "pencil.svg",
+      "url": "/fluent-emoji/pencil.svg",
+      "codepoints": [
+        "270F",
+        "FE0F"
+      ],
+      "source_path": "assets/Pencil/Flat/pencil_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Pencil/Flat/pencil_flat.svg",
+      "source_git_blob_sha": "e7ad7bfaa8f2b7170329bb239f490390a90d4305",
+      "sha256": "f82b7820c41b57d2cca96ef75e32fdedcb07d2d8b786a781274c25fe306c76d7",
+      "bytes": 785
+    },
+    {
+      "key": "backpack",
+      "emoji": "🎒",
+      "label": "Backpack",
+      "file": "backpack.svg",
+      "url": "/fluent-emoji/backpack.svg",
+      "codepoints": [
+        "1F392"
+      ],
+      "source_path": "assets/Backpack/Flat/backpack_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Backpack/Flat/backpack_flat.svg",
+      "source_git_blob_sha": "5180b0fb25546ba5f1fcf5879293511f701ed97d",
+      "sha256": "9a3ea2d79e670de01c0f6e742b80d5b679c172edc4532c08a7c3083d703b4f23",
+      "bytes": 2948
+    },
+    {
+      "key": "calendar",
+      "emoji": "📅",
+      "label": "Calendar",
+      "file": "calendar.svg",
+      "url": "/fluent-emoji/calendar.svg",
+      "codepoints": [
+        "1F4C5"
+      ],
+      "source_path": "assets/Calendar/Flat/calendar_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Calendar/Flat/calendar_flat.svg",
+      "source_git_blob_sha": "7827458bcbce08fd0a47af915ad1adaf16640007",
+      "sha256": "a3840f324bdf1ddcb7001d2f238f438760934d24ce368129184f1f1e7ff915c9",
+      "bytes": 2625
+    },
+    {
+      "key": "clock",
+      "emoji": "🕒",
+      "label": "Clock",
+      "file": "clock.svg",
+      "url": "/fluent-emoji/clock.svg",
+      "codepoints": [
+        "1F552"
+      ],
+      "source_path": "assets/Three oclock/Flat/three_oclock_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Three%20oclock/Flat/three_oclock_flat.svg",
+      "source_git_blob_sha": "0ead6dd03fedc278401f29ad2842a53ffc24abb4",
+      "sha256": "4df248acd6fe40ae0a811ff29fb0a2e6421ad6f30f6318b8be58c06f22a38308",
+      "bytes": 1137
+    },
+    {
+      "key": "alarm_clock",
+      "emoji": "⏰",
+      "label": "Alarm clock",
+      "file": "alarm_clock.svg",
+      "url": "/fluent-emoji/alarm_clock.svg",
+      "codepoints": [
+        "23F0"
+      ],
+      "source_path": "assets/Alarm clock/Flat/alarm_clock_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Alarm%20clock/Flat/alarm_clock_flat.svg",
+      "source_git_blob_sha": "5040c46138f416a2a5ca66befcd6efbdaab4bff8",
+      "sha256": "e5356b8830074a3ca21fff8bb74807003ce996645341d46c25e26e06f0385d3b",
+      "bytes": 1541
+    },
+    {
+      "key": "sun",
+      "emoji": "☀️",
+      "label": "Sun",
+      "file": "sun.svg",
+      "url": "/fluent-emoji/sun.svg",
+      "codepoints": [
+        "2600",
+        "FE0F"
+      ],
+      "source_path": "assets/Sun/Flat/sun_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Sun/Flat/sun_flat.svg",
+      "source_git_blob_sha": "9c7849149d4e30f62fa8e000c8953b8a9f173da8",
+      "sha256": "a51d98e68ac038b917584d43b7729174f035a94ed7cd694802a3a7160f0b08f2",
+      "bytes": 1495
+    },
+    {
+      "key": "moon",
+      "emoji": "🌙",
+      "label": "Crescent moon",
+      "file": "moon.svg",
+      "url": "/fluent-emoji/moon.svg",
+      "codepoints": [
+        "1F319"
+      ],
+      "source_path": "assets/Crescent moon/Flat/crescent_moon_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Crescent%20moon/Flat/crescent_moon_flat.svg",
+      "source_git_blob_sha": "53dd7a034e3ad359a121e190dcd35537554b16b1",
+      "sha256": "d749d4a9c2917cf5d13193d214898c4173371a9037aa92874f034e27b77ad540",
+      "bytes": 1396
+    },
+    {
+      "key": "bed",
+      "emoji": "🛏️",
+      "label": "Bed",
+      "file": "bed.svg",
+      "url": "/fluent-emoji/bed.svg",
+      "codepoints": [
+        "1F6CF",
+        "FE0F"
+      ],
+      "source_path": "assets/Bed/Flat/bed_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bed/Flat/bed_flat.svg",
+      "source_git_blob_sha": "882dff6891edc8d8f2d229930ab69617507d7daa",
+      "sha256": "80fecebffc4efb24e8b83033d27d601969eac3edc6cc9a2a197c98b095aab0d3",
+      "bytes": 1188
+    },
+    {
+      "key": "toothbrush",
+      "emoji": "🪥",
+      "label": "Toothbrush",
+      "file": "toothbrush.svg",
+      "url": "/fluent-emoji/toothbrush.svg",
+      "codepoints": [
+        "1FAA5"
+      ],
+      "source_path": "assets/Toothbrush/Flat/toothbrush_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Toothbrush/Flat/toothbrush_flat.svg",
+      "source_git_blob_sha": "f0b02ecccf1f78c6a6b5d202e6d22422806207fe",
+      "sha256": "de7bc7a2eec3c0c828f18a0676c070e25dab0a8ecf8369a3b883b8e93bf46e4d",
+      "bytes": 1518
+    },
+    {
+      "key": "soap",
+      "emoji": "🧼",
+      "label": "Soap",
+      "file": "soap.svg",
+      "url": "/fluent-emoji/soap.svg",
+      "codepoints": [
+        "1F9FC"
+      ],
+      "source_path": "assets/Soap/Flat/soap_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Soap/Flat/soap_flat.svg",
+      "source_git_blob_sha": "df5d12be493097820b545b1557150da92ac0ad55",
+      "sha256": "f2fd8b29f2c8111e5b70af29d67ce14bcd2fbe79101724aa4f4422a53e308d1f",
+      "bytes": 1741
+    },
+    {
+      "key": "water",
+      "emoji": "💧",
+      "label": "Water droplet",
+      "file": "water.svg",
+      "url": "/fluent-emoji/water.svg",
+      "codepoints": [
+        "1F4A7"
+      ],
+      "source_path": "assets/Droplet/Flat/droplet_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Droplet/Flat/droplet_flat.svg",
+      "source_git_blob_sha": "932e5c24ce753fae2fa5c293c8c2b3c0fb0d0ad0",
+      "sha256": "91bbffebc864f286b0684817b797f8ce1e1c4cc7dd0d9e1af1bd58afef2d09f0",
+      "bytes": 327
+    },
+    {
+      "key": "plate",
+      "emoji": "🍽️",
+      "label": "Plate",
+      "file": "plate.svg",
+      "url": "/fluent-emoji/plate.svg",
+      "codepoints": [
+        "1F37D",
+        "FE0F"
+      ],
+      "source_path": "assets/Fork and knife with plate/Flat/fork_and_knife_with_plate_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Fork%20and%20knife%20with%20plate/Flat/fork_and_knife_with_plate_flat.svg",
+      "source_git_blob_sha": "b70b41a5721a3e8bcb932cee2586d2d99ad570a5",
+      "sha256": "c4745d563e1587989ed8a1cd0f4b39ef2b40fc7a97c29382102652195db4a8df",
+      "bytes": 1507
+    },
+    {
+      "key": "apple",
+      "emoji": "🍎",
+      "label": "Apple",
+      "file": "apple.svg",
+      "url": "/fluent-emoji/apple.svg",
+      "codepoints": [
+        "1F34E"
+      ],
+      "source_path": "assets/Red apple/Flat/red_apple_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20apple/Flat/red_apple_flat.svg",
+      "source_git_blob_sha": "aac151e9962f79f31015576f1caf475de5f6c754",
+      "sha256": "bc69f7c89a3621fb564482f9e13818019c6eac3a9d16fe996852514f3b19a073",
+      "bytes": 563
+    },
+    {
+      "key": "basket",
+      "emoji": "🧺",
+      "label": "Basket",
+      "file": "basket.svg",
+      "url": "/fluent-emoji/basket.svg",
+      "codepoints": [
+        "1F9FA"
+      ],
+      "source_path": "assets/Basket/Flat/basket_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Basket/Flat/basket_flat.svg",
+      "source_git_blob_sha": "defb03c0ff5f91c6f8565ca87fc9a5d57e8c113b",
+      "sha256": "ba3325690df45f79d0254dd290b72432c6799977be42d6818caf7f0bd4fedb75",
+      "bytes": 3628
+    },
+    {
+      "key": "broom",
+      "emoji": "🧹",
+      "label": "Broom",
+      "file": "broom.svg",
+      "url": "/fluent-emoji/broom.svg",
+      "codepoints": [
+        "1F9F9"
+      ],
+      "source_path": "assets/Broom/Flat/broom_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Broom/Flat/broom_flat.svg",
+      "source_git_blob_sha": "e548bec31292ea0f9efc8c3038843ee9b01160e9",
+      "sha256": "a0d9f525a3a2b02f847f378cec0b1242a323e027a58e9abad6028b8ee07e6795",
+      "bytes": 1432
+    },
+    {
+      "key": "socks",
+      "emoji": "🧦",
+      "label": "Socks",
+      "file": "socks.svg",
+      "url": "/fluent-emoji/socks.svg",
+      "codepoints": [
+        "1F9E6"
+      ],
+      "source_path": "assets/Socks/Flat/socks_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Socks/Flat/socks_flat.svg",
+      "source_git_blob_sha": "7faf860280ab31dccfbdc6b30a574a6d7931f8e8",
+      "sha256": "21d265b928af081abcb4bc9b32eda8ba44f911ee585ef2b7b10349e1eab248a6",
+      "bytes": 3198
+    },
+    {
+      "key": "door",
+      "emoji": "🚪",
+      "label": "Door",
+      "file": "door.svg",
+      "url": "/fluent-emoji/door.svg",
+      "codepoints": [
+        "1F6AA"
+      ],
+      "source_path": "assets/Door/Flat/door_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Door/Flat/door_flat.svg",
+      "source_git_blob_sha": "6f97301220338273d9d621fa15ae89d54785fcfa",
+      "sha256": "6a81dd76ab1e38aef2e6dafdfec77880b51067c0e20ed5ea5d3491cb0af7c3b6",
+      "bytes": 915
+    },
+    {
+      "key": "seedling",
+      "emoji": "🌱",
+      "label": "Seedling",
+      "file": "seedling.svg",
+      "url": "/fluent-emoji/seedling.svg",
+      "codepoints": [
+        "1F331"
+      ],
+      "source_path": "assets/Seedling/Flat/seedling_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Seedling/Flat/seedling_flat.svg",
+      "source_git_blob_sha": "541a51175d0aad261c0a2e5f446bb87797c84781",
+      "sha256": "69afa13809bd8192cb4599db991f7cedd3cea054efb5eb68f6f93d8bb19b3652",
+      "bytes": 483
+    },
+    {
+      "key": "ball",
+      "emoji": "⚽",
+      "label": "Ball",
+      "file": "ball.svg",
+      "url": "/fluent-emoji/ball.svg",
+      "codepoints": [
+        "26BD"
+      ],
+      "source_path": "assets/Soccer ball/Flat/soccer_ball_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Soccer%20ball/Flat/soccer_ball_flat.svg",
+      "source_git_blob_sha": "081bd09d898034015197a22ea856594fe82e82e6",
+      "sha256": "ca792d91995ac20dc37be0c1bd1f9f46d2f7ea4aea3bd4d0c69df1083bd641c9",
+      "bytes": 7732
+    },
+    {
+      "key": "bicycle",
+      "emoji": "🚲",
+      "label": "Bicycle",
+      "file": "bicycle.svg",
+      "url": "/fluent-emoji/bicycle.svg",
+      "codepoints": [
+        "1F6B2"
+      ],
+      "source_path": "assets/Bicycle/Flat/bicycle_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Bicycle/Flat/bicycle_flat.svg",
+      "source_git_blob_sha": "45eaec96f523f723d9ccba9ce9462592c3c32abe",
+      "sha256": "0241c712d2ea30a7ab0253422f94f1687838f6312a7a628f6d9c8da509faadf9",
+      "bytes": 3376
+    },
+    {
+      "key": "puzzle",
+      "emoji": "🧩",
+      "label": "Puzzle piece",
+      "file": "puzzle.svg",
+      "url": "/fluent-emoji/puzzle.svg",
+      "codepoints": [
+        "1F9E9"
+      ],
+      "source_path": "assets/Puzzle piece/Flat/puzzle_piece_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Puzzle%20piece/Flat/puzzle_piece_flat.svg",
+      "source_git_blob_sha": "ae3c7d0ac9543080c2463d8f8f1f4abf01d6e099",
+      "sha256": "72b3482570a4041ab8b77a54cf2b4e81fe78dab7c3b9ecb879a2921ab3711533",
+      "bytes": 4172
+    },
+    {
+      "key": "art",
+      "emoji": "🎨",
+      "label": "Art palette",
+      "file": "art.svg",
+      "url": "/fluent-emoji/art.svg",
+      "codepoints": [
+        "1F3A8"
+      ],
+      "source_path": "assets/Artist palette/Flat/artist_palette_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Artist%20palette/Flat/artist_palette_flat.svg",
+      "source_git_blob_sha": "a97e4542b081a6c73dd6ee9eb2e041a84318453b",
+      "sha256": "046b147ae3b378bb7e19358d2a0036cd6a6e79b721481445538dc34333fd4a49",
+      "bytes": 1224
+    },
+    {
+      "key": "headphones",
+      "emoji": "🎧",
+      "label": "Headphones",
+      "file": "headphones.svg",
+      "url": "/fluent-emoji/headphones.svg",
+      "codepoints": [
+        "1F3A7"
+      ],
+      "source_path": "assets/Headphone/Flat/headphone_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Headphone/Flat/headphone_flat.svg",
+      "source_git_blob_sha": "28a8c589e908f10ca6500ea1cefb13488b9645d6",
+      "sha256": "cda2447d8063692b29056d0cb1a2ea38a66d9f6ac787f380bc88c7b30735ca8a",
+      "bytes": 2490
+    },
+    {
+      "key": "speech_balloon",
+      "emoji": "💬",
+      "label": "Speech balloon",
+      "file": "speech_balloon.svg",
+      "url": "/fluent-emoji/speech_balloon.svg",
+      "codepoints": [
+        "1F4AC"
+      ],
+      "source_path": "assets/Speech balloon/Flat/speech_balloon_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Speech%20balloon/Flat/speech_balloon_flat.svg",
+      "source_git_blob_sha": "a663876a3bc304e759ff39b7aebed21c99a7c31d",
+      "sha256": "2b40d9136add717dad2389ce77af8eb9ca976963a8190b0097b379497628aac7",
+      "bytes": 926
+    },
+    {
+      "key": "heart",
+      "emoji": "❤️",
+      "label": "Heart",
+      "file": "heart.svg",
+      "url": "/fluent-emoji/heart.svg",
+      "codepoints": [
+        "2764",
+        "FE0F"
+      ],
+      "source_path": "assets/Red heart/Flat/red_heart_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Red%20heart/Flat/red_heart_flat.svg",
+      "source_git_blob_sha": "143b3dd5d8dae026774d1be348a1e299a013fb3a",
+      "sha256": "61846b9c946736481d65dbf244fe53792d06d50405c2d5f3e40a0a06cbfe5317",
+      "bytes": 1153
+    },
+    {
+      "key": "rainbow",
+      "emoji": "🌈",
+      "label": "Rainbow",
+      "file": "rainbow.svg",
+      "url": "/fluent-emoji/rainbow.svg",
+      "codepoints": [
+        "1F308"
+      ],
+      "source_path": "assets/Rainbow/Flat/rainbow_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Rainbow/Flat/rainbow_flat.svg",
+      "source_git_blob_sha": "b4756938dd9b0e53f8f73b14c65c53c678710192",
+      "sha256": "85a0bee875fa032375f0448ac5ed89bf5fa8662438dbb539abbfcba118c18c74",
+      "bytes": 1256
+    },
+    {
+      "key": "compass",
+      "emoji": "🧭",
+      "label": "Compass",
+      "file": "compass.svg",
+      "url": "/fluent-emoji/compass.svg",
+      "codepoints": [
+        "1F9ED"
+      ],
+      "source_path": "assets/Compass/Flat/compass_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Compass/Flat/compass_flat.svg",
+      "source_git_blob_sha": "29c99f30e90c36e6008904853c89c60c20870da2",
+      "sha256": "92e69670a742d2a9dc5cb30da349e261d959780981a9a52305676b9599698dd6",
+      "bytes": 1928
+    },
+    {
+      "key": "light_bulb",
+      "emoji": "💡",
+      "label": "Light bulb",
+      "file": "light_bulb.svg",
+      "url": "/fluent-emoji/light_bulb.svg",
+      "codepoints": [
+        "1F4A1"
+      ],
+      "source_path": "assets/Light bulb/Flat/light_bulb_flat.svg",
+      "source_url": "https://raw.githubusercontent.com/microsoft/fluentui-emoji/1ffb34c752ecf5d402f04cfb4b392c77f57c54bc/assets/Light%20bulb/Flat/light_bulb_flat.svg",
+      "source_git_blob_sha": "9c460204af9f00fc41069e8801f598205a173a7b",
+      "sha256": "3e746a9b94051287b263e518e1f156cbfbffb45b5e0a6db6570b99d4c8c56484",
+      "bytes": 2538
+    }
+  ]
+}

@@ -5,8 +5,8 @@ import { AI_TIMEOUT_MS, request } from "./client";
 // ── Onboarding: pain points, goals, habits ────────────────────────────────────
 
 /** Describe a problem: `POST /v1/children/{child_id}/pain-points`. */
-export const addPainPoint = (childId: string, text: string) =>
-  request<PainPointResult>("POST", `/v1/children/${childId}/pain-points`, { text }, { timeoutMs: AI_TIMEOUT_MS });
+export const addPainPoint = (childId: string, text: string, requestId: string = crypto.randomUUID()) =>
+  request<PainPointResult>("POST", `/v1/children/${childId}/pain-points`, { text, request_id: requestId }, { timeoutMs: AI_TIMEOUT_MS, retryWrites: false });
 /** Read the plan: `GET /v1/children/{child_id}/plan`. */
 export const getPlan = (childId: string) => request<Plan>("GET", `/v1/children/${childId}/plan`);
 /** Set the plan: `PUT /v1/children/{child_id}/plan`. */
@@ -18,7 +18,7 @@ export const updateChildHabit = (id: string, changes: { cue_time?: string; days?
 export const listGoals = () => request<Goal[]>("GET", "/v1/goals");
 
 /** A catalog habit, or one of the family's own (ids starting "my-"), with its goal's title and age range. */
-export interface CatalogHabit extends HabitText { id: string; goal_title: string; min_age: number; max_age: number }
+export interface CatalogHabit extends HabitText { id: string; goal_title: string; min_age: number; max_age: number; generated_for_child_id?: string | null }
 export interface CustomHabitInput {
   goal_id: string;
   title: string;

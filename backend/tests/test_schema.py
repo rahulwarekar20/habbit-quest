@@ -1,6 +1,5 @@
 """The lean schema: family isolation through row-level security, data rules, and the seeded catalog."""
 
-from datetime import date
 from uuid import UUID, uuid4
 
 import psycopg
@@ -138,7 +137,9 @@ def test_one_live_row_per_habit_and_one_completion_per_day(db):
     db.execute(again, (rivera["child"],))  # removed rows are history; the habit can be picked again
     with pytest.raises(psycopg.errors.UniqueViolation):
         db.execute(
-            "INSERT INTO hq.completions(child_habit_id,day) VALUES(%s,%s)", (rivera["habit"], date.today())
+            "INSERT INTO hq.completions(child_habit_id,day)"
+            " SELECT child_habit_id,day FROM hq.completions WHERE id=%s",
+            (rivera["completion"],),
         )
 
 

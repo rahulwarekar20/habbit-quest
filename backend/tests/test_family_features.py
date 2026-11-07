@@ -426,12 +426,30 @@ def test_a_new_approach_to_pin_guessing_is_limited(settings, db, family, alex):
 
 
 def test_sign_in_attempts_are_limited_per_address(settings, db):
-    limited = settings.model_copy(update={"sign_in_limit": 1, "google_client_id": ""})
-    with TestClient(create_app(limited)) as c:
-        body, headers = {"credential": "x" * 30}, {"X-Forwarded-For": "1.2.3.4, 10.0.0.1"}
+    from ipaddress import ip_network
+
+    limited = settings.model_copy(
+        update={
+            "sign_in_limit": 1,
+            "google_client_id": "",
+            "alb_trusted_proxy_cidrs": [ip_network("172.31.96.0/24")],
+        }
+    )
+    with TestClient(create_app(limited), client=("172.31.96.8", 443)) as c:
+        body, headers = {"credential": "x" * 30}, {"X-Forwarded-For": "192.0.2.1, 203.0.113.1"}
         assert c.post("/v1/auth/google", json=body, headers=headers).status_code == 503
         assert c.post("/v1/auth/google", json=body, headers=headers).status_code == 429
-        assert c.post("/v1/auth/google", json=body).status_code == 503  # another address
+        # Forging the caller-controlled prefix cannot reset the bucket.
+        assert (
+            c.post(
+                "/v1/auth/google", json=body, headers={"X-Forwarded-For": "192.0.2.2, 203.0.113.1"}
+            ).status_code
+            == 429
+        )
+        assert (
+            c.post("/v1/auth/google", json=body, headers={"X-Forwarded-For": "203.0.113.2"}).status_code
+            == 503
+        )
 
 
 def test_the_rate_limiter_forgets_old_attempts():
@@ -479,21 +497,6 @@ def test_the_last_caregiver_cannot_leave(client, settings, db, family):
     assert client.delete(url).status_code == 409
     db.execute("INSERT INTO hq.caregivers VALUES(%s,%s,'Lee','father')", (family, OTHER))
     assert client.delete(url).status_code == 204
-
-
-def test_the_client_address_comes_from_cloudflare_not_a_forged_header():
-    from starlette.requests import Request
-
-    from habitquest_backend.limits import client_address
-
-    def request(headers: dict) -> Request:
-        raw = [(k.encode(), v.encode()) for k, v in headers.items()]
-        return Request({"type": "http", "headers": raw, "client": ("10.0.0.1", 1)})
-
-    forged = {"x-forwarded-for": "1.2.3.4, 9.9.9.9"}
-    assert client_address(request(forged | {"cf-connecting-ip": "5.6.7.8"})) == "5.6.7.8"
-    assert client_address(request(forged)) == "1.2.3.4"
-    assert client_address(request({})) == "10.0.0.1"
 
 
 def test_the_rate_limiter_drops_idle_keys_once_there_are_many(monkeypatch):

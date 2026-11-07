@@ -1,0 +1,12 @@
+Edit this existing HabitQuest Tokenomics illustration with only the following three corrections. Preserve the white-paper blue/purple style, title, main accounting arrows, all four numbered stages, family meter, tariff booklet, admin metrics, receipt cabinet, legend, seed-policy values and all other facts. Keep the artwork date-free.
+
+1. DELETE the ENTIRE bottom box labelled “FACTUAL LIMITS:” and ALL of its dense paragraph text, border and lavender heading. Those are generation instructions accidentally printed in the image. Do not replace them with any paragraph. Preserve the short ribbon immediately above it beginning “Seed policy: 100/day” and its three companion qualifications. Clean white paper should replace the deleted panel. The short ribbon may move slightly downward to balance the lower margin, but do not change its text or shrink other labels.
+
+2. Within the top-left “/admin policy” panel, replace the TWO illustrated enforcement switches and their two adjacent lines with ONE clearly visible toggle labelled exactly “Enforce budgets”. Under this single control, use two plain-text explanatory lines with NO additional switch icons:
+“ON: allowance + exposure checks”
+“OFF: demo tracking, no budget blocking”
+These are alternate states of one setting, not two separate controls. Keep the daily-credits/activity-weights and operator-spending-ceiling bullets unchanged.
+
+3. Remove the “Timing display separate” bullet from the admin policy panel. Keep the admin “Show costs toggle” bullet. Under the family meter's “Refresh after completion” caption, add this readable short caption: “Family setting: show seconds”. Do not draw this family timing preference as an admin control or connect it to enforcement.
+
+Do not introduce any other paragraph, date, measured balance, price, credential, guarantee or new architecture. Do not change the separate chat, embedding and Pinecone meters, useful-versus-failed settlement branches, or provider-cost retention. Export a new corrected version while preserving this draft.

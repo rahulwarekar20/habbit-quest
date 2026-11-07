@@ -1,0 +1,223 @@
+{
+  "collection": "HabitQuest architecture illustrations",
+  "review_date": "2026-11-06",
+  "dates_in_final_artwork": false,
+  "generation": {
+    "tool": "built-in image_gen.imagegen",
+    "mode": "style-reference generation and targeted image edits",
+    "image_calls": 10,
+    "python_image_editing": false,
+    "note": "Original prompt briefs now reflect final date-free subtitle policy; dated initial and corrected exports remain in drafts."
+  },
+  "skills": [
+    "/Users/nkaul/Documents/repos/github-manager/.agents/skills/illustrated-explainers/SKILL.md",
+    "/Users/nkaul/.codex/skills/.system/imagegen/SKILL.md"
+  ],
+  "style_references": [
+    {
+      "path": "hq-ai-services/docs/planning-agent/illustrations/01-service-architecture.png",
+      "sha256": "4e0b9717b21413f414b5affe05d8657293d1d861fde997c1a7c8473aaa7c80fb"
+    },
+    {
+      "path": "hq-ai-services/docs/planning-agent/illustrations/02-deep-agents-runtime.png",
+      "sha256": "4ff6e1b4297917f36c84c553211c421830ef5b6b5b4e287ce127404e8e0ef728"
+    }
+  ],
+  "source_documents": [
+    {
+      "path": "habbit-quest/docs-design/00-documentation-plan.md",
+      "sha256": "b3c02381de45e07bfe697cd23a118502a3e85e4795898dd9f81123577486a9a3"
+    },
+    {
+      "path": "habbit-quest/docs-design/01-system-overview.md",
+      "sha256": "c3f45fc07b864e44a9bcdc4022996b0feeada2eaf5abbcf3976e771cbc85d919"
+    },
+    {
+      "path": "habbit-quest/docs-design/02-frontend-experience.md",
+      "sha256": "67c9c9b737b71f2a8ac64ddd8ddd2125ce3f5404514a916efbe6928776989630"
+    },
+    {
+      "path": "habbit-quest/docs-design/03-backend-api-and-security.md",
+      "sha256": "391a106776f0adb1d225ebf2fafba758bc55976fb48ba73d565a59645a23e48a"
+    },
+    {
+      "path": "habbit-quest/docs-design/04-database-and-domain-model.md",
+      "sha256": "a145a5f6bcb3901b533df1362d53b45c04a9e54adb11ecb940e894a9ff5f1306"
+    },
+    {
+      "path": "habbit-quest/docs-design/05-ai-orchestration.md",
+      "sha256": "b622ae0b74c4d2c8b155b5682d9f5d575470db666154e10e27c761d5f86be3b1"
+    },
+    {
+      "path": "habbit-quest/docs-design/06-habit-coach-and-habit-generation.md",
+      "sha256": "d8ca6f2907f1fcab738cc265dd867988cb355058cb077e4f8b6c8f393c08f3eb"
+    },
+    {
+      "path": "habbit-quest/docs-design/07-planner-review-and-other-ai.md",
+      "sha256": "29afad48144d168b01e648b5339f18fee91e9cb7e1a3ff6a08a93a58f659466e"
+    },
+    {
+      "path": "habbit-quest/docs-design/08-model-selection-and-runtime-routing.md",
+      "sha256": "a9cbb79e1ff7711719ad4eba48eabf70934631072b37f093768608d5b5d19727"
+    },
+    {
+      "path": "habbit-quest/docs-design/09-embedding-model-selection.md",
+      "sha256": "e2ce78db7c5e67da63d58bc87336d43eb21b3724eca18e35f6c6242d7fe83d19"
+    },
+    {
+      "path": "habbit-quest/docs-design/10-habit-research-and-pinecone-catalog.md",
+      "sha256": "9daafbe3d9bdad13592040ccacdd5b785905674a0659f43bc31b917c6340386e"
+    },
+    {
+      "path": "habbit-quest/docs-design/11-tokenomics-latency-and-observability.md",
+      "sha256": "1cb4d0b6ce048e25f24729344af2f4ad43a63661929426d65add1aefb5afb6fb"
+    },
+    {
+      "path": "habbit-quest/docs-design/12-buddies-artwork-and-assets.md",
+      "sha256": "de94e0b787ebe0b00c70acddc4f7a6923eb3f5152a1ad756c5769073dba07631"
+    },
+    {
+      "path": "habbit-quest/docs-design/13-aws-deployment.md",
+      "sha256": "3a0d381d77c9300655bcbfd97133ea478deb2c01da78975c2ef88f6df9b6d071"
+    },
+    {
+      "path": "habbit-quest/docs-design/14-validation-and-design-decisions.md",
+      "sha256": "2cfb592dde894a309093ecfa4cb85e7ae07a09bf5fc501cc6325aac1aa2735f1"
+    },
+    {
+      "path": "habbit-quest/docs-design/README.md",
+      "sha256": "1d9e3b18c925dc83372007be23918492b0aa86ce89f5bdd20d4135f87a564bd0"
+    }
+  ],
+  "assets": [
+    {
+      "path": "illustrations/01-system-overview.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1972767,
+      "sha256": "5b0c78ffd90f84125264da814560f823b148b2a2b14a7ded44ffc16450ef7926"
+    },
+    {
+      "path": "illustrations/02-ai-pipeline.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2017702,
+      "sha256": "6422d74a73817a129eeaaeea5e06448cc34ce0dc95f851437dc3bc1f6389b6c3"
+    },
+    {
+      "path": "illustrations/03-aws-deployment.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1942050,
+      "sha256": "24806f1a4280e1809e369551fbf267b7a256e4e82ff56122e976d2fad362189d"
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompts/01-system-overview-revision.txt",
+      "sha256": "954030dc89fcab3dd6f63859deeb0cf760777f0a292721c77b4b8b0b54dfdc06"
+    },
+    {
+      "path": "prompts/01-system-overview-undated.txt",
+      "sha256": "76af458f3e9ce008b0e79fca475b21018d06be3b6624078098382741d1f51662"
+    },
+    {
+      "path": "prompts/01-system-overview.txt",
+      "sha256": "e56a312e3f630238de0ecc3b3f11c15bf5c0183dec24492efeb84b0d1d0d31de"
+    },
+    {
+      "path": "prompts/02-ai-pipeline-revision.txt",
+      "sha256": "a4244039c8e74f1e8bdb3dd31673dc542afe1916d875fd3bb1f01e3021cbaa94"
+    },
+    {
+      "path": "prompts/02-ai-pipeline-undated.txt",
+      "sha256": "76af458f3e9ce008b0e79fca475b21018d06be3b6624078098382741d1f51662"
+    },
+    {
+      "path": "prompts/02-ai-pipeline.txt",
+      "sha256": "066b391bc4ce2ac1c053cfa3d40309e76854a312fa8cec5026f1cd031a6e93b7"
+    },
+    {
+      "path": "prompts/03-aws-deployment-ecr-branch.txt",
+      "sha256": "b0d40d1bd4fa41c598ef7ed256bdc96c5367c4ad887fd939f276770292ceb872"
+    },
+    {
+      "path": "prompts/03-aws-deployment-revision.txt",
+      "sha256": "9ffe0dbd0f5182481bef691d627fb7e9e102fcfc13b3dcfdb5118d6910535d92"
+    },
+    {
+      "path": "prompts/03-aws-deployment-undated.txt",
+      "sha256": "fd481b017b9888acfbdfa5bf4b7e798c6fca8826ad26ca719ac909acaefbdc0c"
+    },
+    {
+      "path": "prompts/03-aws-deployment.txt",
+      "sha256": "05e154feb558396d529c7c7761ac77f38866c93422ba86a91585bdfb50aa5f6b"
+    }
+  ],
+  "contracts": [
+    {
+      "path": "sources/01-system-contract.md",
+      "sha256": "d2b45211229c3e8658b474fef986acab558731411894dcd958846110fd6bf5f0"
+    },
+    {
+      "path": "sources/02-ai-pipeline-contract.md",
+      "sha256": "af9b95a6feee0936a6512a1d13527077a2d2b9b34b01c5d0677356b911e40e52"
+    },
+    {
+      "path": "sources/03-deployment-contract.md",
+      "sha256": "1fd52aff8757ef87651545eabe4e01e8349242820974b8bae4ae43b45d76da38"
+    }
+  ],
+  "drafts": [
+    {
+      "path": "drafts/01-system-overview-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1978140,
+      "sha256": "66222c03883f69f3fdaf644e4b048a984e03128aaacba2789ff483ac09ddbdad"
+    },
+    {
+      "path": "drafts/01-system-overview-v2.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2023626,
+      "sha256": "25c8487abb9534b791394929b5e1c735fdf59f9bd3faa7780a86947936c4346c"
+    },
+    {
+      "path": "drafts/02-ai-pipeline-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1860501,
+      "sha256": "ba6344096605c20d4631751ee534ad1da57be47e9affb5c29c09da9465c493eb"
+    },
+    {
+      "path": "drafts/02-ai-pipeline-v2.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2004176,
+      "sha256": "cf648ce80fa01c94a96d430e135ef93a869cf0b569182d54595308e9a44a1209"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v1.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1792650,
+      "sha256": "0638ace08508d8e7255c7588a1b09f0147a8140c7838e8627985bacbd041e9a7"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v2.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1908167,
+      "sha256": "3425fdace301bfef0fcaaa2107a428e2a6b59092fc8c32bcc64b98efbca3265b"
+    },
+    {
+      "path": "drafts/03-aws-deployment-v3-undated.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1910444,
+      "sha256": "07f978ec7d4eeef9c277174644ddee4a206b29c7439682146c2db227db5f89fc"
+    }
+  ],
+  "scope": "Local illustration artifacts only; no application or AWS changes."
+}

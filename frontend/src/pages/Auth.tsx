@@ -45,12 +45,12 @@ export function AuthLayout({ children, corner, wide = false, scene, below }: {
 // ── Login ─────────────────────────────────────────────────────────────────────
 
 /**
- * The sign-in page (#/login): Continue with Google, or I'm a kid; the development login in the corner.
+ * The sign-in page (#/login): Continue with Google, or I'm a kid; developer and admin access in the corner.
  */
 export function Login() {
   const { notice } = useStore();
   return (
-    <AuthLayout corner={<DevLogin />} scene={<LoginScene />} below={<WorldStrip />}>
+    <AuthLayout corner={<div className="auth__utilities"><DevLogin /><a className="auth__admin-link" href="/admin">Admin login</a></div>} scene={<LoginScene />} below={<WorldStrip />}>
       <div className="auth__banner" aria-hidden="true">
         <WorldArt world="camp" />
         <div className="auth__banner-buddies">

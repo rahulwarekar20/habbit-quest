@@ -1,0 +1,106 @@
+{
+  "synthetic_only": true,
+  "source_capture": "refinement-text-only-live.json",
+  "goal_id": "hqg-50761831c722d74df4c56162",
+  "age": 8,
+  "failed_writer_payloads": [
+    {
+      "items": [
+        {
+          "title": "Signal when a task feels stuck",
+          "kid_title": "Ask for help or a pause",
+          "kid_hint": "You can ask before the task feels too big.",
+          "description": "When a familiar activity has a hard part, use a help or pause signal. An adult will respond without waiting for an explanation.",
+          "instruction": "Show or say help or pause when a task gets stuck.",
+          "why": "A signal lets an adult know you need help or a pause, even before you can explain what is hard.",
+          "parent_setup": "Check that the child understands the activity and can reach its materials. Put help and pause pictures within reach, or agree on a gesture or AAC button. Be ready to respond right away.",
+          "strategy": "Rehearse the signal during an easy activity. When the child signals, offer help or a break first. Explore the hard part together only if the child wants.",
+          "estimated_seconds": 45,
+          "steps": [
+            "During an easy activity, practice showing or saying help or pause.",
+            "When a familiar task gets stuck, respond to the signal right away.",
+            "Offer help or a break; explore the hard part together only if the child wants."
+          ],
+          "materials": [
+            "Optional help and pause pictures, an AAC button, or an agreed gesture."
+          ],
+          "help_text": "You can show or say \u201cHelp me, please\u201d or \u201cPause.\u201d You do not have to explain first.",
+          "cue": "A familiar activity reaches a concrete obstacle, such as a hard-to-open container or a confusing step.",
+          "completion": "The child practices or uses a help or pause signal, with or without adult support. A pause, observation, or decline is not a failure.",
+          "parent_guidance": {
+            "prepare": "Make sure the task and materials are accessible, and that help is available. Keep any signal pictures or device within reach.",
+            "coach": "Respond to the signal first. Offer assistance or a break without requiring repeated tries or a precise explanation.",
+            "if_hard": "Offer the help signal as the only option, model it, or pause the task. Never delay needed help or a break.",
+            "observe": "Notice whether the adult response provides useful support. If not, adjust the response or task; do not ask the child to signal harder."
+          },
+          "recurrence": "weekly"
+        }
+      ]
+    },
+    {
+      "items": [
+        {
+          "title": "Signal for help or a pause",
+          "kid_title": "Ask for help or a pause",
+          "kid_hint": "You can ask before a task feels too big.",
+          "description": "Practice a simple help or pause signal during an easy activity, then use it when a familiar task gets stuck.",
+          "instruction": "When something feels stuck, show your help or pause signal.",
+          "why": "A signal can help you get support without explaining everything first.",
+          "parent_setup": "Check that the child understands the activity and can access its instructions and materials. Keep help and pause pictures, an AAC button, or an agreed gesture within reach. Be ready to respond right away.",
+          "strategy": "Rehearse the signal during an easy everyday activity. When the child signals, offer help or a pause first. If the child wants, explore the obstacle together and adjust the task or your support.",
+          "estimated_seconds": 45,
+          "steps": [
+            "Practice showing a help or pause signal during an easy activity.",
+            "When you signal during a hard part, an adult will help or offer a pause.",
+            "If you want, point to the hard part together."
+          ],
+          "materials": [
+            "Help or pause picture, AAC button, or agreed gesture (optional)"
+          ],
+          "help_text": "You do not have to explain first. An adult can help you point to the hard part.",
+          "cue": "When a familiar activity has a concrete hard part, the adult can remind the child that help or a pause is available.",
+          "completion": "The child uses, practices, or observes a help or pause signal, or chooses to pause or decline.",
+          "parent_guidance": {
+            "prepare": "Choose a familiar, easy activity for rehearsal. Check that instructions and materials are accessible and that help is available.",
+            "coach": "Say, \u201cHelp or a pause is available. You do not have to explain first.\u201d Respond to the signal without delay.",
+            "if_hard": "Offer the help signal, a pause, or a gesture or picture choice. Do not require failed attempts or an explanation before helping.",
+            "observe": "Notice whether the signal brings useful assistance. If it does not, change your response or the task; do not practice signaling harder while withholding help."
+          },
+          "recurrence": "daily"
+        }
+      ]
+    }
+  ],
+  "corrected_example": {
+    "items": [
+      {
+        "title": "Signal for help or a pause",
+        "kid_title": "Show your help or pause signal",
+        "kid_hint": "You can ask when you get stuck.",
+        "description": "Practice a familiar help or pause signal with a responsive adult.",
+        "instruction": "When you get stuck, show your help or pause signal.",
+        "why": "A familiar signal can make a support need easier to communicate.",
+        "parent_setup": "Agree on an accessible signal and respond without delay.",
+        "strategy": "Practice one signal together while support is already available.",
+        "estimated_seconds": 60,
+        "steps": [
+          "Choose your grown-up.",
+          "Show your help or pause signal."
+        ],
+        "materials": [
+          "A familiar help or pause picture"
+        ],
+        "help_text": "You can ask for help, watch, stop or take a break anytime.",
+        "cue": "When you get stuck on a familiar task.",
+        "completion": "You showed your help or pause signal.",
+        "parent_guidance": {
+          "prepare": "Choose an accessible task and familiar signal.",
+          "coach": "Respond to the signal with help or a break.",
+          "if_hard": "Offer support without requiring practice; watching or declining is okay.",
+          "observe": "Notice the signal practice; adjust your support if needed."
+        },
+        "recurrence": "weekly"
+      }
+    ]
+  }
+}

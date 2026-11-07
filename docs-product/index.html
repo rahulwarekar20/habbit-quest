@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HabitQuest · Architecture illustrations</title><style>
+    :root { color-scheme: light; --ink:#182544; --blue:#3949ab; --muted:#596481; --line:#e1e4f0; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:#f5f6fb; font:16px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    header,main,footer { max-width:1440px; margin:auto; padding:28px clamp(18px,4vw,56px); }
+    header { padding-top:46px; padding-bottom:12px; }
+    .eyebrow { color:var(--blue); letter-spacing:.14em; font-size:.76rem; font-weight:750; text-transform:uppercase; }
+    h1 { margin:7px 0 12px; font-size:clamp(2rem,4vw,3.2rem); line-height:1.12; letter-spacing:-.04em; }
+    h2 { margin:0; font-size:1.5rem; line-height:1.3; }
+    p { max-width:90ch; margin:10px 0; }
+    .intro,.caption,footer { color:var(--muted); }
+    nav { display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 0; }
+    a { color:var(--blue); text-underline-offset:3px; }
+    nav a,.download { display:inline-block; padding:7px 14px; border:1px solid var(--line); border-radius:22px; background:white; text-decoration:none; font-weight:600; font-size:.9rem; }
+    a:focus-visible { outline:3px solid #7e57c2; outline-offset:4px; }
+    figure { margin:0 0 34px; background:white; border:1px solid var(--line); border-radius:22px; overflow:hidden; box-shadow:0 8px 32px #18254408; scroll-margin-top:20px; }
+    .figure-heading { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:22px 26px 12px; }
+    .number { color:#7e57c2; margin-right:8px; }
+    .image-link { display:block; line-height:0; padding:10px; }
+    img { display:block; width:100%; height:auto; }
+    figcaption { padding:10px 26px 24px; border-top:1px solid #f0f1f6; }
+    .source { font-size:.9rem; margin-top:12px; }
+    footer { padding-top:0; font-size:.9rem; }
+    @media(max-width:600px) { .figure-heading { align-items:flex-start; flex-direction:column; padding:18px; } figcaption { padding:12px 18px 20px; } }
+    @media print { body { background:white; } header,main,footer { padding:12px; } nav,.download { display:none; } figure { break-inside:avoid; box-shadow:none; } }
+  </style></head>
+<body>
+  <header>
+    <div class="eyebrow">HabitQuest · Illustrated architecture</div>
+    <h1>From researched guidance<br>to a daily quest.</h1>
+    <p class="intro">10 illustrated views preserve the detailed Coach runtime and give Quest Planner and Weekly Review their own full-size explanations, alongside the application, catalog, safeguards, Tokenomics, evaluations and deployment.</p>
+    <nav aria-label="Illustrations"><a href="#system">01 · Application components</a><a href="#catalog">02 · AI pipeline · 1 of 2: research and catalog</a><a href="#runtime">03 · AI pipeline · 2 of 2: runtime and agents</a><a href="#coach-detail">04 · Habit Coach: detailed runtime pipeline</a><a href="#planner">05 · Quest Planner agent</a><a href="#review">06 · Weekly Review agent</a><a href="#safety">07 · Safety guardrails</a><a href="#tokenomics">08 · Tokenomics and monitoring</a><a href="#evaluations">09 · Evaluation evidence</a><a href="#aws">10 · AWS deployment</a><a href="presentation.html">Present slides</a><a href="README.md">Documentation</a></nav>
+  </header>
+  <main>
+<figure id="system">
+<div class="figure-heading"><h2><span class="number">01</span> Application components</h2><a class="download" href="illustrations/01b-system-components.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/01b-system-components.png" aria-label="Open full-size Application components"><img src="illustrations/01b-system-components.png" alt="A React/Vite browser serves parent, child and operator experiences. One FastAPI application contains identity, RAG, Coach, habit writer, separate Planner and Review helpers, domain rules and Tokenomics; only the API accesses PostgreSQL." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">The frontend presents parent, child and operator experiences. One modular FastAPI backend owns authorization, retrieval, bounded AI calls, exact goal links, plans, approval rules and accounting. LangGraph belongs to the Coach module; these responsibilities are not separate microservices.</p><p class="source"><a href="sources/01b-system-components-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="catalog">
+<div class="figure-heading"><h2><span class="number">02</span> AI pipeline · 1 of 2: research and catalog</h2><a class="download" href="illustrations/04-research-catalog.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/04-research-catalog.png" aria-label="Open full-size AI pipeline · 1 of 2: research and catalog"><img src="illustrations/04-research-catalog.png" alt="Evidence and framework books feed editorial age-specific practice cards. Cross-review and local validation produce a versioned catalog. Search-text embeddings are archived before Pinecone publication, alongside pinned canonical guidance for runtime reuse." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Offline research, editorial authoring and cross-review create reusable age-specific practice cards. Prepared search text is embedded, frozen and published to Pinecone; full guidance remains in pinned canonical JSON. Live requests reuse the release. Reviewed source cards become goals, while personalized habit choices are generated later.</p><p class="source"><a href="sources/04-research-catalog-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="runtime">
+<div class="figure-heading"><h2><span class="number">03</span> AI pipeline · 2 of 2: runtime and agents</h2><a class="download" href="illustrations/02b-ai-runtime-agents.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/02b-ai-runtime-agents.png" aria-label="Open full-size AI pipeline · 2 of 2: runtime and agents"><img src="illustrations/02b-ai-runtime-agents.png" alt="Scoped context and masked retrieval feed the five-node Coach LangGraph, followed by separate habit generation and parent acceptance. Quest Planner and Weekly Review appear as independent explicit helper roles, each using one structured call plus local checks." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">RAG supplies verified context to the five-node Coach graph. New prose receives model Safety; separate writer batches prepare habit choices. Quest Planner and Weekly Review are independent, explicitly triggered agent roles outside that graph. Each helper is a structured model call plus local checks, not an autonomous multi-agent loop.</p><p class="source"><a href="sources/02b-ai-runtime-agents-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="coach-detail">
+<div class="figure-heading"><h2><span class="number">04</span> Habit Coach: detailed runtime pipeline</h2><a class="download" href="illustrations/02-ai-pipeline.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/02-ai-pipeline.png" aria-label="Open full-size Habit Coach: detailed runtime pipeline"><img src="illustrations/02-ai-pipeline.png" alt="The preserved detailed runtime diagram shows scoped context, masking, embedding, Pinecone, canonical hydration, five Coach graph nodes with one bounded Safety revision, and separate habit batches with parent approval." width="1536" height="1024" loading="lazy"></a>
+<figcaption><p class="caption">Preserved original runtime illustration: it explains the API request-to-result pipeline without offline catalog creation. Follow A from verified retrieval into the Coach graph and B from reviewed saved goals into separate habit batches. Planner and Review retain their own dedicated slides.</p><p class="source"><a href="sources/02-ai-pipeline-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="planner">
+<div class="figure-heading"><h2><span class="number">05</span> Quest Planner agent</h2><a class="download" href="illustrations/08-quest-planner.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/08-quest-planner.png" aria-label="Open full-size Quest Planner agent"><img src="illustrations/08-quest-planner.png" alt="A parent explicitly runs Quest Planner. Labelled SQL family facts feed one LangChain model call, code validates up to four change suggestions, and the parent accepts or dismisses them before any plan update." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Quest Planner focuses on practical adjustments to the family plan. One structured call uses scoped SQL facts; code checks references and retains up to four suggestions. The parent decides, with fresh eligibility and capacity checks before changes are applied. It runs outside the Coach graph.</p><p class="source"><a href="sources/08-quest-planner-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="review">
+<div class="figure-heading"><h2><span class="number">06</span> Weekly Review agent</h2><a class="download" href="illustrations/09-weekly-review.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/09-weekly-review.png" aria-label="Open full-size Weekly Review agent"><img src="illustrations/09-weekly-review.png" alt="A parent explicitly runs Weekly Review. Two seven-day SQL windows and labelled child context feed one structured model call. Parent-facing wins, watch points and patterns accompany at most two checked change proposals." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Weekly Review interprets recent progress rather than creating a schedule automatically. It compares two seven-day SQL windows, produces a parent-facing report and at most two locally checked suggestions. Parents decide on changes; reading the saved report makes no new model call.</p><p class="source"><a href="sources/09-weekly-review-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="safety">
+<div class="figure-heading"><h2><span class="number">07</span> Safety guardrails</h2><a class="download" href="illustrations/07-safety-guardrails.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/07-safety-guardrails.png" aria-label="Open full-size Safety guardrails"><img src="illustrations/07-safety-guardrails.png" alt="Research authority and scoped Coach input feed verified retrieval and structured output checks. Generated Coach prose receives Safety review; locally checked habit drafts proceed to parent acceptance. Six controls are not six model calls." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Six complementary controls cover researched source authority, scoped Coach input, verified retrieval, structured output checks, Coach prose review and parent authority. They are not six LLM calls. Trusted catalog lookup and bounded habit checks do not receive an extra whole-content Safety pass.</p><p class="source"><a href="sources/07-safety-guardrails-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="tokenomics">
+<div class="figure-heading"><h2><span class="number">08</span> Tokenomics and monitoring</h2><a class="download" href="illustrations/05-tokenomics.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/05-tokenomics.png" aria-label="Open full-size Tokenomics and monitoring"><img src="illustrations/05-tokenomics.png" alt="An explicit operation reserves allowance, meters chat, embedding and Pinecone attempts, records usage and tariff-based cost in PostgreSQL, then settles useful credits or releases failed holds. Admin policy and metrics remain separate from the family credit meter." width="1671" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Every provider attempt retains usage, timing and estimated cost, including embeddings, search, retries and failures. Useful results settle family credits once; failed work releases credit holds without erasing provider cost. Admin can enforce allowance and exposure gates or track demo overage. Enforcement requires verified tariffs and bounded exposure.</p><p class="source"><a href="sources/05-tokenomics-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="evaluations">
+<div class="figure-heading"><h2><span class="number">09</span> Evaluation evidence</h2><a class="download" href="illustrations/06-evaluations.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/06-evaluations.png" aria-label="Open full-size Evaluation evidence"><img src="illustrations/06-evaluations.png" alt="Four separate workbenches show source audits, a frozen synthetic retrieval-model study, mocked guardrail regression tests and recorded application/live-provider checks. The evidence types do not form an extra runtime pipeline." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">Recorded source audits, a synthetic embedding study, mocked guardrail regressions and small live-provider samples answer different questions. They support content, model and control-flow decisions. They do not establish a zero-harm guarantee, clinical effectiveness or a new production latency benchmark.</p><p class="source"><a href="sources/06-evaluations-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure>
+<figure id="aws">
+<div class="figure-heading"><h2><span class="number">10</span> AWS deployment</h2><a class="download" href="illustrations/03-aws-deployment.png" download>Download PNG</a></div>
+<a class="image-link" href="illustrations/03-aws-deployment.png" aria-label="Open full-size AWS deployment"><img src="illustrations/03-aws-deployment.png" alt="Independent browser HTTPS paths reach app and API ALBs and Fargate tasks. API connects to private RDS and external AI providers; shared DNS and certificate configuration, ECR images, backend secrets and CloudWatch support deployment." width="1672" height="941" loading="lazy"></a>
+<figcaption><p class="caption">The browser independently reaches the app and API through two public ALBs. Public-subnet Fargate tasks use restricted ALB-only ingress and internet-gateway egress; RDS stays private. ECR supplies both services, API secrets arrive at startup and CloudWatch retains logs. This always-on demo uses no NAT and is not production HA.</p><p class="source"><a href="sources/03-deployment-contract.md">Read the content contract and source references</a></p></figcaption>
+</figure><section aria-labelledby="supplemental-heading"><h2 id="supplemental-heading">Preserved supplemental reference</h2><p class="intro">The original product journey remains available here. The original detailed AI pipeline is also preserved unchanged and appears in the main presentation.</p><ul><li><a href="illustrations/01-system-overview.png">Original product journey overview</a> · <a href="sources/01-system-contract.md">source notes</a></li></ul></section>
+</main>
+  <footer>Final artwork contains no implementation dates. <a href="presentation.html">Open presentation mode</a> · <a href="slides.json">Slide inventory</a> · <a href="manifest.json">Provenance manifest</a> · <a href="VISUAL-QA.md">Visual review</a>. All gallery assets are local; no network requests or provider calls are made.</footer>
+</body></html>

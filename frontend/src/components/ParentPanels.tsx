@@ -1,3 +1,4 @@
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 /**
  * Parent dashboard panels, all from the backend:
  *   SafetyAlerts     notes from a child that raised a safety concern (always shown first)
@@ -115,7 +116,7 @@ export function RewardRequests({ family, familyId, onCount }: { family: Family; 
             <li key={r.id} className="approval">
               <span className="reward__emoji" aria-hidden="true">{r.emoji}</span>
               <div className="approval__text">
-                <span className="approval__who">{child && <Buddy buddy={child.buddy} accessory={child.wearing} size={24} />} {r.child_name}{r.mystery ? " · from a mystery box" : ""}</span>
+                <span className="approval__who">{child && <Buddy {...buddyDisplayProps(child)} accessory={child.wearing} size={24} />} {r.child_name}{r.mystery ? " · from a mystery box" : ""}</span>
                 <b>{r.title}</b>
                 <span className="muted">{r.cost} points held{r.minutes ? ` · adds ${r.minutes} min of screen time` : ""}</span>
               </div>

@@ -25,7 +25,34 @@ Keep the dev server on port 5180: the API and Google only allow that origin. The
 so the first request can take up to a minute; the app shows "Waking up the server…" while it waits.
 
 With `VITE_DEV_LOGIN=true` the sign-in page also offers a development login: `parent`, or `parent:<label>` for a
-separate test parent, with the shared password from the backend owner. Never put that password in an env file.
+separate test parent. Enter `DEV_LOGIN_PASSWORD` from `../backend/.env` in the sign-in form. Keep passwords,
+database credentials, JWT secrets and provider keys in the backend environment only.
+
+For the local backend, use `frontend/.env.local`:
+
+```dotenv
+VITE_API_URL=http://127.0.0.1:8000
+VITE_GOOGLE_CLIENT_ID=589389699921-ol224oo6m4svf9tts3enahorubm4lb1s.apps.googleusercontent.com
+VITE_DEV_LOGIN=true
+VITE_BUDDY_CATALOG_ENABLED=true
+```
+
+The Google client ID must match `GOOGLE_CLIENT_ID` in `backend/.env`. The backend's `CORS_ORIGINS` must include
+`http://localhost:5180`. `.env.local` overrides `.env`; restart the frontend after changing either file. Without
+`VITE_API_URL`, requests go to the frontend server instead of the backend. AI calls run through the backend, so
+the frontend does not need an AI-provider key.
+
+Enable `VITE_BUDDY_CATALOG_ENABLED` only after the backend buddy migration is applied.
+It exposes 24 catalog buddies alongside the four originals. New children receive a
+local age-based default; parents and kids can choose another buddy. Names,
+characteristics and suggested ages appear in the chooser only. Dashboard avatars
+keep their compact layout. Existing children and all eight earned accessories are
+preserved. Disabling the chooser flag still displays saved catalog selections.
+Selection makes no model call and uses no coaching credits. See the
+[buddy implementation and rollout](../docs-detailed/design-update/buddies/execution.md).
+
+To use the hosted backend, set `VITE_API_URL=https://habitquest-api-qmt1.onrender.com` and use that server's
+credentials. Local and hosted family data and codes are separate; switching servers may require signing in again.
 
 ## Pages
 
@@ -64,6 +91,7 @@ flowchart LR
 | `#/parent` | Dashboard: safety alerts, approvals, reward requests, each child's progress, kids' check-ins, surprises, AI helpers |
 | `#/coach[/:child]` | Habit coach: describe a problem, get quest cards to accept |
 | `#/quests[/:child]` | Quest library: the child's quests (up to 6); retime, pause, remove; Add quests by age group, goal and tier; the family's own custom habits |
+| `#/quests/:child/goal/:goalId` | Exact saved goal and only its linked habits; canonical details and a return link to all habits |
 | `#/rewards` | Rewards & limits: shop prices, record a reward, points history, the kid-mode time limit |
 | `#/family` | Family settings: the family code for kids' devices, grown-ups and invite code, parent PIN, export and deletion |
 | `#/kid` | Kid mode: "Who's playing?" |

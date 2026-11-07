@@ -1,0 +1,173 @@
+{
+  "source_sha256": "8dc11b07787057de85b5676e4146d5edf60fc74282dfc72ad543ed268b6fdc17",
+  "buddies": [
+    {
+      "id": "cove-seal",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "dot-bot",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "echo-raven",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "ember-fox",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "fern-moth",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "flux-rover",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "juniper-panda",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "kiki-dragon",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "koa-capybara",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "lumi-firefly",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "momo-cloud",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "moss-grove",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "nori-bunny",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "nova-fox",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "orbit-axolotl",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "otto-otter",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "pebble-bot",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "pip-owl",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "pippin-bear",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "pixel-bot",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "ripple-ray",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "scout-lynx",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "sprig-leaf",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    },
+    {
+      "id": "tilly-turtle",
+      "catalog_version": "0.1.0",
+      "supported_age_min": 3,
+      "supported_age_max": 13,
+      "available": true
+    }
+  ]
+}

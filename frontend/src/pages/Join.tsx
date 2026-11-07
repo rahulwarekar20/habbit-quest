@@ -1,3 +1,4 @@
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 /**
  * Joining from a shared family QR code (#/join/:code) or a typed family code (#/join).
  * It first asks how you're joining:
@@ -57,7 +58,7 @@ export default function Join({ code }: { code?: string }) {
         <div className="join-choice">
           <button className="join-choice__card" onClick={() => setWho("kid")}>
             <span className="join-choice__buddies" aria-hidden="true">
-              {found.children.slice(0, 3).map((c) => <Buddy key={c.id} buddy={c.buddy} size={44} />)}
+              {found.children.slice(0, 3).map((c) => <Buddy key={c.id} {...buddyDisplayProps(c)} size={44} />)}
             </span>
             <b>I'm a kid</b>
             <span className="muted">Use your own PIN</span>
@@ -145,7 +146,7 @@ function KidSignIn({ code, found }: { code: string; found: LoginFamily }) {
       <div className="kid-picker__grid join-kids">
         {found.children.map((c) => (
           <button key={c.id} className="kid-picker__card" onClick={() => setPicked(c)} disabled={!c.has_pin}>
-            <Buddy buddy={c.buddy} size={72} />
+            <Buddy {...buddyDisplayProps(c)} size={72} />
             <b>{c.name}</b>
             {!c.has_pin && <span className="muted">Ask a grown-up to set your PIN</span>}
           </button>
@@ -156,7 +157,7 @@ function KidSignIn({ code, found }: { code: string; found: LoginFamily }) {
 
   return (
     <form className="form join-pin" onSubmit={submit}>
-      <Buddy buddy={picked.buddy} size={80} />
+      <Buddy {...buddyDisplayProps(picked)} size={80} />
       <p className="muted">Hi, {picked.name}! Enter your PIN.</p>
       <input className={`pin-input ${error ? "pin-input--wrong" : ""}`} inputMode="numeric" pattern="\d{4}" maxLength={4} autoFocus
         value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setError(null); }}

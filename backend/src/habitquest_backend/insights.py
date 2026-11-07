@@ -9,7 +9,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass
-from typing import Annotated, Literal, cast
+from typing import Annotated, Any, Literal, cast
 from uuid import UUID
 
 import openai
@@ -24,7 +24,6 @@ from habitquest_backend.coach import (
     APP_FACTS,
     LABELS,
     save_suggestion,
-    spend_ai_call,
     swap_names,
     take_snapshot,
 )
@@ -32,6 +31,8 @@ from habitquest_backend.coach_tools import TIME, Snapshot
 from habitquest_backend.config import Settings
 from habitquest_backend.daily import today_view
 from habitquest_backend.db import one, transaction
+from habitquest_backend.generation_metering import endpoint
+from habitquest_backend.generation_progress import report_stage, stream_operation
 from habitquest_backend.habits import is_custom
 from habitquest_backend.llm import chat_model
 from habitquest_backend.safety import check_text
@@ -41,6 +42,7 @@ MAX_PLAN_CHANGES = 4
 MAX_REVIEW_CHANGES = 2
 MAX_LINE_LENGTH = 160
 BUSY = "The AI helpers are busy right now. Please try again in a minute."
+TRUNCATED = "The AI report was cut short before it finished. Please try a new request."
 PLANNER_PROMPT = f"""You are the quest planner for HabitQuest.
 {APP_FACTS}
 
@@ -50,7 +52,8 @@ ages 3-5 and 9-12 hours at ages 6-12), how often each habit was approved recentl
 and bedtime. Prefer small steps: shift a time by 15-30 minutes rather than a big jump, and do not add more than a
 family is managing: suggest at most one new habit per child. A child has at most 6 habits. Tie each reason to that child's numbers. If a plan is already
 sensible, return no changes. Write to a busy parent: warm, brief, plain text with no markdown or emojis, and no habit
-ids or field names. Never give medical advice."""
+ids or field names. Put actionable advice in 2-3 short ordered tips, one action per tip;
+keep the summary to one short introductory sentence. Never give medical advice."""
 REVIEWER_PROMPT = f"""You are the weekly reviewer for HabitQuest.
 {APP_FACTS}
 
@@ -71,6 +74,11 @@ BUDDY_FALLBACK = {
     "greet": "Hello, quest hero! Let's do something great today!",
     "submitted": "Great job trying! A grown-up will check soon.",
     "celebrate": "Hooray! You earned a Spark. I'm so proud of you!",
+}
+CATALOG_BUDDY_LINES = {
+    "greet": "Hello! You can choose a small step for today.",
+    "submitted": "Sent to your grown-up to check.",
+    "celebrate": "Your grown-up approved your quest. You earned a Spark!",
 }
 
 
@@ -212,11 +220,14 @@ def save_changes(conn, view: FamilyView, changes: list[ProposedChange], source: 
 def ask[Answer: BaseModel](settings: Settings, schema: type[Answer], prompt: str, facts: str) -> Answer:
     """One structured model call. Without a model it fails with 503, and nothing is saved."""
     try:
-        model = chat_model(settings, temperature=0.1).with_structured_output(schema)
+        role = "planner" if schema is PlanAnswer else "review"
+        model = chat_model(settings, temperature=0.1, role=role).with_structured_output(schema)
         return cast(Answer, model.invoke([("system", prompt), ("user", f"Family snapshot:\n{facts}")]))
     except (openai.OpenAIError, ValueError) as exc:
         status = exc.status_code if isinstance(exc, openai.APIStatusError) else ""
         log.warning("AI helper failed (%s %s)", type(exc).__name__, status)
+        if isinstance(exc, openai.LengthFinishReasonError):
+            raise HTTPException(502, TRUNCATED) from exc
         raise HTTPException(503, BUSY) from exc
 
 
@@ -268,7 +279,7 @@ def buddy_line(settings: Settings, event: str, age: int, quests: list[str]) -> s
         return fallback
     request = json.dumps({"event": event, "age": age, "quests": quests})
     try:
-        reply = chat_model(settings, small=True, temperature=0.8).invoke(
+        reply = chat_model(settings, small=True, temperature=0.8, role="buddy").invoke(
             [("system", BUDDY_PROMPT), ("user", request)]
         )
     except (openai.OpenAIError, ValueError) as exc:
@@ -286,32 +297,45 @@ def router(settings: Settings) -> APIRouter:
     Kid = Annotated[UUID, Depends(signed_in(settings, KID))]
 
     def run(family_id: UUID, user: UUID, kind: str, source: str, limit: int, build) -> dict:
+        report_stage("context")
         with transaction(settings, user) as conn:
             one(conn, "SELECT id FROM hq.families WHERE id=%s", (family_id,))
-            spend_ai_call(conn, family_id, settings)
             view = family_view(conn, family_id)
         # The model call happens outside any transaction.
+        report_stage("planning" if kind == "plan" else "review")
         answer = build(settings, view)
+        report_stage("validation")
         changes = checked_changes(view, answer.changes, limit)
         fields = answer.model_dump(exclude={"changes"})
+        report_stage("saving")
         with transaction(settings, user) as conn:
             save_changes(conn, view, changes, source)
             return report_row(conn, family_id, user, kind, restored_text(view, fields))
 
     @api.post("/v1/families/{family_id}/plan-suggestions", tags=["Coach"], summary="Suggest a plan")
-    def suggest_plan(family_id: UUID, user: User) -> dict:
+    @endpoint(settings, "planner", scope="family")
+    def suggest_plan(
+        family_id: UUID, user: User, stream: bool = False, request_id: UUID | None = None
+    ) -> Any:
         """The quest planner reads each child's age, plan and recent approvals and writes a `summary` and `tips`.
         Its changes that pass the catalog and plan checks become suggestions from `planner`, at most four.
         Children's names are not sent to the AI provider. 503 when the AI is unavailable.
         """
+        if stream:
+            return stream_operation(lambda: suggest_plan(family_id, user, request_id=request_id))
         return run(family_id, user, "plan", "planner", MAX_PLAN_CHANGES, plan_for)
 
     @api.post("/v1/families/{family_id}/reviews", tags=["Coach"], summary="Write the weekly review")
-    def write_review(family_id: UUID, user: User) -> dict:
+    @endpoint(settings, "review", scope="family")
+    def write_review(
+        family_id: UUID, user: User, stream: bool = False, request_id: UUID | None = None
+    ) -> Any:
         """The reviewer compares the last 7 days with the 7 before and writes a `headline`, each child's `wins`
         and `watch`, and `patterns`. Up to two changes become suggestions from `reviewer`. Children's names are
         not sent to the AI provider. 503 when the AI is unavailable.
         """
+        if stream:
+            return stream_operation(lambda: write_review(family_id, user, request_id=request_id))
         return run(family_id, user, "review", "reviewer", MAX_REVIEW_CHANGES, review_for)
 
     @api.get("/v1/families/{family_id}/reports", tags=["Coach"], summary="Latest plan and review")
@@ -328,18 +352,18 @@ def router(settings: Settings) -> APIRouter:
         return {"plan": found.get("plan"), "review": found.get("review")}
 
     @api.post("/v1/kid/buddy-line", tags=["Kid mode"], summary="A line from the buddy")
+    @endpoint(settings, "buddy", scope="kid")
     def kid_buddy_line(body: BuddyRequest, kid: Kid) -> dict:
         """With a kid token: one short encouraging line for `greet`, `submitted` or `celebrate`, safety-checked
         before it is returned. A built-in line replaces it when the AI is unavailable or the family's daily AI
         limit is reached. The provider sees the child's age and quest titles, not their name.
         """
         with transaction(settings, kid=kid) as conn:
-            child = one(conn, "SELECT age FROM hq.children WHERE id=%s", (kid,))
+            child = one(conn, "SELECT age,buddy_selection_mode FROM hq.children WHERE id=%s", (kid,))
+            if child["buddy_selection_mode"] == "catalog":
+                return {"line": CATALOG_BUDDY_LINES[body.event]}
             view = today_view(conn, kid)
             quests = [h["kid_title"] for h in view["habits"] if not is_custom(h["habit_id"])]
-            calls = conn.execute("SELECT hq.kid_ai_call() AS n").fetchone()["n"]
-        if calls > settings.ai_daily_limit:
-            return {"line": BUDDY_FALLBACK[body.event]}
         return {"line": buddy_line(settings, body.event, child["age"], quests)}
 
     return api

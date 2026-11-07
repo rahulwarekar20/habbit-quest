@@ -17,6 +17,13 @@ from habitquest_backend.db import transaction
 from habitquest_backend.main import create_app
 
 CLIENT_ID = "1234-test.apps.googleusercontent.com"
+LEGACY_BUDDY = {
+    "buddy": "fox",
+    "buddy_selection_mode": "legacy",
+    "catalog_buddy_id": None,
+    "buddy_catalog_version": None,
+    "buddy_selection_revision": 0,
+}
 GOOGLE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 FAMILY = {
     "name": "Rivera",
@@ -284,7 +291,9 @@ def test_kid_session_gives_a_token_only_for_kid_endpoints(client, settings, db, 
     session = client.post(f"/v1/children/{alex}/kid-session")
     assert session.status_code == 200, session.text
     body = session.json()
-    assert body["child"] == {"id": str(alex), "name": "Alex"} and body["expires_in"] == 8 * 3600
+    assert (
+        body["child"] == {"id": str(alex), "name": "Alex", **LEGACY_BUDDY} and body["expires_in"] == 8 * 3600
+    )
     kid = {"Authorization": "Bearer " + body["access_token"]}
     me = client.get("/v1/kid/me", headers=kid).json()
     assert (me["name"], me["age"], me["buddy"], me["world"]) == ("Alex", 7, "fox", "camp")
@@ -332,8 +341,8 @@ def test_a_kid_signs_in_with_the_family_code_and_their_pin(client, db, family):
     assert found.json() == {
         "family": {"id": family["id"], "name": "Rivera"},
         "children": [
-            {"id": str(alex), "name": "Alex", "buddy": "fox", "has_pin": True},
-            {"id": str(maya), "name": "Maya", "buddy": "fox", "has_pin": False},
+            {"id": str(alex), "name": "Alex", **LEGACY_BUDDY, "has_pin": True},
+            {"id": str(maya), "name": "Maya", **LEGACY_BUDDY, "has_pin": False},
         ],
     }
     signed_in = client.post(f"/v1/kid-login/{code}", json={"child_id": str(alex), "pin": "4321"})
@@ -400,7 +409,11 @@ def test_a_shared_device_asks_for_the_kids_pin_when_they_have_one(client, db, fa
     assert client.post(f"/v1/children/{alex}/kid-session").status_code == 403
     assert client.post(f"/v1/children/{alex}/kid-session", json={"pin": "0000"}).status_code == 403
     session = client.post(f"/v1/children/{alex}/kid-session", json={"pin": "4321"})
-    assert session.status_code == 200 and session.json()["child"] == {"id": str(alex), "name": "Alex"}
+    assert session.status_code == 200 and session.json()["child"] == {
+        "id": str(alex),
+        "name": "Alex",
+        **LEGACY_BUDDY,
+    }
 
 
 def test_kid_login_functions_reveal_nothing_without_the_code(settings, db, family):

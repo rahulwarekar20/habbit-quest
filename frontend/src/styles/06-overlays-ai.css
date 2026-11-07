@@ -93,6 +93,7 @@
 }
 .ai-chat__form input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 4px rgba(123, 92, 240, 0.15); }
 .thinking { display: inline-flex; align-items: center; gap: 10px; }
+.response-time { display: block; color: var(--ink-soft); font-size: var(--text-xs); line-height: 1.4; font-variant-numeric: tabular-nums; }
 .thinking__dots { display: inline-flex; gap: 4px; }
 .thinking__dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; animation: dot 1.2s ease-in-out infinite; }
 .thinking__dots i:nth-child(2) { animation-delay: 0.15s; }
@@ -104,3 +105,32 @@
   border-radius: 18px; border-top-left-radius: 6px; box-shadow: var(--shadow-sm); max-width: 52ch; animation: rise 0.3s ease;
 }
 .celebrate__buddy { margin: 0; color: var(--ink-soft); font-weight: 700; font-size: var(--text-base); }
+
+/* Source goals and explicit habit drafts share the Coach's existing card treatment. */
+.coach-setting { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--ink-soft); font-size: var(--text-sm); }
+.coach-setting select, .goal-workbench select, .goal-workbench input[type="time"], .goal-workbench textarea {
+  font: inherit; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: #fff;
+}
+.source-goals, .goal-workbench, .goal-reader, .habit-drafts { display: grid; gap: 12px; min-width: 0; }
+.source-goals h3, .source-goals h4, .source-goals h5, .source-goals h6, .source-goals p { margin: 0; }
+.source-goals h4, .source-goals h5, .source-goals h6 { font: 650 var(--text-lg)/1.4 var(--font-display); }
+.source-goal { border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 14px; }
+.source-goal > button { justify-self: start; }
+.source-goal__head { display: flex; align-items: flex-start; gap: 12px; }
+.source-goal__head > div { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.source-goal__head > button { flex: none; }
+.goal-reader details, .habit-draft details { border-top: 1px solid var(--line); padding-top: 10px; }
+.goal-reader details > p, .habit-draft details > p, .goal-evidence { margin-top: 8px; }
+.goal-reader summary, .habit-draft summary { cursor: pointer; font-weight: 650; }
+.goal-evidence { padding: 10px; background: var(--bg); border-radius: 10px; }
+.goal-generator { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; }
+.goal-generator label, .habit-draft__schedule label { display: grid; gap: 6px; font-size: var(--text-sm); }
+.goal-generator textarea { resize: vertical; min-height: 70px; width: 100%; box-sizing: border-box; }
+.goal-generator__actions, .habit-draft__schedule { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.habit-draft { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; }
+.habit-draft__child { display: grid; gap: 8px; background: #faf8ff; border-radius: 12px; padding: 14px; }
+.habit-draft__child ol { margin: 0; padding-left: 22px; display: grid; gap: 5px; }
+.habit-draft__accepted { color: var(--mint-deep); font-weight: 700; }
+.habit-draft__days { display: flex; flex-wrap: wrap; gap: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.habit-draft__days label { display: flex; align-items: center; gap: 4px; }
+.habit-draft > button { justify-self: start; }

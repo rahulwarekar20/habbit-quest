@@ -8,6 +8,7 @@
 import {
   clearCaregiverToken, expireKidSession, getCaregiverToken, getKidSession,
 } from "../storage";
+import { GenerationStreamError, readGenerationStream, type ProgressListener } from "./generationProgress";
 
 // ── Errors ────────────────────────────────────────────────────────────────────
 
@@ -16,7 +17,7 @@ import {
  * message written for people, safe to show as it is.
  */
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly detail: string) {
+  constructor(readonly status: number, readonly detail: string, readonly generationEnded = false) {
     super(detail);
     this.name = "ApiError";
   }
@@ -48,10 +49,8 @@ export const AI_TIMEOUT_MS = 75_000;
 const IDLE_AFTER_MS = 10 * 60_000; // Render sleeps after 15 idle minutes; assume cold a little before
 const WAKE_NOTICE_MS = 2_500;
 const WAKE_RETRY_MS = 3_000;
-/** Statuses a waking server returns. 502 and 503 mean the request never reached the app, so any call may retry;
- * 504 can come after the app already acted, so only reads retry on it (a write is never sent twice). */
+/** Gateway errors can arrive after the API commits a write. Only reads retry. */
 const RETRY_STATUS = new Set([502, 503, 504]);
-const NOT_REACHED = new Set([502, 503]);
 
 let lastOk = 0;
 let slowCalls = 0;
@@ -81,10 +80,13 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 // ── The request helper ────────────────────────────────────────────────────────
 
 export interface RequestOptions {
+  onProgress?: ProgressListener;
   kid?: boolean; // use the kid token
   form?: Record<string, string>; // send as application/x-www-form-urlencoded (dev login)
   noAuth?: boolean; // sign-in calls
   timeoutMs?: number;
+  /** Legacy compatibility flag. Writes are never automatically replayed, regardless of this value. */
+  retryWrites?: boolean;
 }
 
 function expired(kid: boolean): ApiError {
@@ -99,12 +101,13 @@ function expired(kid: boolean): ApiError {
 
 /**
  * Sends one API call and returns its JSON. Adds the caregiver or kid token, gives a cold server time to wake and
- * retries while it does (reads on any waking status, writes only when the app was never reached), and turns every
+ * retries reads while it does (writes are never replayed after ambiguous failures), and turns every
  * failure into an ApiError with a readable `detail`. A 401 ends the session and tells the expiry listener.
  */
 export async function request<T>(method: string, path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
   const { kid = false, form, noAuth = false } = options;
   const headers: Record<string, string> = {};
+  if (options.onProgress) headers.Accept = "text/event-stream";
   if (!noAuth) {
     const token = kid ? getKidSession()?.token : getCaregiverToken()?.token;
     if (!token) throw expired(kid);
@@ -138,7 +141,7 @@ export async function request<T>(method: string, path: string, body?: unknown, o
         response = await fetch(`${baseUrl()}${path}`, { method, headers, body: payload, signal: AbortSignal.timeout(left) });
       } catch (e) {
         const timedOut = e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError");
-        if (!timedOut && cold && deadline - Date.now() > WAKE_RETRY_MS) {
+        if (!timedOut && cold && method === "GET" && deadline - Date.now() > WAKE_RETRY_MS) {
           await sleep(WAKE_RETRY_MS);
           continue;
         }
@@ -146,13 +149,32 @@ export async function request<T>(method: string, path: string, body?: unknown, o
           ? "The server is taking too long to answer. Please try again."
           : "We couldn't reach the server. Check your connection and try again.");
       }
-      const retryable = method === "GET" ? RETRY_STATUS : NOT_REACHED;
-      if (cold && retryable.has(response.status) && deadline - Date.now() > WAKE_RETRY_MS) {
+      if (cold && method === "GET" && RETRY_STATUS.has(response.status) && deadline - Date.now() > WAKE_RETRY_MS) {
         await sleep(WAKE_RETRY_MS);
         continue;
       }
+      // Response headers prove the server is awake, even while an SSE generation continues.
+      clearTimeout(notice);
+      if (noticed) {
+        noticed = false;
+        if (--slowCalls === 0) onWaking(false);
+      }
       lastOk = Date.now();
       if (response.status === 204) return undefined as T;
+      if (response.ok && options.onProgress && response.headers.get("Content-Type")?.includes("text/event-stream")) {
+        try {
+          return await readGenerationStream<T>(response, options.onProgress);
+        } catch (error) {
+          if (error instanceof GenerationStreamError) {
+            if (error.status === 401 && !noAuth) throw expired(kid);
+            // An explicit stream error confirms the endpoint ended. A 409 can
+            // mean it is still running; only the failed-result replay is terminal.
+            const ended = error.status > 0 && (error.status !== 409 || error.message === "This request has no saved result. Start a new request to try again.");
+            throw new ApiError(error.status, error.message, ended);
+          }
+          throw new ApiError(0, "The connection was interrupted before the result arrived. Check the conversation or saved drafts before retrying.");
+        }
+      }
       const data: unknown = await response.json().catch(() => null);
       if (response.ok) return data as T;
       if (response.status === 401 && !noAuth) throw expired(kid);

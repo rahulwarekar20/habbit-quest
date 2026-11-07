@@ -1,0 +1,7 @@
+Edit this existing HabitQuest safety illustration with ONLY one relationship correction in the top-right Coach prose review station. Preserve all wording, numbers, controls, colors, artwork and the date-free title/subtitle.
+
+Delete the current navy connector that exits the entire right edge of the Coach prose review frame around the purple rejected/unavailable outcome's level. Replace it with a connector that starts explicitly at the RIGHT EDGE of the GREEN "Approved → reviewed output" outcome, exits the frame at that same approved-outcome height, and then follows the right margin downward into the existing Parent authority destination. At 1672×941, the new success connector should begin near x1595,y296; it must not start beside the lower purple outcome. Keep the arrowhead at the existing Parent authority entrance.
+
+The PURPLE "Rejected twice / unavailable → fixed failure" outcome must terminate locally: add a small dark terminal dot or short stop bar INSIDE that purple outcome box, and give it NO outgoing line to Parent authority or PostgreSQL. Preserve its existing text exactly.
+
+Do not modify the separate HABIT-drafts branch, reviewed-goal binding, parent gate, database, footer, model-call counts or other arrows. Do not print these instructions, add a date or redraw unrelated regions. Export a new corrected version.

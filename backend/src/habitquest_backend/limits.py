@@ -2,6 +2,8 @@
 
 import time
 from collections import deque
+from collections.abc import Sequence
+from ipaddress import IPv4Network, IPv6Network, ip_address
 
 from fastapi import HTTPException, Request
 
@@ -33,12 +35,22 @@ class RateLimiter:
             del self.hits[key]
 
 
-def client_address(request: Request) -> str:
-    """The caller's address. Cloudflare, in front of Render, sets CF-Connecting-IP itself, so it cannot be faked.
-    The first X-Forwarded-For entry can be (Render keeps one a caller sends), so it is only a fallback.
+def client_address(request: Request, alb_proxies: Sequence[IPv4Network | IPv6Network] = ()) -> str:
+    """Trust only the last ALB-appended IP from a configured socket peer.
+
+    Requires uvicorn --no-proxy-headers, ALB XFF append mode without client ports,
+    and task ingress restricted to the ALB security group. Empty configuration
+    uses the direct peer. Vendor headers and caller-supplied earlier IPs are ignored.
     """
-    for header in ("cf-connecting-ip", "true-client-ip"):
-        if found := request.headers.get(header, "").strip():
-            return found
-    forwarded = request.headers.get("x-forwarded-for", "")
-    return forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    peer = request.client.host if request.client else "unknown"
+    try:
+        if any(ip_address(peer) in network for network in alb_proxies):
+            forwarded = request.headers.getlist("x-forwarded-for")
+            # Do not guess which duplicate header an upstream proxy modified.
+            if len(forwarded) == 1:
+                candidate = forwarded[0].rsplit(",", 1)[-1].strip()
+                if "%" not in candidate:
+                    return str(ip_address(candidate))
+    except ValueError:
+        pass  # Missing/invalid headers or peer: conservative shared peer bucket.
+    return peer

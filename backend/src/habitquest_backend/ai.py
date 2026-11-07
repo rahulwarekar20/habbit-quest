@@ -89,7 +89,7 @@ def ask_model(settings: Settings, age: int, text: str, candidates: list[Candidat
         {"id": c.goal_id, "title": c.title, "description": c.description, "habits": c.habits}
         for c in candidates
     ]
-    model = chat_model(settings).bind(response_format={"type": "json_object"})
+    model = chat_model(settings, role="onboarding").bind(response_format={"type": "json_object"})
     reply = model.invoke(
         [
             ("system", SYSTEM_PROMPT),

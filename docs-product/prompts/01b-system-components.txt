@@ -1,0 +1,68 @@
+Use case: infographic-diagram. Create a refined HabitQuest system architecture illustration exposing the actual frontend and backend components. Use supplied HabitQuest artwork as STYLE REFERENCES ONLY. Friendly white paper, irregular dark navy ink, large indigo/blue handwritten heading, clear readable body lettering, subtle lavender and pale-blue washes. Recognizable browser, identity shield, source books, robot, writer cards, planner booklet, review calendar, approval clipboard, plan board, accounting ledger and database cabinet. Landscape 16:9. NO DATES anywhere.
+
+MAIN REQUIREMENT: The prior overview collapsed the backend into one FastAPI robot. This version must visibly expose functional modules INSIDE ONE FastAPI APPLICATION, without implying independently deployed microservices or one giant all-agent workflow.
+
+COMPOSITION: Left: one React/Vite browser with three sections for Parent, Child and Operator. Center/right: a large light boundary titled "Backend modules · one FastAPI application". Top of this boundary has a compact Identity + family scope shield. Inside, an AI workbench has FIVE distinct semantic objects: RAG/catalog, Coach, Habit writer, Quest Planner, Weekly Review. RAG→Coach→habit writer is the main bounded generation path. Quest Planner and Weekly Review are SEPARATE explicit-request helper objects, not linked serially to Coach or to each other. Only the Coach object is labeled LangGraph. A supporting label "LangChain model adapters" applies to model invocation. The lower backend area contains parent acceptance leading to plans/approvals and the submission→parent approval→reward loop; separate Tokenomics ledger shows costs/latency/credits/policy. Keep recognizable objects, not nine identical boxes.
+
+Outside the backend on the right/top are public source knowledge objects: Pinecone vector database and pinned canonical JSON, BOTH connected specifically to RAG. A compact provider cloud connects to the backend AI workbench; calls remain backend-only. Below is PostgreSQL with a bidirectional connection ONLY to the FastAPI boundary. A small artwork palette feeds the browser with bundled goal art and S3 buddy images. Browser↔API has one readable scoped request/results connection. The human parent acceptance gate MUST sit before generated proposals become plan writes. Do not connect providers, browser, vector database or artwork directly to PostgreSQL. Use uncluttered connectors, generous margins and readable short labels. Avoid multiplying arrows across the modules; this is a functional architecture overview, with detailed calls shown on the dedicated AI slides.
+
+EXACT VISIBLE COPY:
+
+HabitQuest application components
+Frontend experiences + backend responsibilities
+
+React + Vite
+Parent
+Dashboard · plans · Habit Coach
+Child
+Today's quests · buddy · rewards
+Operator /admin
+Tokenomics settings + metrics
+
+HTTPS + scoped identity
+JSON results + stage updates
+
+Backend modules · one FastAPI application
+Identity + family scope
+Google verification · caregiver / kid / admin
+
+RAG + catalog
+Mask → embed → retrieve → verify
+Coach · LangGraph
+Generate → prose Safety → decide
+Habit writer
+3 draft choices · local validation
+Quest Planner
+Explicit plan proposals
+Weekly Review
+Explicit progress summaries
+LangChain model adapters
+
+Parent acceptance
+Plans + approvals
+Exact goal links · schedules
+Submit → parent approval → rewards
+Tokenomics
+Credits · costs · latency
+Enforcement or demo mode
+
+Public source knowledge
+Pinecone vector database
+Pinned canonical JSON
+Backend-only provider calls
+OpenAI: writers + embeddings
+Nebius: Safety + reports
+
+PostgreSQL
+Families · plans · progress
+Generation ledger · policy
+RLS + transactional writes
+
+Goal art + S3 buddy images
+Buddy choice: local rules
+
+AI proposes. Parents approve plan changes. The API owns persistence.
+
+END OF VISIBLE COPY. The remaining text is instruction only and MUST NOT be printed in the illustration.
+
+ One backend monolith with modules, not new services. One frontend app with scoped parent/kid and separate operator entry. Browser calls API directly. Operator identity does not access private family content. Only refined Coach has the five-node LangGraph; retrieval is before it, habit writer separate, Planner and Weekly Review independent explicit singlecall capabilities. Do not imply every module is graph-orchestrated or that all helpers run each turn. No old Deep Agents harness or ten-agent loop. Models propose only; parent decisions plus backend/database rules own accepted plans and rewards. Canonical card maps to goal; generated action maps to habit. Public source knowledge is not family state. Tokenomics credits are not child reward points. Buddy selection is local. No implementation dates, invented numbers, secrets, latency claim, automatic assignment or unsupported efficacy claim. Keep every module readable at the final slide size.

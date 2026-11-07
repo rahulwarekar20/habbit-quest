@@ -10,6 +10,7 @@ import { SparkCount, SparkIcon } from "../components/Spark";
 import WorldArt from "../components/WorldArt";
 import { WORLDS } from "../lib/family";
 import { HABITS } from "../lib/habits";
+import { JOURNEY_MEDIA } from "../lib/journeyMedia";
 import { formatMinutes, formatTime } from "../lib/time";
 
 const STEPS = [
@@ -169,6 +170,37 @@ export default function Home() {
             <li><b>Encouraging, never punishing.</b> &ldquo;Not yet&rdquo; lets them try again. Sparks are never taken away.</li>
             <li><b>No ads, no chat, no strangers.</b> Kid mode is a closed space just for your family.</li>
           </ul>
+        </div>
+      </section>
+
+      {/* ── Journey ──────────────────────────────────────────────────── */}
+      <section className="section home-journey" id="journey" aria-labelledby="journey-title">
+        <div className="wrap">
+          <div className="section__head home-journey__head">
+            <h2 id="journey-title">Journey</h2>
+            <p className="home-journey__subtitle">HabitQuest Journey: Little Habits, Big Adventures</p>
+            <p className="lead">See how small everyday steps become a shared adventure, with your family in charge.</p>
+          </div>
+          <figure className="home-journey__film">
+            <video
+              className="home-journey__video"
+              controls
+              playsInline
+              preload="none"
+              crossOrigin="anonymous"
+              poster={JOURNEY_MEDIA.poster}
+              aria-label="HabitQuest Journey: Little Habits, Big Adventures"
+              aria-describedby="journey-caption"
+            >
+              <source src={JOURNEY_MEDIA.video} type="video/mp4" />
+              <track kind="captions" src={JOURNEY_MEDIA.captions} srcLang="en" label="English" />
+              Your browser does not support this video. <a href={JOURNEY_MEDIA.video}>Open the Journey video</a>.
+            </video>
+            <figcaption id="journey-caption" className="home-journey__caption">
+              <span>2 min 35 sec <span aria-hidden="true">·</span> English captions available</span>
+              <a href={JOURNEY_MEDIA.video} target="_blank" rel="noopener noreferrer">Open video <span aria-hidden="true">↗</span></a>
+            </figcaption>
+          </figure>
         </div>
       </section>
 

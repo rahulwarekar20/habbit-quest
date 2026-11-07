@@ -8,6 +8,7 @@ import { landmarkKey } from "../lib/journeyPath";
 import { useStore } from "../lib/store";
 import { useKidDay } from "../lib/useKidDay";
 import { KidBar, KidLapsed, NotFound } from "../components/KidChrome";
+import { buddyDisplayProps } from "../lib/buddyIdentity";
 
 const MEDAL = ["", "Bronze", "Silver", "Gold"];
 
@@ -15,14 +16,14 @@ const MEDAL = ["", "Bronze", "Silver", "Gold"];
 export default function Journal({ childId }: { childId: string }) {
   const { family } = useStore();
   const child = family!.children.find((c) => c.id === childId);
-  const { journey, lapsed, resume } = useKidDay(childId);
+  const { today, journey, error, lapsed, resume, reload } = useKidDay(childId);
   const secondsLeft = usePlaytime(child);
   if (!child) return <NotFound />;
   if (lapsed) return <KidLapsed onResume={resume} />;
   const total = journey?.worlds.reduce((n, w) => n + w.landmarks.length, 0) ?? 0;
 
   return (
-    <div className="page page--kid" data-buddy={child.buddy}>
+    <div className="page page--kid" data-buddy={buddyDisplayProps(child).selectionMode === "catalog" ? "catalog" : child.buddy}>
       <KidBar child={child} />
       <main className="wrap kid-main">
         <a className="back" href={`#/kid/${child.id}`}>&larr; Back to my quests</a>
@@ -30,7 +31,12 @@ export default function Journal({ childId }: { childId: string }) {
 
         <section className="panel">
           <div className="panel__head"><h2>My buddy</h2></div>
-          <BuddyPicker child={child} />
+          {today ? <BuddyPicker child={child} /> : error ? (
+            <div className="buddy-save-error" role="alert">
+              <p>Your buddy could not be loaded. {error}</p>
+              <button type="button" className="btn btn--soft btn--sm" onClick={() => void reload()}>Try again</button>
+            </div>
+          ) : <p className="hint" role="status">Loading your buddy…</p>}
           <p className="hint">Your Sparks and outfits stay the same when you change buddy.</p>
         </section>
 

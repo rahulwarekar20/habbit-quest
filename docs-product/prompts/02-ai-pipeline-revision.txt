@@ -1,0 +1,11 @@
+Edit the supplied HabitQuest AI pipeline illustration as a targeted correction. Preserve the white-paper hand-drawn style, characters, all three bands, all other wording, numerical bounds, arrows and objects. Do not redesign or regenerate unrelated content.
+
+1. At the far right of the top retrieval band, replace ONLY the dangling right-pointing chevron labeled “prepare” with a small circled capital “A” and the readable caption “Continue below”. At the left edge of the second band, add the matching circled “A” to the existing arrow entering the real “prepare” graph node. These are continuation markers, not new graph nodes.
+
+2. In the “finalize” node, DELETE the redundant garbled bottom caption below the two outcomes. Keep the exact green outcome “Reviewed output” and purple outcome “Fixed failure”. Route the arrow to “Fresh local checks” specifically from the GREEN “Reviewed output” outcome. The “Fixed failure” outcome must terminate with a small stop line/dot inside the node and must have no arrow toward fresh checks, SQL, or habit preparation. Keep “finalize” as the node heading.
+
+3. Add a small circled capital “B” with “Continue below” as a success continuation after the saved-goal SQL object at the far right of the second band. Add its matching circled “B” on an incoming arrow into the habit-batch cards at the start of the third band. The sequence is saved reviewed goals → separate habit batches. Do not connect fixed failure to this path.
+
+4. Preserve the exact footer labels “OpenAI writers: gpt-6-luna” and “Nebius Safety + reports: deepseek-ai/DeepSeek-V4.1-Flash-1017”. The provider prefix deepseek-ai/ must remain present. Preserve the independent Planner / Weekly Review rail and “No Coach Safety pass”.
+
+Keep all text readable and every item within the canvas. Export a new version; preserve the original.
